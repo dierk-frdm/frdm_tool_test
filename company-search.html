@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Company Search · FRDM Tools</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f8f9fa;
+      color: #1a1a2e;
+      min-height: 100vh;
+    }
+
+    nav {
+      background: #fff;
+      border-bottom: 1px solid #e0e4ef;
+      padding: 0 2rem;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    nav .logo { font-size: 1.25rem; font-weight: 700; color: #1a1a2e; text-decoration: none; }
+    nav .sep  { color: #ccc; }
+    nav .page { font-size: 0.95rem; color: #555; }
+    nav .badge {
+      font-size: 0.7rem; font-weight: 600; color: #1a73e8;
+      background: #e8f0fe; border-radius: 20px; padding: 2px 8px;
+    }
+
+    main {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 3rem 2rem;
+    }
+
+    .hero { margin-bottom: 2rem; }
+    .hero h1 { font-size: 1.75rem; font-weight: 700; color: #1a1a2e; margin-bottom: 0.3rem; }
+    .hero p  { color: #666; font-size: 0.95rem; }
+
+    .search-box {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 2rem;
+    }
+    .search-box input {
+      flex: 1;
+      padding: 0.7rem 1rem;
+      border: 1.5px solid #d1d5e0;
+      border-radius: 8px;
+      font-size: 1rem;
+      color: #1a1a2e;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .search-box input:focus { border-color: #1a73e8; }
+    .search-box button {
+      padding: 0.7rem 1.5rem;
+      background: #1a73e8;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+    .search-box button:hover:not(:disabled) { background: #1558b0; }
+    .search-box button:disabled { background: #93b8f5; cursor: default; }
+
+    /* ── State messages ── */
+    #status {
+      text-align: center;
+      padding: 1rem;
+      font-size: 0.9rem;
+      color: #666;
+      min-height: 2.5rem;
+    }
+    #status.error { color: #c0392b; }
+
+    /* ── Result card ── */
+    #result { display: none; }
+
+    .result-card {
+      background: #fff;
+      border: 1px solid #e0e4ef;
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+
+    .result-header {
+      padding: 1.5rem 1.75rem;
+      border-bottom: 1px solid #f0f2f8;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .result-header h2 { font-size: 1.3rem; font-weight: 700; color: #1a1a2e; }
+    .result-header .meta { font-size: 0.85rem; color: #777; margin-top: 0.25rem; }
+
+    .risk-badge {
+      font-size: 0.78rem;
+      font-weight: 700;
+      border-radius: 20px;
+      padding: 4px 12px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .risk-low    { background: #d4edda; color: #155724; }
+    .risk-medium { background: #fff3cd; color: #856404; }
+    .risk-high   { background: #f8d7da; color: #721c24; }
+
+    .result-body { padding: 1.5rem 1.75rem; display: flex; flex-direction: column; gap: 1.25rem; }
+
+    .section-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: #999;
+      margin-bottom: 0.3rem;
+    }
+
+    .description { font-size: 0.9rem; color: #333; line-height: 1.65; }
+
+    .tags { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+    .tag {
+      font-size: 0.78rem;
+      background: #eef2fd;
+      color: #1a73e8;
+      border-radius: 20px;
+      padding: 3px 10px;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+    .info-item { display: flex; flex-direction: column; gap: 0.2rem; }
+    .info-value { font-size: 0.9rem; color: #1a1a2e; font-weight: 500; }
+
+    .note-box {
+      background: #f8f9fa;
+      border-left: 3px solid #1a73e8;
+      border-radius: 0 6px 6px 0;
+      padding: 0.75rem 1rem;
+      font-size: 0.875rem;
+      color: #444;
+      line-height: 1.6;
+    }
+    .note-box.risk-note {
+      border-left-color: inherit;
+    }
+    .note-box.risk-note.low    { border-left-color: #28a745; }
+    .note-box.risk-note.medium { border-left-color: #ffc107; }
+    .note-box.risk-note.high   { border-left-color: #dc3545; }
+
+    /* ── Spinner ── */
+    .spinner {
+      display: inline-block;
+      width: 18px; height: 18px;
+      border: 2.5px solid #dce3f5;
+      border-top-color: #1a73e8;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    footer {
+      text-align: center; color: #aaa; font-size: 0.8rem;
+      padding: 2.5rem 1rem;
+      border-top: 1px solid #e8eaf0;
+      margin-top: 4rem;
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="logo" href="/">🛡️ FRDM Tools</a>
+  <span class="sep">›</span>
+  <span class="page">Company Search</span>
+  <span class="badge">AI</span>
+</nav>
+
+<main>
+  <div class="hero">
+    <h1>🔍 Company Search</h1>
+    <p>Type a company name to pull an AI-generated profile with supply chain and ESG context.</p>
+  </div>
+
+  <div class="search-box">
+    <input
+      type="text"
+      id="companyInput"
+      placeholder="e.g. Apple, Foxconn, Unilever…"
+      autocomplete="off"
+    />
+    <button id="searchBtn" onclick="search()">Search</button>
+  </div>
+
+  <div id="status"></div>
+  <div id="result"></div>
+</main>
+
+<footer>FRDM Internal Tools &nbsp;·&nbsp; For internal QA use only</footer>
+
+<script>
+  const input  = document.getElementById("companyInput");
+  const btn    = document.getElementById("searchBtn");
+  const status = document.getElementById("status");
+  const result = document.getElementById("result");
+
+  input.addEventListener("keydown", e => { if (e.key === "Enter") search(); });
+
+  function setStatus(msg, isError = false) {
+    status.innerHTML = msg;
+    status.className = isError ? "error" : "";
+  }
+
+  function riskClass(level = "") {
+    const l = level.toLowerCase();
+    if (l === "low")    return "low";
+    if (l === "high")   return "high";
+    return "medium";
+  }
+
+  function renderResult(data) {
+    const rc = riskClass(data.risk_level);
+    const badgeClass = `risk-badge risk-${rc}`;
+
+    const tags = (data.products_services || [])
+      .map(t => `<span class="tag">${escHtml(t)}</span>`)
+      .join("");
+
+    result.innerHTML = `
+      <div class="result-card">
+        <div class="result-header">
+          <div>
+            <h2>${escHtml(data.name || "Unknown")}</h2>
+            <div class="meta">
+              ${escHtml(data.industry || "")}
+              ${data.headquarters ? " &nbsp;·&nbsp; " + escHtml(data.headquarters) : ""}
+              ${data.founded      ? " &nbsp;·&nbsp; Est. " + escHtml(data.founded) : ""}
+              ${data.employees    ? " &nbsp;·&nbsp; " + escHtml(data.employees) + " employees" : ""}
+            </div>
+          </div>
+          <span class="${badgeClass}">${escHtml(data.risk_level || "Unknown")} Risk</span>
+        </div>
+
+        <div class="result-body">
+
+          ${data.description ? `
+          <div>
+            <div class="section-label">Overview</div>
+            <p class="description">${escHtml(data.description)}</p>
+          </div>` : ""}
+
+          ${tags ? `
+          <div>
+            <div class="section-label">Products &amp; Services</div>
+            <div class="tags">${tags}</div>
+          </div>` : ""}
+
+          ${data.supply_chain_notes ? `
+          <div>
+            <div class="section-label">Supply Chain</div>
+            <div class="note-box">${escHtml(data.supply_chain_notes)}</div>
+          </div>` : ""}
+
+          ${data.esg_highlights ? `
+          <div>
+            <div class="section-label">ESG Highlights</div>
+            <div class="note-box">${escHtml(data.esg_highlights)}</div>
+          </div>` : ""}
+
+          ${data.risk_rationale ? `
+          <div>
+            <div class="section-label">Risk Rationale</div>
+            <div class="note-box risk-note ${rc}">${escHtml(data.risk_rationale)}</div>
+          </div>` : ""}
+
+        </div>
+      </div>`;
+
+    result.style.display = "block";
+  }
+
+  function escHtml(str) {
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  async function search() {
+    const company = input.value.trim();
+    if (!company) { input.focus(); return; }
+
+    btn.disabled = true;
+    result.style.display = "none";
+    setStatus(`<span class="spinner"></span>Looking up <strong>${escHtml(company)}</strong>…`);
+
+    try {
+      const res = await fetch("/api/company-search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ company }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || data.error) {
+        setStatus("Error: " + (data.error || res.statusText), true);
+      } else {
+        setStatus("");
+        renderResult(data);
+      }
+    } catch (err) {
+      setStatus("Network error — could not reach the API.", true);
+    } finally {
+      btn.disabled = false;
+    }
+  }
+</script>
+
+</body>
+</html>
