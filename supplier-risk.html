@@ -93,7 +93,8 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;gap:.75rem
 .status-line.wait{color:var(--muted);}
 
 /* SUMMARY STATS */
-.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem;}
+.stats-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:1rem;margin-bottom:1.5rem;}
+@media(max-width:900px){.stats-grid{grid-template-columns:repeat(3,1fr);}}
 @media(max-width:640px){.stats-grid{grid-template-columns:repeat(2,1fr);}}
 .stat-card{background:#fff;padding:1.1rem 1.3rem;border:1px solid var(--border);border-radius:8px;}
 .stat-label{font-size:.7rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.4rem;}
@@ -156,6 +157,15 @@ nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;gap:.75rem
 .flag-chip{font-size:.78rem;padding:.3rem .6rem;background:#fff3cd;border-left:2px solid var(--high);color:var(--text);line-height:1.5;border-radius:0 4px 4px 0;}
 .sanctions-detail-block{margin-top:.6rem;font-size:.78rem;color:var(--muted);line-height:1.7;}
 .sanctions-hit-name{color:var(--critical);}
+
+/* OFFICER SECTION */
+.officer-section{margin-top:.75rem;padding-top:.75rem;border-top:1px solid var(--border);}
+.officer-section-label{font-size:.68rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.4rem;}
+.officer-list{display:flex;flex-direction:column;gap:.25rem;}
+.officer-item{font-size:.78rem;color:var(--text);display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;}
+.officer-role{font-size:.68rem;color:var(--muted);background:var(--bg2);padding:.1rem .4rem;border-radius:3px;}
+.officer-hit-badge{font-size:.65rem;font-weight:700;background:#f8d7da;color:#721c24;border:1px solid #f5c6cb;padding:.1rem .4rem;border-radius:3px;}
+.officer-hit-detail{font-size:.75rem;color:var(--muted);margin-left:1rem;padding:.2rem .5rem;border-left:2px solid var(--critical);margin-top:.1rem;}
 
 /* SCORE CELL */
 .score-cell{display:flex;align-items:center;gap:.5rem;}
@@ -607,19 +617,41 @@ async function runAnalysis() {
     for (let i = 0; i < suppliers.length; i += BATCH) batches.push(suppliers.slice(i, i + BATCH));
 
     for (let b = 0; b < batches.length; b++) {
-      setProgress(50 + Math.round((b / batches.length) * 35),
+      setProgress(50 + Math.round((b / batches.length) * 28),
         `AI analysis: batch ${b + 1} of ${batches.length} (${batches[b].length} suppliers)…`);
       const batchResult = await runAIBatch(batches[b], countryRiskMap);
       Object.assign(aiMap, batchResult);
     }
-    setProgress(85, `AI risk analysis complete for ${suppliers.length} suppliers.`, 'done');
+    setProgress(78, `AI risk analysis complete for ${suppliers.length} suppliers.`, 'done');
   } catch (err) {
-    setProgress(85, `AI analysis error: ${err.message}. Using fallback scores.`, 'err');
+    setProgress(78, `AI analysis error: ${err.message}. Using fallback scores.`, 'err');
   }
 
-  // Step 4: Combine and render
-  setProgress(90, 'Calculating final risk scores…');
-  analysisResults = combineResults(suppliers, countryRiskMap, sanctionsMap, aiMap);
+  // Step 4: Officer identification via AI
+  setProgress(80, `Identifying key officers for each supplier…`);
+  let officerMap = {};
+  try {
+    officerMap = await runOfficerAIBatch(suppliers);
+    const total = Object.values(officerMap).reduce((n, arr) => n + arr.length, 0);
+    setProgress(88, `Officer identification complete — ${total} individual${total !== 1 ? 's' : ''} identified.`, 'done');
+  } catch (err) {
+    setProgress(88, `Officer identification failed: ${err.message}. Skipping officer screening.`, 'err');
+  }
+
+  // Step 5: Officer sanctions screening
+  setProgress(90, `Screening identified officers against sanctions watchlists…`);
+  let officerSanctionsMap = {};
+  try {
+    officerSanctionsMap = await runOfficerSanctionsCheck(suppliers, officerMap);
+    const hits = Object.values(officerSanctionsMap).filter(v => v.hits.length > 0).length;
+    setProgress(96, `Officer sanctions screening complete — ${hits} supplier${hits !== 1 ? 's' : ''} with flagged officer${hits !== 1 ? 's' : ''}.`, hits > 0 ? 'done' : 'done');
+  } catch (err) {
+    setProgress(96, `Officer sanctions check failed: ${err.message}. Continuing without officer sanctions data.`, 'err');
+  }
+
+  // Step 6: Combine and render
+  setProgress(97, 'Calculating final risk scores…');
+  analysisResults = combineResults(suppliers, countryRiskMap, sanctionsMap, aiMap, officerMap, officerSanctionsMap);
   setProgress(100, 'Analysis complete. Rendering results…', 'done');
 
   await new Promise(r => setTimeout(r, 400));
@@ -741,13 +773,141 @@ Respond with ONLY a valid JSON array — no markdown, no explanation.`;
 }
 
 /* ═══════════════════════════════════════════
+   OFFICER AI IDENTIFICATION
+═══════════════════════════════════════════ */
+async function runOfficerAIBatch(suppliers) {
+  const BATCH = 12;
+  const officerMap = {};
+  const batches = [];
+  for (let i = 0; i < suppliers.length; i += BATCH) batches.push(suppliers.slice(i, i + BATCH));
+
+  for (const batch of batches) {
+    const list = batch.map(s => ({
+      id: s.id,
+      name: s.name,
+      country: s.country,
+      ...(s.sector ? { sector: s.sector } : {}),
+    }));
+
+    const prompt = `You are a corporate intelligence analyst. For each company below, identify up to 3 key named individuals: CEO, Chairman, President, or major known shareholders. Use your knowledge of publicly known leadership as of your training data. Only include real, named individuals you have reasonable confidence about.
+
+Companies:
+${JSON.stringify(list, null, 2)}
+
+For each company return a JSON object with:
+- "id": the company's id number
+- "officers": array of up to 3 objects, each with "name" (full name) and "role" (e.g. "CEO", "Chairman", "Major Shareholder")
+
+If you have no reliable information about a company's leadership, return an empty officers array.
+
+Respond with ONLY a valid JSON array — no markdown, no explanation.`;
+
+    const resp = await fetch(WORKER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 1500,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+    });
+
+    if (!resp.ok) throw new Error(`AI API returned ${resp.status}`);
+    const data = await resp.json();
+    const text = data?.content?.[0]?.text || '[]';
+
+    let parsed;
+    try {
+      const clean = text.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim();
+      parsed = JSON.parse(clean);
+    } catch {
+      parsed = [];
+    }
+
+    for (const item of parsed) {
+      if (item.id !== undefined) {
+        officerMap[item.id] = Array.isArray(item.officers) ? item.officers.slice(0, 3) : [];
+      }
+    }
+  }
+
+  return officerMap;
+}
+
+/* ═══════════════════════════════════════════
+   OFFICER SANCTIONS CHECK
+═══════════════════════════════════════════ */
+async function runOfficerSanctionsCheck(suppliers, officerMap) {
+  const BATCH = 25;
+  const resultMap = {};
+
+  // Flatten: [{supplierId, name, role, country}]
+  const allOfficers = [];
+  for (const s of suppliers) {
+    for (const o of officerMap[s.id] || []) {
+      allOfficers.push({ supplierId: s.id, name: o.name, role: o.role, country: s.country });
+    }
+  }
+
+  for (const s of suppliers) resultMap[s.id] = { hits: [] };
+  if (allOfficers.length === 0) return resultMap;
+
+  for (let i = 0; i < allOfficers.length; i += BATCH) {
+    const batch = allOfficers.slice(i, i + BATCH);
+    const queries = {};
+    for (let j = 0; j < batch.length; j++) {
+      const o = batch[j];
+      queries[`o${i + j}`] = {
+        schema: 'Person',
+        properties: {
+          name: [o.name],
+          ...(o.country ? { nationality: [o.country] } : {}),
+        },
+      };
+    }
+
+    const resp = await fetch(WORKER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ _service: 'opensanctions', _path: '/match/default', queries }),
+    });
+
+    if (!resp.ok) throw new Error(`Sanctions API returned ${resp.status}`);
+    const data = await resp.json();
+    const results = data?.responses || data?.results || {};
+
+    for (let j = 0; j < batch.length; j++) {
+      const o = batch[j];
+      const key = `o${i + j}`;
+      const entityResults = results[key]?.results || [];
+      const hits = entityResults.filter(r => r.match === true || r.score > 0.6);
+      if (hits.length > 0) {
+        resultMap[o.supplierId].hits.push({
+          officerName: o.name,
+          role: o.role,
+          matches: hits.slice(0, 2).map(r => ({
+            name: r.caption || (r.properties?.name?.[0] || 'Unknown'),
+            datasets: r.datasets || [],
+            score: Math.round((r.score || 0) * 100),
+          })),
+        });
+      }
+    }
+  }
+
+  return resultMap;
+}
+
+/* ═══════════════════════════════════════════
    COMBINE RESULTS
 ═══════════════════════════════════════════ */
-function combineResults(suppliers, countryRiskMap, sanctionsMap, aiMap) {
+function combineResults(suppliers, countryRiskMap, sanctionsMap, aiMap, officerMap, officerSanctionsMap) {
   return suppliers.map(s => {
     const countryScore = countryRiskMap[s.id];
     const sanctions = sanctionsMap[s.id] || { hit: false, matches: [] };
     const ai = aiMap[s.id] || { score: 50, tier: 'MEDIUM', summary: 'AI analysis unavailable.', flags: [] };
+    const officers = officerMap ? (officerMap[s.id] || []) : [];
+    const officerSanctions = officerSanctionsMap ? (officerSanctionsMap[s.id] || { hits: [] }) : { hits: [] };
 
     // Weighted overall score
     let base;
@@ -757,8 +917,9 @@ function combineResults(suppliers, countryRiskMap, sanctionsMap, aiMap) {
       base = ai.score; // rely fully on AI if country unknown
     }
 
-    // Sanctions hit forces score to at least 80
-    const overall = sanctions.hit ? Math.max(base, 80) : base;
+    // Sanctions hit (company or officer) forces score to at least 80
+    const anyHit = sanctions.hit || officerSanctions.hits.length > 0;
+    const overall = anyHit ? Math.max(base, 80) : base;
 
     return {
       id: s.id,
@@ -772,6 +933,8 @@ function combineResults(suppliers, countryRiskMap, sanctionsMap, aiMap) {
       countryTier: countryScore !== null ? getTier(countryScore) : null,
       sanctionsHit: sanctions.hit,
       sanctionsMatches: sanctions.matches,
+      officers,
+      officerHits: officerSanctions.hits,
       aiScore: ai.score,
       aiSummary: ai.summary,
       aiFlags: ai.flags,
@@ -798,6 +961,7 @@ function renderStats() {
   const total = results.length;
   const highRisk = results.filter(r => r.overall >= 55).length;
   const sanctionHits = results.filter(r => r.sanctionsHit).length;
+  const officerHitCount = results.filter(r => r.officerHits && r.officerHits.length > 0).length;
   const avgScore = total ? Math.round(results.reduce((a,r) => a + r.overall, 0) / total) : 0;
   const avgTier = getTier(avgScore);
 
@@ -815,7 +979,12 @@ function renderStats() {
     <div class="stat-card">
       <div class="stat-label">Sanctions Flags</div>
       <div class="stat-val" style="color:${sanctionHits > 0 ? 'var(--critical)' : 'var(--minimal)'}">${sanctionHits}</div>
-      <div class="stat-sub">Potential watchlist matches</div>
+      <div class="stat-sub">Company watchlist matches</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Officer Flags</div>
+      <div class="stat-val" style="color:${officerHitCount > 0 ? 'var(--critical)' : 'var(--minimal)'}">${officerHitCount}</div>
+      <div class="stat-sub">Suppliers with flagged officers</div>
     </div>
     <div class="stat-card">
       <div class="stat-label">Avg Risk Score</div>
@@ -917,12 +1086,28 @@ function renderTable() {
         }</div>`
       : '';
 
+    let officerHtml = '';
+    if (r.officers && r.officers.length > 0) {
+      const officerItems = r.officers.map(o => {
+        const hit = (r.officerHits || []).find(h => h.officerName === o.name);
+        const hitBadge = hit ? `<span class="officer-hit-badge">SANCTIONED</span>` : '';
+        const hitDetail = hit
+          ? hit.matches.map(m =>
+              `<div class="officer-hit-detail">${escHtml(m.name)} — Score: ${m.score}/100, Datasets: ${escHtml((m.datasets||[]).slice(0,2).join(', '))||'N/A'}</div>`
+            ).join('')
+          : '';
+        return `<div class="officer-item"><span>${escHtml(o.name)}</span><span class="officer-role">${escHtml(o.role)}</span>${hitBadge}</div>${hitDetail}`;
+      }).join('');
+      officerHtml = `<div class="officer-section"><div class="officer-section-label">Key Officers</div><div class="officer-list">${officerItems}</div></div>`;
+    }
+
     detailTr.innerHTML = `<td colspan="8"><div class="detail-content">
       <div class="detail-summary">
         <strong>AI Risk Assessment:</strong> ${escHtml(r.aiSummary)}
         ${r.spend ? `<br><strong>Annual Spend:</strong> ${escHtml(r.spend)}` : ''}
         ${r.notes ? `<br><strong>Notes:</strong> ${escHtml(r.notes)}` : ''}
         ${sanctionsDetailHtml}
+        ${officerHtml}
       </div>
       <div class="detail-flags">
         <div class="detail-flags-label">Risk Factors</div>
@@ -957,12 +1142,15 @@ function toggleSort(col) {
    EXPORT CSV
 ═══════════════════════════════════════════ */
 function exportCSV() {
-  const headers = ['Supplier Name','Country','Sector','Country Risk Score','Country Risk Tier','Sanctions Hit','AI Score','Overall Risk Score','Risk Tier','AI Summary','Risk Flags'];
+  const headers = ['Supplier Name','Country','Sector','Country Risk Score','Country Risk Tier','Sanctions Hit','Officer Sanctions Hit','Officers Identified','Flagged Officers','AI Score','Overall Risk Score','Risk Tier','AI Summary','Risk Flags'];
   const rows = analysisResults.map(r => [
     r.name, r.country, r.sector || '',
     r.countryScore !== null ? r.countryScore : 'Unknown',
     r.countryTier ? r.countryTier.label : 'Unknown',
     r.sanctionsHit ? 'YES' : 'NO',
+    (r.officerHits && r.officerHits.length > 0) ? 'YES' : 'NO',
+    (r.officers || []).map(o => `${o.name} (${o.role})`).join('; '),
+    (r.officerHits || []).map(h => `${h.officerName} (${h.role})`).join('; '),
     r.aiScore,
     r.overall, r.tier.label,
     r.aiSummary,
