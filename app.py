@@ -76,11 +76,15 @@ with col1:
 
 with col2:
     tool_card(
-        icon="🔧",
-        title="Tool 2",
-        description="Next tool — description coming soon.",
-        page_path="pages/2_Tool_2.py",
-        status="coming_soon",
+        icon="🌿",
+        title="Commitments Matcher",
+        description=(
+            "Upload a supplier file and reference databases (RE100, SBTi, CDP) to fuzzy-match "
+            "suppliers against sustainability commitments. Review each match and export approved "
+            "results as a clean CSV."
+        ),
+        page_path="pages/2_Commitments_Matcher.py",
+        status="available",
     )
 
 with col3:
