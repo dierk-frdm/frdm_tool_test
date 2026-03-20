@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FRDM Internal Tools</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f8f9fa;
+      color: #1a1a2e;
+      min-height: 100vh;
+    }
+
+    /* ── Nav ── */
+    nav {
+      background: #fff;
+      border-bottom: 1px solid #e0e4ef;
+      padding: 0 2rem;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    nav .logo { font-size: 1.25rem; font-weight: 700; color: #1a1a2e; }
+    nav .badge {
+      font-size: 0.7rem; font-weight: 600; color: #1a73e8;
+      background: #e8f0fe; border-radius: 20px; padding: 2px 8px;
+    }
+
+    /* ── Main ── */
+    main { max-width: 1100px; margin: 0 auto; padding: 3rem 2rem; }
+
+    .hero { margin-bottom: 2.5rem; }
+    .hero h1 { font-size: 1.9rem; font-weight: 700; color: #1a1a2e; margin-bottom: 0.4rem; }
+    .hero p  { color: #555; font-size: 1rem; }
+
+    .section-title {
+      font-size: 1rem; font-weight: 600; color: #888;
+      text-transform: uppercase; letter-spacing: 0.06em;
+      margin-bottom: 1rem;
+    }
+
+    /* ── Tool grid ── */
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.25rem; }
+
+    .card {
+      background: #fff;
+      border: 1px solid #e0e4ef;
+      border-radius: 12px;
+      padding: 1.5rem;
+      transition: box-shadow 0.15s, border-color 0.15s;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+    .card.available:hover {
+      box-shadow: 0 4px 18px rgba(0,0,0,0.09);
+      border-color: #1a73e8;
+    }
+    .card.coming-soon { opacity: 0.6; }
+
+    .card-icon { font-size: 2rem; line-height: 1; }
+
+    .card-header { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+    .card-title  { font-size: 1rem; font-weight: 600; color: #1a1a2e; }
+
+    .status-badge {
+      font-size: 0.68rem; font-weight: 600; border-radius: 20px; padding: 2px 8px;
+    }
+    .status-available    { color: #1e7e34; background: #d4edda; }
+    .status-coming-soon  { color: #6c757d; background: #e9ecef; }
+
+    .card-desc { font-size: 0.875rem; color: #555; line-height: 1.55; flex: 1; }
+
+    .card-link {
+      display: inline-block; margin-top: 0.5rem;
+      font-size: 0.875rem; font-weight: 600;
+      color: #1a73e8; text-decoration: none;
+    }
+    .card-link:hover { text-decoration: underline; }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center; color: #aaa; font-size: 0.8rem;
+      padding: 2.5rem 1rem;
+      border-top: 1px solid #e8eaf0;
+      margin-top: 4rem;
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <span class="logo">🛡️ FRDM Tools</span>
+  <span class="badge">Internal</span>
+</nav>
+
+<main>
+  <div class="hero">
+    <h1>Internal Tools</h1>
+    <p>QA &amp; testing utilities for the FRDM platform.</p>
+  </div>
+
+  <p class="section-title">Available Tools</p>
+
+  <div class="grid">
+
+    <div class="card available">
+      <div class="card-icon">📊</div>
+      <div class="card-header">
+        <span class="card-title">Risk Score Analyzer</span>
+        <span class="status-badge status-available">Available</span>
+      </div>
+      <p class="card-desc">
+        Upload a supplier risk report CSV and automatically detect scoring discrepancies —
+        flagging suppliers where the overall risk level doesn't match their sub-scores.
+        Useful for weekly QA of the scoring algorithm.
+      </p>
+      <a class="card-link" href="analyzer.html">Open tool →</a>
+    </div>
+
+    <div class="card coming-soon">
+      <div class="card-icon">🔧</div>
+      <div class="card-header">
+        <span class="card-title">Tool 2</span>
+        <span class="status-badge status-coming-soon">Coming Soon</span>
+      </div>
+      <p class="card-desc">Next tool — description coming soon.</p>
+    </div>
+
+    <div class="card coming-soon">
+      <div class="card-icon">🔧</div>
+      <div class="card-header">
+        <span class="card-title">Tool 3</span>
+        <span class="status-badge status-coming-soon">Coming Soon</span>
+      </div>
+      <p class="card-desc">Next tool — description coming soon.</p>
+    </div>
+
+  </div>
+</main>
+
+<footer>FRDM Internal Tools &nbsp;·&nbsp; For internal QA use only</footer>
+
+</body>
+</html>

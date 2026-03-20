@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Risk Score Analyzer · FRDM Tools</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f8f9fa;
+      color: #1a1a2e;
+      min-height: 100vh;
+    }
+
+    /* ── Nav ── */
+    nav {
+      background: #fff;
+      border-bottom: 1px solid #e0e4ef;
+      padding: 0 2rem;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    nav a         { text-decoration: none; color: #555; font-size: 0.875rem; }
+    nav a:hover   { color: #1a73e8; }
+    nav .logo     { font-size: 1.1rem; font-weight: 700; color: #1a1a2e; text-decoration: none; }
+    nav .sep      { color: #ccc; }
+
+    /* ── Layout ── */
+    .layout { display: flex; min-height: calc(100vh - 56px); }
+
+    /* ── Sidebar ── */
+    aside {
+      width: 260px;
+      flex-shrink: 0;
+      background: #fff;
+      border-right: 1px solid #e0e4ef;
+      padding: 1.5rem 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+    aside h3   { font-size: 0.875rem; font-weight: 700; color: #1a1a2e; }
+    aside label { font-size: 0.82rem; color: #555; display: block; margin-bottom: 0.35rem; }
+    aside select {
+      width: 100%;
+      padding: 0.4rem 0.5rem;
+      border: 1px solid #d0d5e0;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      background: #fff;
+      color: #1a1a2e;
+      cursor: pointer;
+    }
+    aside .info-box {
+      background: #f0f4ff;
+      border-radius: 8px;
+      padding: 0.9rem;
+      font-size: 0.8rem;
+      color: #444;
+      line-height: 1.6;
+    }
+    aside .info-box strong { color: #1a1a2e; }
+    aside hr { border: none; border-top: 1px solid #e8eaf0; }
+    aside .caption { font-size: 0.75rem; color: #aaa; text-align: center; }
+
+    /* ── Main content ── */
+    main { flex: 1; padding: 2rem; overflow-x: auto; }
+
+    .page-title { font-size: 1.7rem; font-weight: 700; margin-bottom: 0.25rem; }
+    .page-sub   { color: #555; font-size: 0.925rem; margin-bottom: 1.75rem; }
+
+    /* ── Upload zone ── */
+    .upload-zone {
+      border: 2px dashed #c0c8e0;
+      border-radius: 12px;
+      padding: 2.5rem;
+      text-align: center;
+      background: #fff;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      margin-bottom: 1.75rem;
+    }
+    .upload-zone:hover, .upload-zone.drag-over {
+      border-color: #1a73e8;
+      background: #f0f4ff;
+    }
+    .upload-zone p     { color: #555; font-size: 0.9rem; margin-top: 0.5rem; }
+    .upload-zone small { color: #aaa; font-size: 0.78rem; }
+    .upload-btn {
+      display: inline-block;
+      margin-top: 0.85rem;
+      padding: 0.5rem 1.25rem;
+      background: #1a73e8;
+      color: #fff;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: background 0.15s;
+    }
+    .upload-btn:hover { background: #1558b0; }
+    #file-input { display: none; }
+
+    /* ── Section ── */
+    .section { margin-bottom: 2rem; }
+    .section-title {
+      font-size: 1.05rem; font-weight: 700;
+      color: #1a1a2e; margin-bottom: 1rem;
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+
+    /* ── Metrics row ── */
+    .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.75rem; }
+    .metric-card {
+      background: #fff; border: 1px solid #e0e4ef; border-radius: 10px;
+      padding: 1rem 1.25rem;
+    }
+    .metric-label { font-size: 0.78rem; color: #888; margin-bottom: 0.25rem; }
+    .metric-value { font-size: 1.65rem; font-weight: 700; color: #1a1a2e; line-height: 1; }
+    .metric-sub   { font-size: 0.78rem; color: #888; margin-top: 0.2rem; }
+    .metric-card.warn .metric-value { color: #e74c3c; }
+
+    /* ── Chart row ── */
+    .charts { display: grid; grid-template-columns: 2fr 1fr; gap: 1.25rem; margin-bottom: 1.75rem; }
+    .chart-card {
+      background: #fff; border: 1px solid #e0e4ef; border-radius: 10px;
+      padding: 1.25rem;
+    }
+    .chart-card h4 { font-size: 0.875rem; font-weight: 600; color: #555; margin-bottom: 0.85rem; }
+    .chart-wrap { position: relative; height: 220px; }
+
+    /* ── Filters ── */
+    .filters {
+      display: flex; align-items: center; gap: 1rem;
+      flex-wrap: wrap; margin-bottom: 1rem;
+    }
+    .filters label { font-size: 0.85rem; color: #555; }
+    .filter-btn {
+      padding: 0.3rem 0.8rem;
+      border: 1px solid #d0d5e0;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      background: #fff;
+      color: #555;
+      cursor: pointer;
+      transition: all 0.12s;
+    }
+    .filter-btn.active { background: #1a73e8; border-color: #1a73e8; color: #fff; }
+
+    /* ── Alert list ── */
+    .alert-list { display: flex; flex-direction: column; gap: 0.6rem; }
+
+    .alert-card {
+      background: #fff;
+      border: 1px solid #e0e4ef;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .alert-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.85rem 1.1rem;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.1s;
+    }
+    .alert-header:hover { background: #f8f9fa; }
+    .alert-icon   { font-size: 1rem; flex-shrink: 0; }
+    .alert-name   { font-weight: 600; font-size: 0.9rem; flex: 1; }
+    .alert-meta   { display: flex; align-items: center; gap: 0.5rem; }
+    .gap-badge {
+      font-size: 0.75rem; font-weight: 700;
+      padding: 2px 8px; border-radius: 12px;
+    }
+    .gap-high   { background: #f8d7da; color: #721c24; }
+    .gap-medium { background: #ffe5cc; color: #c45500; }
+    .gap-low    { background: #fff3cd; color: #856404; }
+    .chevron { color: #aaa; font-size: 0.75rem; transition: transform 0.2s; }
+    .chevron.open { transform: rotate(90deg); }
+
+    .alert-body { display: none; padding: 1rem 1.1rem 1.1rem; border-top: 1px solid #f0f0f0; }
+    .alert-body.open { display: block; }
+
+    .score-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+    .score-item label {
+      font-size: 0.75rem; color: #888; display: block; margin-bottom: 0.3rem;
+    }
+    .score-item .val {
+      font-size: 1.1rem; font-weight: 700;
+    }
+    .score-item .val.high  { color: #e74c3c; }
+    .score-item .val.low   { color: #28a745; }
+
+    .bar-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.6rem 1.5rem; margin-bottom: 1rem; }
+    .bar-row label { font-size: 0.75rem; color: #888; display: block; margin-bottom: 0.2rem; }
+    .bar-wrap {
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .bar-bg {
+      flex: 1; height: 7px; background: #eee; border-radius: 4px; overflow: hidden;
+    }
+    .bar-fill { height: 100%; border-radius: 4px; background: #5f6368; }
+    .bar-num  { font-size: 0.75rem; color: #555; min-width: 32px; }
+
+    .context-box {
+      background: #f0f4ff;
+      border-left: 3px solid #1a73e8;
+      border-radius: 4px;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8rem;
+      color: #444;
+      margin-bottom: 0.75rem;
+    }
+    .context-label { font-weight: 600; margin-bottom: 0.15rem; font-size: 0.75rem; color: #888; }
+
+    .details-toggle {
+      font-size: 0.8rem; color: #1a73e8;
+      background: none; border: none; cursor: pointer; padding: 0;
+      text-decoration: underline;
+    }
+    .extra-detail { margin-top: 0.6rem; font-size: 0.8rem; color: #555; display: none; }
+    .extra-detail.open { display: block; }
+    .extra-detail dl { display: grid; grid-template-columns: max-content 1fr; gap: 0.2rem 0.75rem; }
+    .extra-detail dt { color: #888; font-weight: 600; }
+    .extra-detail a  { color: #1a73e8; }
+
+    /* ── Risk badges ── */
+    .rb { font-size: 0.72rem; font-weight: 600; border-radius: 12px; padding: 2px 7px; }
+    .rb-low      { background: #d4edda; color: #155724; }
+    .rb-moderate { background: #fff3cd; color: #856404; }
+    .rb-elevated { background: #ffe5cc; color: #c45500; }
+    .rb-high     { background: #f8d7da; color: #721c24; }
+    .rb-unknown  { background: #eee;    color: #555; }
+
+    /* ── Empty / success states ── */
+    .state-box {
+      background: #fff; border: 1px solid #e0e4ef; border-radius: 10px;
+      padding: 2rem; text-align: center; color: #888;
+    }
+    .state-box.success { border-color: #c3e6cb; background: #f0fff4; color: #155724; }
+
+    /* ── Export ── */
+    .export-btn {
+      padding: 0.5rem 1.25rem;
+      background: #1a73e8; color: #fff;
+      border: none; border-radius: 6px;
+      font-size: 0.875rem; font-weight: 600;
+      cursor: pointer; transition: background 0.15s;
+    }
+    .export-btn:hover { background: #1558b0; }
+
+    hr { border: none; border-top: 1px solid #e8eaf0; margin: 1.75rem 0; }
+
+    /* ── Responsive ── */
+    @media (max-width: 800px) {
+      .layout   { flex-direction: column; }
+      aside     { width: 100%; border-right: none; border-bottom: 1px solid #e0e4ef; }
+      .metrics  { grid-template-columns: repeat(2, 1fr); }
+      .charts   { grid-template-columns: 1fr; }
+      .score-row{ grid-template-columns: repeat(2, 1fr); }
+      .bar-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav>
+  <a class="logo" href="index.html">🛡️ FRDM Tools</a>
+  <span class="sep">›</span>
+  <a href="#">Risk Score Analyzer</a>
+</nav>
+
+<div class="layout">
+
+  <!-- Sidebar -->
+  <aside>
+    <div>
+      <h3>Settings</h3>
+    </div>
+
+    <div>
+      <label for="threshold-select">Flag discrepancies at</label>
+      <select id="threshold-select">
+        <option value="0.20">Low (≥ 0.20)</option>
+        <option value="0.30" selected>Medium (≥ 0.30)</option>
+        <option value="0.40">High (≥ 0.40)</option>
+      </select>
+    </div>
+
+    <hr />
+
+    <div class="info-box">
+      <strong>How it works</strong><br /><br />
+      For each supplier the tool computes:<br /><br />
+      1. <strong>Topline score</strong> — <code>topline_risk_score</code> (0–1)<br /><br />
+      2. <strong>Composite sub-score</strong> — average of country, industry, purchase,
+      and trade-partner risk scores (0–1)<br /><br />
+      3. <strong>Gap</strong> = |topline − composite|<br /><br />
+      Rows where the gap exceeds the threshold are flagged.
+      Alerts and regulations are surfaced to help distinguish
+      legitimate discrepancies from algorithm errors.
+    </div>
+
+    <hr />
+    <p class="caption">FRDM Internal Tools · QA use only</p>
+  </aside>
+
+  <!-- Main -->
+  <main>
+    <h1 class="page-title">📊 Risk Score Analyzer</h1>
+    <p class="page-sub">
+      Upload a supplier risk report CSV to detect scoring discrepancies between
+      the overall risk level and its contributing sub-scores.
+    </p>
+
+    <!-- Upload -->
+    <div class="upload-zone" id="drop-zone">
+      <div style="font-size:2rem;">📂</div>
+      <p>Drag &amp; drop a CSV file here, or click to browse</p>
+      <small>Supplier risk report export from the FRDM platform</small>
+      <br />
+      <button class="upload-btn" onclick="document.getElementById('file-input').click()">
+        Choose file
+      </button>
+      <input type="file" id="file-input" accept=".csv" />
+    </div>
+
+    <!-- Results (hidden until file loaded) -->
+    <div id="results" style="display:none;">
+
+      <!-- Metrics -->
+      <div class="section">
+        <div class="section-title">Summary</div>
+        <div class="metrics">
+          <div class="metric-card">
+            <div class="metric-label">Total Suppliers</div>
+            <div class="metric-value" id="m-total">—</div>
+          </div>
+          <div class="metric-card warn">
+            <div class="metric-label">Flagged</div>
+            <div class="metric-value" id="m-flagged">—</div>
+            <div class="metric-sub"  id="m-flagged-pct"></div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Clean</div>
+            <div class="metric-value" id="m-clean">—</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Avg Gap</div>
+            <div class="metric-value" id="m-avg-gap">—</div>
+          </div>
+        </div>
+      </div>
+
+      <hr />
+
+      <!-- Charts -->
+      <div class="charts section">
+        <div class="chart-card">
+          <h4>Gap Distribution</h4>
+          <div class="chart-wrap"><canvas id="hist-chart"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <h4>Overall Risk Level Mix</h4>
+          <div class="chart-wrap"><canvas id="pie-chart"></canvas></div>
+        </div>
+      </div>
+
+      <hr />
+
+      <!-- Flagged list -->
+      <div class="section" id="flagged-section">
+        <div class="section-title">
+          Flagged Suppliers
+          <span id="flagged-count-badge"
+            style="font-size:0.8rem; font-weight:600; background:#f8d7da;
+              color:#721c24; border-radius:20px; padding:2px 9px;">0</span>
+        </div>
+
+        <div class="filters" id="direction-filters">
+          <span style="font-size:0.85rem; color:#555;">Filter:</span>
+        </div>
+
+        <div id="flagged-list" class="alert-list"></div>
+
+        <div id="no-flagged" class="state-box success" style="display:none;">
+          ✅ No discrepancies found at the current threshold.
+          All overall scores are consistent with sub-scores.
+        </div>
+      </div>
+
+      <hr />
+
+      <!-- Export -->
+      <div class="section">
+        <div class="section-title">Export</div>
+        <button class="export-btn" id="export-btn">⬇️ Download Flagged Suppliers CSV</button>
+      </div>
+
+    </div><!-- /results -->
+  </main>
+</div><!-- /layout -->
+
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// Constants
+// ─────────────────────────────────────────────────────────────────────────────
+const RISK_LABEL_MAP = {
+  low: 0.15, weak: 0.15, moderate: 0.40, elevated: 0.70, high: 0.90, critical: 1.00
+};
+
+const SUB_SCORE_COLS = [
+  'all_country_risk_score',
+  'all_industry_risk_score',
+  'purchase_risk',
+  'trade_partner_risk'
+];
+
+const SUB_SCORE_LABELS = {
+  all_country_risk_score:  'Country Risk',
+  all_industry_risk_score: 'Industry Risk',
+  purchase_risk:           'Purchase Risk',
+  trade_partner_risk:      'Trade Partner Risk'
+};
+
+const LEVEL_COLORS = {
+  Low: '#28a745', Weak: '#28a745', Moderate: '#ffc107',
+  Elevated: '#fd7e14', High: '#dc3545', Critical: '#6f0020', Unknown: '#adb5bd'
+};
+
+let allRows    = [];
+let flaggedRows = [];
+let histChart  = null;
+let pieChart   = null;
+let activeDirections = new Set();
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Scoring helpers
+// ─────────────────────────────────────────────────────────────────────────────
+function toNum(v) {
+  const n = parseFloat(v);
+  return isNaN(n) ? null : n;
+}
+
+function compositeSubScore(row) {
+  const vals = SUB_SCORE_COLS.map(c => toNum(row[c])).filter(v => v !== null);
+  if (!vals.length) return null;
+  return vals.reduce((a, b) => a + b, 0) / vals.length;
+}
+
+function enrichRow(row) {
+  const topline   = toNum(row['topline_risk_score']);
+  const composite = compositeSubScore(row);
+  const overallLabel = (row['Overall Risk Level'] || '').trim().toLowerCase();
+  const overallNum   = RISK_LABEL_MAP[overallLabel] ?? null;
+  const primary  = topline ?? overallNum;
+  const gap      = (primary !== null && composite !== null)
+                   ? Math.abs(primary - composite) : null;
+  const direction = gap === null ? 'Missing data'
+                  : primary > composite ? 'Overall higher than sub-scores'
+                  : primary < composite ? 'Overall lower than sub-scores'
+                  : 'No gap';
+  return { ...row, _topline: topline, _composite: composite, _gap: gap, _direction: direction };
+}
+
+function contextSummary(row) {
+  const parts = [];
+  const alerts = toNum(row['all_alerts_count']);
+  if (alerts && alerts > 0) parts.push(`${alerts} alert(s)`);
+  const pr = (row['Product Regulation'] || '').trim();
+  if (pr) parts.push(`Product regs: ${pr}`);
+  const ir = (row['Industry Regulation'] || '').trim();
+  if (ir) parts.push(`Industry regs: ${ir}`);
+  const docs = (row['Documents'] || '').trim();
+  if (docs && docs !== '0') parts.push(`Documents: ${docs}`);
+  return parts.length ? parts.join(' · ') : 'No additional context in report';
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Rendering
+// ─────────────────────────────────────────────────────────────────────────────
+function riskBadge(label) {
+  const key = (label || '').trim().toLowerCase();
+  const cls = { low:'rb-low', weak:'rb-low', moderate:'rb-moderate',
+                elevated:'rb-elevated', high:'rb-high' }[key] || 'rb-unknown';
+  const text = label ? label.charAt(0).toUpperCase() + label.slice(1).toLowerCase() : '—';
+  return `<span class="rb ${cls}">${text}</span>`;
+}
+
+function barHtml(value, color = '#5f6368') {
+  if (value === null) return '<span style="color:#aaa">—</span>';
+  const pct = Math.min(Math.max(value, 0), 1) * 100;
+  return `
+    <div class="bar-wrap">
+      <div class="bar-bg"><div class="bar-fill" style="width:${pct.toFixed(0)}%;background:${color};"></div></div>
+      <span class="bar-num">${value.toFixed(2)}</span>
+    </div>`;
+}
+
+function gapBadge(gap) {
+  if (gap === null) return '';
+  const cls = gap >= 0.40 ? 'gap-high' : gap >= 0.30 ? 'gap-medium' : 'gap-low';
+  return `<span class="gap-badge ${cls}">Gap ${gap.toFixed(3)}</span>`;
+}
+
+function renderFlagged(rows) {
+  const list = document.getElementById('flagged-list');
+  const empty = document.getElementById('no-flagged');
+
+  list.innerHTML = '';
+
+  const filtered = rows.filter(r => activeDirections.has(r._direction));
+
+  if (!filtered.length) {
+    list.style.display = 'none';
+    empty.style.display = '';
+    return;
+  }
+  list.style.display = '';
+  empty.style.display = 'none';
+
+  filtered.forEach((row, idx) => {
+    const name     = row['Supplier'] || row['name'] || 'Unknown Supplier';
+    const overall  = row['Overall Risk Level'] || '—';
+    const topline  = row._topline;
+    const comp     = row._composite;
+    const gap      = row._gap;
+    const dir      = row._direction;
+    const ctx      = contextSummary(row);
+    const dirColor = dir.includes('higher') ? '#e74c3c' : '#e67e22';
+    const portalUrl = (row['portal_in_url'] || '').trim();
+
+    const extraFields = ['countries','Country Risk Level','industries','Industry Risk Level',
+                         'products','Product Risk Level','Spend Level','tags']
+      .filter(k => row[k] && String(row[k]).trim() && String(row[k]).trim() !== 'nan')
+      .map(k => `<dt>${k}</dt><dd>${row[k]}</dd>`).join('');
+
+    const card = document.createElement('div');
+    card.className = 'alert-card';
+    card.innerHTML = `
+      <div class="alert-header" onclick="toggleCard(this)">
+        <span class="alert-icon">⚠️</span>
+        <span class="alert-name">${name}</span>
+        <div class="alert-meta">
+          ${riskBadge(overall)}
+          ${gapBadge(gap)}
+        </div>
+        <span class="chevron">▶</span>
+      </div>
+      <div class="alert-body">
+        <div class="score-row">
+          <div class="score-item">
+            <label>Topline Score</label>
+            ${topline !== null
+              ? `<div>${barHtml(topline, '#1a73e8')}</div>`
+              : '<div class="val">—</div>'}
+          </div>
+          <div class="score-item">
+            <label>Composite Sub-Score</label>
+            ${comp !== null
+              ? `<div>${barHtml(comp, '#34a853')}</div>`
+              : '<div class="val">—</div>'}
+          </div>
+          <div class="score-item">
+            <label>Gap</label>
+            <div class="val" style="color:${dirColor}">
+              ${gap !== null ? gap.toFixed(3) : '—'}
+            </div>
+            <div style="font-size:0.75rem; color:#888;">${dir}</div>
+          </div>
+        </div>
+
+        <div style="font-size:0.8rem; font-weight:600; color:#555; margin-bottom:0.5rem;">
+          Sub-Scores Breakdown
+        </div>
+        <div class="bar-grid">
+          ${SUB_SCORE_COLS.map(c => `
+            <div class="bar-row">
+              <label>${SUB_SCORE_LABELS[c]}</label>
+              ${barHtml(toNum(row[c]))}
+            </div>`).join('')}
+        </div>
+
+        <div class="context-label">Context (possible explanations)</div>
+        <div class="context-box">${ctx}</div>
+
+        ${(extraFields || portalUrl) ? `
+          <button class="details-toggle" onclick="toggleExtra(this)">Show full detail</button>
+          <div class="extra-detail">
+            ${extraFields ? `<dl>${extraFields}</dl>` : ''}
+            ${portalUrl ? `<div style="margin-top:0.5rem;"><a href="${portalUrl}" target="_blank" rel="noopener">Open in FRDM Portal ↗</a></div>` : ''}
+          </div>` : ''}
+      </div>`;
+    list.appendChild(card);
+  });
+}
+
+function toggleCard(header) {
+  const body    = header.nextElementSibling;
+  const chevron = header.querySelector('.chevron');
+  const open    = body.classList.toggle('open');
+  chevron.classList.toggle('open', open);
+}
+
+function toggleExtra(btn) {
+  const box = btn.nextElementSibling;
+  const open = box.classList.toggle('open');
+  btn.textContent = open ? 'Hide detail' : 'Show full detail';
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Charts
+// ─────────────────────────────────────────────────────────────────────────────
+function buildHistogram(rows, threshold) {
+  const gaps = rows.map(r => r._gap).filter(v => v !== null);
+  const bins = 20;
+  const max  = Math.max(...gaps, threshold + 0.1);
+  const step = max / bins;
+  const counts = new Array(bins).fill(0);
+  const labels = [];
+  for (let i = 0; i < bins; i++) labels.push((i * step).toFixed(2));
+  gaps.forEach(g => {
+    const idx = Math.min(Math.floor(g / step), bins - 1);
+    counts[idx]++;
+  });
+
+  const thresholdIdx = threshold / step;
+
+  if (histChart) histChart.destroy();
+  const ctx = document.getElementById('hist-chart').getContext('2d');
+  histChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Suppliers',
+        data: counts,
+        backgroundColor: labels.map((_, i) => (i * step >= threshold) ? '#e74c3c88' : '#1a73e888'),
+        borderColor:     labels.map((_, i) => (i * step >= threshold) ? '#e74c3c'   : '#1a73e8'),
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        annotation: {}
+      },
+      scales: {
+        x: { title: { display: true, text: 'Gap |Topline − Composite|', font: { size: 11 } } },
+        y: { title: { display: true, text: 'Suppliers', font: { size: 11 } }, ticks: { stepSize: 1 } }
+      }
+    }
+  });
+}
+
+function buildPie(rows) {
+  const counts = {};
+  rows.forEach(r => {
+    const lbl = ((r['Overall Risk Level'] || 'Unknown').trim());
+    const key  = lbl.charAt(0).toUpperCase() + lbl.slice(1).toLowerCase() || 'Unknown';
+    counts[key] = (counts[key] || 0) + 1;
+  });
+  const labels = Object.keys(counts);
+  const data   = labels.map(l => counts[l]);
+  const colors = labels.map(l => LEVEL_COLORS[l] || '#adb5bd');
+
+  if (pieChart) pieChart.destroy();
+  const ctx = document.getElementById('pie-chart').getContext('2d');
+  pieChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 2 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 } } } }
+    }
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Direction filters
+// ─────────────────────────────────────────────────────────────────────────────
+function buildFilters(rows) {
+  const dirs = [...new Set(rows.map(r => r._direction))];
+  activeDirections = new Set(dirs);
+  const container = document.getElementById('direction-filters');
+  container.innerHTML = '<span style="font-size:0.85rem;color:#555;">Filter:</span>';
+  dirs.forEach(d => {
+    const btn = document.createElement('button');
+    btn.className = 'filter-btn active';
+    btn.textContent = d;
+    btn.onclick = () => {
+      if (activeDirections.has(d)) {
+        activeDirections.delete(d);
+        btn.classList.remove('active');
+      } else {
+        activeDirections.add(d);
+        btn.classList.add('active');
+      }
+      renderFlagged(flaggedRows);
+    };
+    container.appendChild(btn);
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Main analysis
+// ─────────────────────────────────────────────────────────────────────────────
+function analyse(rows, threshold) {
+  allRows    = rows.map(enrichRow);
+  flaggedRows = allRows.filter(r => r._gap !== null && r._gap >= threshold)
+                       .sort((a, b) => b._gap - a._gap);
+
+  const total    = allRows.length;
+  const flagged  = flaggedRows.length;
+  const gaps     = allRows.map(r => r._gap).filter(v => v !== null);
+  const avgGap   = gaps.length ? gaps.reduce((a, b) => a + b, 0) / gaps.length : null;
+
+  document.getElementById('m-total').textContent   = total;
+  document.getElementById('m-flagged').textContent = flagged;
+  document.getElementById('m-flagged-pct').textContent =
+    total ? `${(flagged / total * 100).toFixed(1)}% of total` : '';
+  document.getElementById('m-clean').textContent   = total - flagged;
+  document.getElementById('m-avg-gap').textContent = avgGap !== null ? avgGap.toFixed(3) : '—';
+
+  document.getElementById('flagged-count-badge').textContent = flagged;
+
+  buildHistogram(allRows, threshold);
+  buildPie(allRows);
+  buildFilters(flaggedRows);
+  renderFlagged(flaggedRows);
+
+  document.getElementById('results').style.display = '';
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Export
+// ─────────────────────────────────────────────────────────────────────────────
+document.getElementById('export-btn').addEventListener('click', () => {
+  if (!flaggedRows.length) return;
+  const exportCols = ['Supplier', 'Overall Risk Level', '_topline', '_composite', '_gap', '_direction',
+    ...SUB_SCORE_COLS,
+    'all_alerts_count', 'Product Regulation', 'Industry Regulation',
+    'countries', 'industries', 'tags', 'portal_in_url'];
+
+  const keys = exportCols.filter(k => flaggedRows.some(r => r[k] !== undefined && r[k] !== null && r[k] !== ''));
+  const header = keys.join(',');
+  const rowsCsv = flaggedRows.map(r =>
+    keys.map(k => {
+      const v = r[k] ?? '';
+      return String(v).includes(',') ? `"${String(v).replace(/"/g, '""')}"` : v;
+    }).join(',')
+  );
+  const csv  = [header, ...rowsCsv].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = 'flagged_discrepancies.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// File input
+// ─────────────────────────────────────────────────────────────────────────────
+function handleFile(file) {
+  if (!file) return;
+  const threshold = parseFloat(document.getElementById('threshold-select').value);
+  Papa.parse(file, {
+    header: true,
+    skipEmptyLines: true,
+    complete: res => analyse(res.data, threshold),
+    error: err => alert('Could not parse CSV: ' + err.message)
+  });
+}
+
+document.getElementById('file-input').addEventListener('change', e => {
+  handleFile(e.target.files[0]);
+});
+
+// Threshold change re-runs analysis on existing data
+document.getElementById('threshold-select').addEventListener('change', () => {
+  if (!allRows.length) return;
+  const threshold = parseFloat(document.getElementById('threshold-select').value);
+  flaggedRows = allRows.filter(r => r._gap !== null && r._gap >= threshold)
+                       .sort((a, b) => b._gap - a._gap);
+  const total   = allRows.length;
+  const flagged = flaggedRows.length;
+  const gaps    = allRows.map(r => r._gap).filter(v => v !== null);
+  const avgGap  = gaps.length ? gaps.reduce((a, b) => a + b, 0) / gaps.length : null;
+
+  document.getElementById('m-flagged').textContent = flagged;
+  document.getElementById('m-flagged-pct').textContent =
+    total ? `${(flagged / total * 100).toFixed(1)}% of total` : '';
+  document.getElementById('m-clean').textContent = total - flagged;
+  document.getElementById('m-avg-gap').textContent = avgGap !== null ? avgGap.toFixed(3) : '—';
+  document.getElementById('flagged-count-badge').textContent = flagged;
+
+  buildHistogram(allRows, threshold);
+  buildFilters(flaggedRows);
+  renderFlagged(flaggedRows);
+});
+
+// Drag & drop
+const dropZone = document.getElementById('drop-zone');
+dropZone.addEventListener('dragover',  e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  handleFile(e.dataTransfer.files[0]);
+});
+</script>
+</body>
+</html>
