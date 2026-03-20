@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QBR Generator · FRDM Tools</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f8f9fa;
+      color: #1a1a2e;
+      min-height: 100vh;
+    }
+
+    /* ── Nav ── */
+    nav {
+      background: #fff;
+      border-bottom: 1px solid #e0e4ef;
+      padding: 0 2rem;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    nav a.logo { font-size: 1.25rem; font-weight: 700; color: #1a1a2e; text-decoration: none; }
+    nav .sep  { color: #ccc; }
+    nav .page { font-size: 0.95rem; color: #555; }
+
+    /* ── Setup UI ── */
+    .setup { max-width: 700px; margin: 3rem auto; padding: 0 2rem; }
+    .setup h1 { font-size: 1.75rem; font-weight: 700; margin-bottom: 0.3rem; }
+    .setup p  { color: #666; font-size: 0.95rem; margin-bottom: 2rem; }
+
+    .upload-zone {
+      border: 2px dashed #c8d0e0;
+      border-radius: 12px;
+      padding: 2.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      margin-bottom: 1.5rem;
+    }
+    .upload-zone:hover, .upload-zone.drag { border-color: #1a73e8; background: #f0f5ff; }
+    .upload-zone.loaded { border-color: #28a745; background: #f0fff4; }
+    .upload-zone .icon { font-size: 2.5rem; margin-bottom: 0.5rem; }
+    .upload-zone p { color: #666; font-size: 0.9rem; margin: 0; }
+    .upload-zone p strong { color: #1a1a2e; }
+    #file-input { display: none; }
+
+    .options { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+    .field label { display: block; font-size: 0.82rem; font-weight: 600; color: #555; margin-bottom: 0.35rem; }
+    .field input {
+      width: 100%; padding: 0.6rem 0.8rem;
+      border: 1.5px solid #d1d5e0; border-radius: 8px;
+      font-size: 0.95rem; color: #1a1a2e;
+      outline: none; transition: border-color 0.15s;
+    }
+    .field input:focus { border-color: #1a73e8; }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.7rem 1.5rem; border-radius: 8px; border: none;
+      font-size: 0.95rem; font-weight: 600; cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn-primary { background: #1a73e8; color: #fff; }
+    .btn-primary:not(:disabled):hover { background: #1558b0; }
+    .btn-outline { background: #fff; color: #1a73e8; border: 1.5px solid #1a73e8; }
+    .btn-outline:hover { background: #f0f5ff; }
+
+    .btn-row { display: flex; gap: 0.75rem; align-items: center; }
+
+    /* ── Report ── */
+    #report { display: none; }
+
+    .report-actions {
+      max-width: 900px; margin: 1.5rem auto 0; padding: 0 2rem;
+      display: flex; gap: 0.75rem; align-items: center;
+    }
+
+    /* ── Slides ── */
+    .slides { max-width: 900px; margin: 1rem auto 3rem; padding: 0 2rem; display: flex; flex-direction: column; gap: 1.5rem; }
+
+    .slide {
+      border-radius: 12px; overflow: hidden;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.1);
+      background: #fff;
+      page-break-inside: avoid;
+    }
+
+    /* Cover slide */
+    .slide-cover {
+      background: #1a1a2e;
+      padding: 3.5rem 3rem;
+      min-height: 220px;
+      display: flex; flex-direction: column; justify-content: center;
+    }
+    .slide-cover .tag { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; color: #6b80d6; text-transform: uppercase; margin-bottom: 0.75rem; }
+    .slide-cover h1 { font-size: 2rem; font-weight: 700; color: #fff; margin-bottom: 0.4rem; }
+    .slide-cover .company { font-size: 1.2rem; color: #b0bcf0; margin-bottom: 0.75rem; }
+    .slide-cover .meta { font-size: 0.85rem; color: #666; }
+
+    /* Section header bar */
+    .slide-header {
+      background: #0f3c96;
+      padding: 0.75rem 1.5rem;
+    }
+    .slide-header h2 { font-size: 1.1rem; font-weight: 700; color: #fff; }
+
+    .slide-body { padding: 1.5rem; }
+
+    /* Stat boxes */
+    .stat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; margin-bottom: 1.5rem; }
+    .stat-box {
+      background: #16213e;
+      border-radius: 8px; padding: 0.9rem 1rem;
+      text-align: center;
+    }
+    .stat-box .val { font-size: 1.6rem; font-weight: 700; color: #fff; line-height: 1.1; }
+    .stat-box .lbl { font-size: 0.72rem; color: #888ea4; margin-top: 0.3rem; line-height: 1.3; }
+    .stat-box.accent { background: #0f3c96; }
+
+    /* Bar charts */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+    .chart-title { font-size: 0.85rem; font-weight: 700; color: #1a1a2e; margin-bottom: 0.75rem; }
+
+    .bar-row { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.4rem; font-size: 0.78rem; }
+    .bar-label { width: 140px; flex-shrink: 0; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .bar-track { flex: 1; background: #f0f2f8; border-radius: 3px; height: 10px; overflow: hidden; }
+    .bar-fill  { height: 10px; border-radius: 3px; }
+    .bar-count { width: 30px; text-align: right; color: #888; flex-shrink: 0; }
+
+    /* Supplier rows */
+    .supplier-row {
+      display: flex; align-items: center; gap: 0.75rem;
+      background: #f4f6fb; border-radius: 6px;
+      padding: 0.5rem 0.75rem; margin-bottom: 0.4rem;
+      font-size: 0.82rem;
+    }
+    .supplier-name { flex: 1; color: #1a1a2e; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .risk-chip {
+      font-size: 0.7rem; font-weight: 700; color: #fff;
+      padding: 2px 8px; border-radius: 20px; flex-shrink: 0;
+    }
+    .sub-text { font-size: 0.75rem; color: #888; flex-shrink: 0; }
+
+    /* Bullets */
+    .bullet-list { list-style: none; padding: 0; }
+    .bullet-list li {
+      padding: 0.35rem 0 0.35rem 1.2rem;
+      position: relative; font-size: 0.88rem; color: #333; border-bottom: 1px solid #f0f2f8;
+    }
+    .bullet-list li::before { content: "•"; position: absolute; left: 0; color: #1a73e8; }
+    .bullet-list li:last-child { border-bottom: none; }
+
+    /* Footer note */
+    .slide-footer { font-size: 0.75rem; color: #aaa; text-align: center; padding: 0.75rem 1.5rem; border-top: 1px solid #f0f2f8; }
+
+    /* Print */
+    @media print {
+      body { background: #fff; }
+      nav, .setup, .report-actions { display: none !important; }
+      #report { display: block !important; }
+      .slides { margin: 0; padding: 0; max-width: 100%; gap: 0; }
+      .slide { border-radius: 0; box-shadow: none; margin-bottom: 0; page-break-after: always; }
+      .slide:last-child { page-break-after: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="logo">🛡️ FRDM Tools</a>
+  <span class="sep">›</span>
+  <span class="page">QBR Generator</span>
+</nav>
+
+<!-- ── Setup ── -->
+<div class="setup" id="setup">
+  <h1>📋 QBR Generator</h1>
+  <p>Upload a FRDM supplier risk CSV to generate a printable Quarterly Business Review report.</p>
+
+  <div class="upload-zone" id="upload-zone">
+    <div class="icon">📂</div>
+    <p><strong>Click to upload</strong> or drag &amp; drop</p>
+    <p>Supplier risk report CSV from the FRDM platform</p>
+    <input type="file" id="file-input" accept=".csv" />
+  </div>
+
+  <div class="options">
+    <div class="field">
+      <label>Customer name <span style="color:#aaa;font-weight:400">(optional)</span></label>
+      <input type="text" id="company-name" placeholder="Leave blank to use Company ID from CSV" />
+    </div>
+    <div class="field">
+      <label>Quarter / period</label>
+      <input type="text" id="quarter" />
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-primary" id="generate-btn" disabled>Generate Report</button>
+    <span id="file-status" style="font-size:0.85rem;color:#666;"></span>
+  </div>
+</div>
+
+<!-- ── Report ── -->
+<div id="report">
+  <div class="report-actions">
+    <button class="btn btn-primary" onclick="window.print()">🖨 Print / Save as PDF</button>
+    <button class="btn btn-outline" onclick="resetTool()">← Upload new file</button>
+  </div>
+  <div class="slides" id="slides"></div>
+</div>
+
+<script>
+// ── Quarter default ──────────────────────────────────────────────────────────
+(function() {
+  const now = new Date();
+  const q = Math.ceil((now.getMonth() + 1) / 3);
+  document.getElementById('quarter').value = `Q${q} ${now.getFullYear()}`;
+})();
+
+// ── File upload ──────────────────────────────────────────────────────────────
+let parsedRows = null;
+
+const zone      = document.getElementById('upload-zone');
+const fileInput = document.getElementById('file-input');
+const genBtn    = document.getElementById('generate-btn');
+const fileStatus = document.getElementById('file-status');
+
+zone.addEventListener('click', () => fileInput.click());
+zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag'); });
+zone.addEventListener('dragleave', () => zone.classList.remove('drag'));
+zone.addEventListener('drop', e => { e.preventDefault(); zone.classList.remove('drag'); handleFile(e.dataTransfer.files[0]); });
+fileInput.addEventListener('change', () => handleFile(fileInput.files[0]));
+
+function handleFile(file) {
+  if (!file) return;
+  Papa.parse(file, {
+    header: true, skipEmptyLines: true,
+    complete(result) {
+      parsedRows = result.data;
+      zone.classList.add('loaded');
+      zone.querySelector('.icon').textContent = '✅';
+      zone.querySelector('p').innerHTML = `<strong>${file.name}</strong>`;
+      zone.querySelectorAll('p')[1].textContent = `${parsedRows.length.toLocaleString()} rows loaded`;
+      genBtn.disabled = false;
+      fileStatus.textContent = '';
+    },
+    error() { fileStatus.textContent = 'Could not parse file.'; }
+  });
+}
+
+document.getElementById('generate-btn').addEventListener('click', () => {
+  if (!parsedRows) return;
+  const companyInput = document.getElementById('company-name').value.trim();
+  const quarter = document.getElementById('quarter').value.trim() || 'QBR';
+  const companyId = (parsedRows[0] && parsedRows[0]['id']) ? parsedRows[0]['id'] : 'Unknown';
+  const displayName = companyInput || `Company ${companyId}`;
+  buildReport(parsedRows, displayName, quarter);
+});
+
+function resetTool() {
+  document.getElementById('report').style.display = 'none';
+  document.getElementById('setup').style.display = 'block';
+  parsedRows = null;
+  zone.classList.remove('loaded');
+  zone.querySelector('.icon').textContent = '📂';
+  zone.querySelector('p').innerHTML = '<strong>Click to upload</strong> or drag &amp; drop';
+  zone.querySelectorAll('p')[1].textContent = 'Supplier risk report CSV from the FRDM platform';
+  genBtn.disabled = true;
+  fileInput.value = '';
+}
+
+// ── Data helpers ─────────────────────────────────────────────────────────────
+function safeFloat(v) { const f = parseFloat(v); return isNaN(f) ? null : f; }
+
+function riskLabel(s) {
+  if (s === null) return 'N/A';
+  if (s < 0.2) return 'Low';
+  if (s < 0.4) return 'Low Moderate';
+  if (s < 0.6) return 'Moderate';
+  if (s < 0.8) return 'High';
+  return 'Elevated';
+}
+
+function transLabel(s) {
+  if (s === null) return 'N/A';
+  if (s < 0.2) return 'Very Low';
+  if (s < 0.4) return 'Low';
+  if (s < 0.6) return 'Moderate';
+  if (s < 0.8) return 'High';
+  return 'Very High';
+}
+
+const RISK_COLORS = {
+  'Low': '#28a745', 'Low Moderate': '#8bc34a',
+  'Moderate': '#ffa500', 'High': '#ff5722', 'Elevated': '#dc3545', 'N/A': '#888ea4'
+};
+const TRANS_LABELS = ['Very Low', 'Low', 'Moderate', 'High', 'Very High'];
+
+function parsePipe(v) {
+  if (!v || !v.trim()) return [];
+  return v.split('|').map(s => s.trim()).filter(Boolean);
+}
+
+function topN(obj, n) {
+  return Object.entries(obj).sort((a, b) => b[1] - a[1]).slice(0, n);
+}
+
+function computeStats(rows) {
+  let riskSum = 0, riskN = 0, transSum = 0, transN = 0;
+  let alertCount = 0, warnCount = 0, docCount = 0;
+  const riskDist = {}, transDist = {};
+  const warnings = {}, docs = {}, prodRegs = {}, indRegs = {}, countries = {};
+
+  for (const row of rows) {
+    const rs = safeFloat(row['topline_risk_score']);
+    const ts = safeFloat(row['transparency_score']);
+    if (rs !== null) { riskSum += rs; riskN++; }
+    if (ts !== null) { transSum += ts; transN++; }
+    if ((safeFloat(row['all_alerts_count']) || 0) > 0) alertCount++;
+    if (row['Warnings'] && row['Warnings'].trim()) warnCount++;
+    if (row['Documents'] && row['Documents'].trim()) docCount++;
+
+    const rl = riskLabel(rs); riskDist[rl] = (riskDist[rl] || 0) + 1;
+    const tl = transLabel(ts); transDist[tl] = (transDist[tl] || 0) + 1;
+
+    for (const w of parsePipe(row['Warnings']))             warnings[w]  = (warnings[w]  || 0) + 1;
+    for (const d of parsePipe(row['Documents']))            docs[d]       = (docs[d]       || 0) + 1;
+    for (const p of parsePipe(row['Product Regulations']))  prodRegs[p]   = (prodRegs[p]   || 0) + 1;
+    for (const i of parsePipe(row['Industry Regulations'])) indRegs[i]    = (indRegs[i]    || 0) + 1;
+    for (const c of parsePipe(row['Countries']))            countries[c]  = (countries[c]  || 0) + 1;
+  }
+
+  const sortedByRisk = [...rows].sort((a, b) => (safeFloat(b['topline_risk_score']) || 0) - (safeFloat(a['topline_risk_score']) || 0));
+
+  return {
+    total: rows.length,
+    avgRisk:  riskN  > 0 ? riskSum  / riskN  : 0,
+    avgTrans: transN > 0 ? transSum / transN : 0,
+    riskDist, transDist,
+    alertCount, warnCount, docCount,
+    regCount: new Set([...Object.keys(prodRegs), ...Object.keys(indRegs)]).size,
+    topWarnings:  topN(warnings,  8),
+    topDocs:      topN(docs,      8),
+    topProdRegs:  topN(prodRegs,  9),
+    topIndRegs:   topN(indRegs,   9),
+    topCountries: topN(countries, 8),
+    topRisky:     sortedByRisk.slice(0, 7),
+    warnSuppliers: sortedByRisk.filter(r => r['Warnings'] && r['Warnings'].trim()).slice(0, 6),
+  };
+}
+
+// ── HTML builders ─────────────────────────────────────────────────────────────
+function h(tag, attrs, ...children) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (k === 'style' && typeof v === 'object') Object.assign(el.style, v);
+    else el.setAttribute(k, v);
+  }
+  for (const c of children) {
+    if (typeof c === 'string') el.insertAdjacentHTML('beforeend', c);
+    else if (c) el.appendChild(c);
+  }
+  return el;
+}
+
+function slide(headerTitle, bodyFn, footerText) {
+  const s = h('div', { class: 'slide' });
+  if (headerTitle) {
+    s.appendChild(h('div', { class: 'slide-header' }, `<h2>${headerTitle}</h2>`));
+  }
+  const body = h('div', { class: 'slide-body' });
+  bodyFn(body);
+  s.appendChild(body);
+  if (footerText) s.appendChild(h('div', { class: 'slide-footer' }, footerText));
+  return s;
+}
+
+function barChart(parent, title, entries, total, color) {
+  const wrap = h('div', {});
+  wrap.appendChild(h('div', { class: 'chart-title' }, title));
+  for (const [label, count] of entries) {
+    const pct = total > 0 ? (count / total) * 100 : 0;
+    const row = h('div', { class: 'bar-row' });
+    row.appendChild(h('div', { class: 'bar-label', title: label }, label));
+    const track = h('div', { class: 'bar-track' });
+    track.appendChild(h('div', { class: 'bar-fill', style: { width: pct + '%', background: color } }));
+    row.appendChild(track);
+    row.appendChild(h('div', { class: 'bar-count' }, String(count)));
+    wrap.appendChild(row);
+  }
+  parent.appendChild(wrap);
+}
+
+function statBox(label, value, accent, colorHex) {
+  const box = h('div', { class: accent ? 'stat-box accent' : 'stat-box' });
+  const val = h('div', { class: 'val' }, String(value));
+  if (colorHex) val.style.color = colorHex;
+  box.appendChild(val);
+  box.appendChild(h('div', { class: 'lbl' }, label));
+  return box;
+}
+
+// ── Slide builders ────────────────────────────────────────────────────────────
+function buildCover(company, quarter) {
+  const s = h('div', { class: 'slide slide-cover' });
+  s.appendChild(h('div', { class: 'tag' }, 'FRDM · Quarterly Business Review'));
+  s.appendChild(h('h1', {}, 'Quarterly Business Review'));
+  s.appendChild(h('div', { class: 'company' }, company));
+  s.appendChild(h('div', { class: 'meta' }, `${quarter} &nbsp;·&nbsp; Prepared by FRDM &nbsp;·&nbsp; Confidential`));
+  return s;
+}
+
+function buildExecSummary(stats) {
+  return slide('Executive Summary', body => {
+    const row = h('div', { class: 'stat-row' });
+    row.appendChild(statBox('Total Suppliers Monitored', stats.total.toLocaleString(), true));
+    row.appendChild(statBox('Avg Risk Score', stats.avgRisk.toFixed(2), false, RISK_COLORS[riskLabel(stats.avgRisk)]));
+    row.appendChild(statBox('Avg Transparency', stats.avgTrans.toFixed(2)));
+    row.appendChild(statBox('Suppliers w/ Alerts', stats.alertCount));
+    body.appendChild(row);
+
+    const cols = h('div', { class: 'two-col' });
+    const left = h('div', {}); const right = h('div', {});
+
+    barChart(left, 'Risk Distribution',
+      ['Low','Low Moderate','Moderate','High','Elevated'].map(l => [l, stats.riskDist[l] || 0]),
+      stats.total, '#1a73e8');
+
+    barChart(right, 'Transparency Distribution',
+      TRANS_LABELS.map(l => [l, stats.transDist[l] || 0]),
+      stats.total, '#0f3c96');
+
+    cols.appendChild(left); cols.appendChild(right);
+    body.appendChild(cols);
+  }, `Suppliers flagged with warnings: ${stats.warnCount}  ·  Suppliers with documents: ${stats.docCount}  ·  Unique regulations tracked: ${stats.regCount}`);
+}
+
+function buildRiskLandscape(stats) {
+  return slide('Supply Chain Risk Landscape', body => {
+    const cols = h('div', { class: 'two-col' });
+    const left = h('div', {}); const right = h('div', {});
+
+    barChart(left, 'Top Countries by Supplier Exposure', stats.topCountries, stats.total, '#1a73e8');
+
+    const rtitle = h('div', { class: 'chart-title' }, 'Highest Risk Suppliers');
+    right.appendChild(rtitle);
+    for (const row of stats.topRisky) {
+      const rs = safeFloat(row['topline_risk_score']);
+      const label = riskLabel(rs);
+      const name = (row['Supplier'] || 'Unknown').slice(0, 40);
+      const scoreStr = rs !== null ? rs.toFixed(2) : 'N/A';
+      const sr = h('div', { class: 'supplier-row' });
+      sr.appendChild(h('div', { class: 'supplier-name' }, name));
+      sr.appendChild(h('div', { class: 'sub-text' }, scoreStr));
+      sr.appendChild(h('div', { class: 'risk-chip', style: { background: RISK_COLORS[label] || '#888' } }, label));
+      right.appendChild(sr);
+    }
+
+    cols.appendChild(left); cols.appendChild(right);
+    body.appendChild(cols);
+  });
+}
+
+function buildWarnings(stats) {
+  return slide('Warnings & Trade Risk Signals', body => {
+    const row = h('div', { class: 'stat-row', style: { gridTemplateColumns: 'repeat(2,1fr)', marginBottom: '1.5rem' } });
+    const pct = stats.total > 0 ? Math.round(stats.warnCount / stats.total * 100) : 0;
+    row.appendChild(statBox('Suppliers with Warnings', stats.warnCount, false, stats.warnCount > 0 ? '#dc3545' : '#28a745'));
+    row.appendChild(statBox('% of Portfolio', pct + '%'));
+    body.appendChild(row);
+
+    const cols = h('div', { class: 'two-col' });
+    const left = h('div', {}); const right = h('div', {});
+
+    barChart(left, 'Most Common Warning Types', stats.topWarnings, stats.warnCount || 1, '#dc3545');
+
+    const rtitle = h('div', { class: 'chart-title' }, 'Spotlight: High-Risk Warning Suppliers');
+    right.appendChild(rtitle);
+    for (const row2 of stats.warnSuppliers) {
+      const name = (row2['Supplier'] || 'Unknown').slice(0, 36);
+      const warns = parsePipe(row2['Warnings']);
+      const sr = h('div', { class: 'supplier-row', style: { flexDirection: 'column', alignItems: 'flex-start' } });
+      sr.appendChild(h('div', { style: { fontWeight: '600', fontSize: '0.82rem' } }, name));
+      if (warns[0]) sr.appendChild(h('div', { style: { fontSize: '0.75rem', color: '#888', marginTop: '2px' } }, warns[0].slice(0, 50)));
+      right.appendChild(sr);
+    }
+
+    cols.appendChild(left); cols.appendChild(right);
+    body.appendChild(cols);
+  });
+}
+
+function buildRegulations(stats) {
+  return slide('Regulatory Exposure', body => {
+    const cols = h('div', { class: 'two-col' });
+    const left = h('div', {}); const right = h('div', {});
+    barChart(left,  'Industry Regulations', stats.topIndRegs,  stats.total, '#0f3c96');
+    barChart(right, 'Product Regulations',  stats.topProdRegs, stats.total, '#1a73e8');
+    cols.appendChild(left); cols.appendChild(right);
+    body.appendChild(cols);
+  }, 'Regulations are tracked across your supply chain by FRDM and updated as legislation changes.');
+}
+
+function buildDocuments(stats) {
+  return slide('Supplier Documents & Transparency', body => {
+    const row = h('div', { class: 'stat-row' });
+    row.appendChild(statBox('Suppliers with Documents', stats.docCount, true));
+    row.appendChild(statBox('Without Documents', stats.total - stats.docCount));
+    row.appendChild(statBox('Avg Transparency Score', stats.avgTrans.toFixed(2)));
+    row.appendChild(statBox('Transparency Level', transLabel(stats.avgTrans)));
+    body.appendChild(row);
+
+    const cols = h('div', { class: 'two-col' });
+    const left = h('div', {}); const right = h('div', {});
+    barChart(left, 'Documents on File', stats.topDocs, stats.docCount || 1, '#28a745');
+    barChart(right, 'Transparency Distribution',
+      TRANS_LABELS.map(l => [l, stats.transDist[l] || 0]),
+      stats.total, '#28a745');
+    cols.appendChild(left); cols.appendChild(right);
+    body.appendChild(cols);
+  }, 'Transparency scores reflect how much verifiable information exists about a supplier\'s human rights and labor practices.');
+}
+
+function buildFrdmValue(stats, company) {
+  const s = h('div', { class: 'slide', style: { background: '#1a1a2e' } });
+  const hdr = h('div', { class: 'slide-header', style: { background: '#0f3c96' } });
+  hdr.appendChild(h('h2', {}, `What FRDM Is Doing For You`));
+  s.appendChild(hdr);
+
+  const body = h('div', { class: 'slide-body' });
+
+  // Stat row on dark bg
+  const row = h('div', { class: 'stat-row' });
+  row.appendChild(statBox('Suppliers Continuously Monitored', stats.total.toLocaleString(), true));
+  row.appendChild(statBox('Regulations Tracked', stats.regCount));
+  row.appendChild(statBox('Active Risk Alerts', stats.alertCount));
+  row.appendChild(statBox('Trade & Compliance Warnings', stats.warnCount));
+  body.appendChild(row);
+
+  // Subtitle
+  const sub = h('div', { style: { fontSize: '0.9rem', fontWeight: '700', color: '#b0bcf0', margin: '1rem 0 0.5rem' } },
+    `FRDM's Ongoing Work for ${company}`);
+  body.appendChild(sub);
+
+  const topCountryNames = stats.topCountries.slice(0, 5).map(([c]) => c).join(', ');
+  const bullets = [
+    `Monitoring ${stats.total.toLocaleString()} suppliers across ${stats.topCountries.length} countries including ${topCountryNames}`,
+    `Tracking ${stats.regCount} unique regulatory requirements affecting ${company}'s supply chain`,
+    `Identified ${stats.warnCount} suppliers with active warnings including forced labor, trade restrictions, and tariff risks`,
+    `Flagged ${stats.alertCount} suppliers with live risk alerts requiring review`,
+    `Continuously updating risk scores as geopolitical events, sanctions, and regulations change`,
+    `Providing transparency scoring to drive supplier engagement and disclosure improvements`,
+  ];
+  const ul = h('ul', { class: 'bullet-list' });
+  for (const b of bullets) {
+    const li = h('li', { style: { color: '#dde4ff', borderBottomColor: '#2a2e4e' } }, b);
+    ul.appendChild(li);
+  }
+  body.appendChild(ul);
+  s.appendChild(body);
+  return s;
+}
+
+// ── Main report builder ───────────────────────────────────────────────────────
+function buildReport(rows, company, quarter) {
+  const stats = computeStats(rows);
+  const container = document.getElementById('slides');
+  container.innerHTML = '';
+
+  container.appendChild(buildCover(company, quarter));
+  container.appendChild(buildExecSummary(stats));
+  container.appendChild(buildRiskLandscape(stats));
+  container.appendChild(buildWarnings(stats));
+  container.appendChild(buildRegulations(stats));
+  container.appendChild(buildDocuments(stats));
+  container.appendChild(buildFrdmValue(stats, company));
+
+  document.getElementById('setup').style.display = 'none';
+  document.getElementById('report').style.display = 'block';
+  window.scrollTo(0, 0);
+}
+</script>
+
+</body>
+</html>
