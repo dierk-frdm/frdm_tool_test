@@ -89,11 +89,15 @@ with col2:
 
 with col3:
     tool_card(
-        icon="🔧",
-        title="Tool 3",
-        description="Next tool — description coming soon.",
-        page_path="pages/3_Tool_3.py",
-        status="coming_soon",
+        icon="📋",
+        title="QBR Generator",
+        description=(
+            "Upload a FRDM supplier risk CSV and generate a customer-ready PowerPoint "
+            "Quarterly Business Review deck — covering risk scores, warnings, regulations, "
+            "documents, and FRDM's value to the customer."
+        ),
+        page_path="pages/3_QBR_Generator.py",
+        status="available",
     )
 
 # ── Footer ────────────────────────────────────────────────────────────────────
