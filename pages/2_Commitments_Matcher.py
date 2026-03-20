@@ -292,11 +292,6 @@ def load_excel_or_csv(uploaded_file, sheet_name=None):
         return pd.read_csv(raw), None
     elif fname.endswith(".tsv"):
         return pd.read_csv(raw, sep="\t"), None
-    elif fname.endswith(".ods"):
-        xf = pd.ExcelFile(raw, engine="odf")
-        sname = sheet_name or xf.sheet_names[0]
-        raw.seek(0)
-        return pd.read_excel(raw, sheet_name=sname, engine="odf"), xf.sheet_names
     else:  # xlsx / xls
         xf = pd.ExcelFile(raw, engine="openpyxl")
         sname = sheet_name or xf.sheet_names[0]
@@ -374,9 +369,9 @@ st.markdown("### Step 1 — Upload Supplier File")
 
 supplier_file = st.file_uploader(
     "Supplier file",
-    type=["xlsx", "xls", "csv", "ods", "tsv"],
+    type=["xlsx", "xls", "csv", "tsv"],
     key="supplier_upload",
-    help="Supported formats: Excel (.xlsx/.xls), CSV, ODS, TSV",
+    help="Supported formats: Excel (.xlsx/.xls), CSV, TSV",
 )
 
 if supplier_file is not None:
@@ -392,10 +387,10 @@ if supplier_file is not None:
         st.session_state.review_idx = 0
 
         fname_lower = supplier_file.name.lower()
-        if fname_lower.endswith((".xlsx", ".xls", ".ods")):
+        if fname_lower.endswith((".xlsx", ".xls")):
             # Need sheet selection — defer loading
             raw = io.BytesIO(supplier_file.read())
-            engine = "odf" if fname_lower.endswith(".ods") else "openpyxl"
+            engine = "openpyxl"
             xf = pd.ExcelFile(raw, engine=engine)
             st.session_state["_supplier_sheets"] = xf.sheet_names
             st.session_state["_supplier_engine"] = engine
