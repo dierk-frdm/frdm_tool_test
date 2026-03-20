@@ -4,14 +4,28 @@ Commitments Matcher
 Upload a supplier file and reference databases (RE100, SBTi, CDP) to fuzzy-match
 suppliers against sustainability commitments. Review each match and export approved
 results as a CSV.
+
+Reference databases are auto-loaded from the data/ folder at the project root:
+    data/re100.xlsx
+    data/sbti.xlsx          (must have a sheet named "WebsiteData")
+    data/cdp_grades.csv
+
+Users can override any of these with a fresh upload at runtime.
 """
 
 import io
 import re
+from pathlib import Path
 
 import pandas as pd
 import streamlit as st
 from rapidfuzz import fuzz, process
+
+# ── Paths to bundled reference databases ──────────────────────────────────────
+_DATA_DIR = Path(__file__).resolve().parent.parent / "data"
+_RE100_PATH  = _DATA_DIR / "re100.xlsx"
+_SBTI_PATH   = _DATA_DIR / "sbti.xlsx"
+_CDP_PATH    = _DATA_DIR / "cdp_grades.csv"
 
 # ── Page config ───────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -43,6 +57,32 @@ OUTPUT_COLUMNS = [
 
 # ── Session state init ────────────────────────────────────────────────────────
 
+def _try_load_bundled_dbs():
+    """Load reference databases from data/ if they exist and haven't been loaded yet."""
+    if st.session_state.re100_df is None and _RE100_PATH.exists():
+        try:
+            st.session_state.re100_df = pd.read_excel(_RE100_PATH, engine="openpyxl")
+            st.session_state["_re100_source"] = "bundled"
+        except Exception:
+            pass
+
+    if st.session_state.sbti_df is None and _SBTI_PATH.exists():
+        try:
+            xf = pd.ExcelFile(_SBTI_PATH, engine="openpyxl")
+            sheet = "WebsiteData" if "WebsiteData" in xf.sheet_names else xf.sheet_names[0]
+            st.session_state.sbti_df = pd.read_excel(_SBTI_PATH, sheet_name=sheet, engine="openpyxl")
+            st.session_state["_sbti_source"] = "bundled"
+        except Exception:
+            pass
+
+    if st.session_state.cdp_df is None and _CDP_PATH.exists():
+        try:
+            st.session_state.cdp_df = pd.read_csv(_CDP_PATH)
+            st.session_state["_cdp_source"] = "bundled"
+        except Exception:
+            pass
+
+
 def _init_state():
     defaults = {
         "supplier_df": None,
@@ -56,18 +96,22 @@ def _init_state():
         "review_idx": 0,
         "matching_done": False,
         "columns_confirmed": False,
-        "dbs_loaded": False,
-        # last uploaded file names to detect re-uploads
+        # last uploaded file ids to detect re-uploads
         "_supplier_file_id": None,
         "_re100_file_id": None,
         "_sbti_file_id": None,
         "_cdp_file_id": None,
+        # track whether each db came from "bundled" or "uploaded"
+        "_re100_source": None,
+        "_sbti_source": None,
+        "_cdp_source": None,
     }
     for k, v in defaults.items():
         if k not in st.session_state:
             st.session_state[k] = v
 
 _init_state()
+_try_load_bundled_dbs()
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -262,10 +306,15 @@ with st.sidebar:
 
         1. Upload your supplier file
         2. Map the name & ID columns
-        3. Upload the reference databases
-        4. Run matching
-        5. Review each match — Approve ✅ or Deny ❌
-        6. Export approved commitments as CSV
+        3. Run matching
+        4. Review each match — Approve ✅ or Deny ❌
+        5. Export approved commitments as CSV
+
+        **Reference databases** are loaded automatically
+        from the `data/` folder in the repo:
+        - `data/re100.xlsx`
+        - `data/sbti.xlsx`
+        - `data/cdp_grades.csv`
 
         **Commitment types produced**
         - `RE100`
