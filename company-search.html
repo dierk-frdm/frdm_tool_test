@@ -313,7 +313,7 @@
     setStatus(`<span class="spinner"></span>Looking up <strong>${escHtml(company)}</strong>…`);
 
     try {
-      const res = await fetch("/api/company-search", {
+      const res = await fetch("https://frdmtooltest.dierk.workers.dev/api/company-search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ company }),
