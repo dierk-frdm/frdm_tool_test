@@ -1,16 +1,13 @@
 """
 Commitments Matcher
 -------------------
-Upload a supplier file and reference databases (RE100, SBTi, CDP) to fuzzy-match
-suppliers against sustainability commitments. Review each match and export approved
-results as a CSV.
+Upload a supplier file to fuzzy-match suppliers against bundled RE100, SBTi,
+and CDP reference databases. Review each match and export approved results as CSV.
 
-Reference databases are auto-loaded from the data/ folder at the project root:
-    data/re100.xlsx
-    data/sbti.xlsx          (must have a sheet named "WebsiteData")
-    data/cdp_grades.csv
-
-Users can override any of these with a fresh upload at runtime.
+Reference databases are loaded from the data/ folder at the project root:
+    data/re_100.xlsx
+    data/sbti_most_update.xlsx   (sheet: "WebsiteData")
+    data/cdp_grades_full.csv
 """
 
 import io
@@ -23,9 +20,9 @@ from rapidfuzz import fuzz, process
 
 # ── Paths to bundled reference databases ──────────────────────────────────────
 _DATA_DIR = Path(__file__).resolve().parent.parent / "data"
-_RE100_PATH  = _DATA_DIR / "re100.xlsx"
-_SBTI_PATH   = _DATA_DIR / "sbti.xlsx"
-_CDP_PATH    = _DATA_DIR / "cdp_grades.csv"
+_RE100_PATH = _DATA_DIR / "re_100.xlsx"
+_SBTI_PATH  = _DATA_DIR / "sbti_most_update.xlsx"
+_CDP_PATH   = _DATA_DIR / "cdp_grades_full.csv"
 
 # ── Page config ───────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -96,15 +93,8 @@ def _init_state():
         "review_idx": 0,
         "matching_done": False,
         "columns_confirmed": False,
-        # last uploaded file ids to detect re-uploads
+        # track supplier file id to detect re-uploads
         "_supplier_file_id": None,
-        "_re100_file_id": None,
-        "_sbti_file_id": None,
-        "_cdp_file_id": None,
-        # track whether each db came from "bundled" or "uploaded"
-        "_re100_source": None,
-        "_sbti_source": None,
-        "_cdp_source": None,
     }
     for k, v in defaults.items():
         if k not in st.session_state:
@@ -312,9 +302,9 @@ with st.sidebar:
 
         **Reference databases** are loaded automatically
         from the `data/` folder in the repo:
-        - `data/re100.xlsx`
-        - `data/sbti.xlsx`
-        - `data/cdp_grades.csv`
+        - `re_100.xlsx`
+        - `sbti_most_update.xlsx`
+        - `cdp_grades_full.csv`
 
         **Commitment types produced**
         - `RE100`
@@ -438,72 +428,24 @@ else:
 st.markdown("---")
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# STEP 2 — Upload reference databases
+# STEP 2 — Reference database status
 # ═══════════════════════════════════════════════════════════════════════════════
-st.markdown("### Step 2 — Upload Reference Databases")
+st.markdown("### Step 2 — Reference Databases")
 
 db_col1, db_col2, db_col3 = st.columns(3)
 
+def _db_status(label, df, path):
+    if df is not None:
+        st.success(f"**{label}** — {len(df):,} records")
+    else:
+        st.error(f"**{label}** — file not found: `{path.name}`")
+
 with db_col1:
-    re100_file = st.file_uploader(
-        "RE100 database (.xlsx)",
-        type=["xlsx", "xls"],
-        key="re100_upload",
-        help="Excel file with a 'Name' column, 'Target year', 'Joining year', 'Industry'.",
-    )
-    if re100_file:
-        fid = f"{re100_file.name}-{re100_file.size}"
-        if fid != st.session_state._re100_file_id:
-            st.session_state._re100_file_id = fid
-            try:
-                st.session_state.re100_df = pd.read_excel(io.BytesIO(re100_file.read()), engine="openpyxl")
-                st.session_state.dbs_loaded = False  # recheck below
-            except Exception as e:
-                st.error(f"Could not read RE100 file: {e}")
-        if st.session_state.re100_df is not None:
-            st.success(f"{len(st.session_state.re100_df):,} RE100 records loaded.")
-
+    _db_status("RE100", st.session_state.re100_df, _RE100_PATH)
 with db_col2:
-    sbti_file = st.file_uploader(
-        "SBTi database (.xlsx)",
-        type=["xlsx", "xls"],
-        key="sbti_upload",
-        help="Excel file with a 'WebsiteData' sheet containing 'company_name', 'target', etc.",
-    )
-    if sbti_file:
-        fid = f"{sbti_file.name}-{sbti_file.size}"
-        if fid != st.session_state._sbti_file_id:
-            st.session_state._sbti_file_id = fid
-            try:
-                raw = io.BytesIO(sbti_file.read())
-                xf = pd.ExcelFile(raw, engine="openpyxl")
-                sheet = "WebsiteData" if "WebsiteData" in xf.sheet_names else xf.sheet_names[0]
-                raw.seek(0)
-                st.session_state.sbti_df = pd.read_excel(raw, sheet_name=sheet, engine="openpyxl")
-                st.session_state.dbs_loaded = False
-            except Exception as e:
-                st.error(f"Could not read SBTi file: {e}")
-        if st.session_state.sbti_df is not None:
-            st.success(f"{len(st.session_state.sbti_df):,} SBTi records loaded.")
-
+    _db_status("SBTi", st.session_state.sbti_df, _SBTI_PATH)
 with db_col3:
-    cdp_file = st.file_uploader(
-        "CDP database (.csv)",
-        type=["csv"],
-        key="cdp_upload",
-        help="CSV file with 'Company Name' and 'Grade' columns.",
-    )
-    if cdp_file:
-        fid = f"{cdp_file.name}-{cdp_file.size}"
-        if fid != st.session_state._cdp_file_id:
-            st.session_state._cdp_file_id = fid
-            try:
-                st.session_state.cdp_df = pd.read_csv(io.BytesIO(cdp_file.read()))
-                st.session_state.dbs_loaded = False
-            except Exception as e:
-                st.error(f"Could not read CDP file: {e}")
-        if st.session_state.cdp_df is not None:
-            st.success(f"{len(st.session_state.cdp_df):,} CDP records loaded.")
+    _db_status("CDP", st.session_state.cdp_df, _CDP_PATH)
 
 all_dbs_ready = (
     st.session_state.re100_df is not None
