@@ -11,9 +11,11 @@ Reference databases are loaded from the data/ folder at the project root:
 """
 
 import io
+import json
 import re
 from pathlib import Path
 
+import anthropic
 import pandas as pd
 import streamlit as st
 from rapidfuzz import fuzz, process
@@ -93,6 +95,8 @@ def _init_state():
         "review_idx": 0,
         "matching_done": False,
         "columns_confirmed": False,
+        "ai_review_done": False,
+        "ai_review_results": [],   # list of {match, decision, reasoning}
         # track supplier file id to detect re-uploads
         "_supplier_file_id": None,
     }
@@ -233,6 +237,51 @@ def generate_matches_for_supplier(
             })
 
     return results
+
+
+def get_anthropic_client():
+    """Return an Anthropic client using the FRDM API key from Streamlit secrets."""
+    api_key = st.secrets.get("FRDM_ANTHROPIC_API_KEY")
+    if not api_key:
+        return None
+    return anthropic.Anthropic(api_key=api_key)
+
+
+def ai_review_match(client: anthropic.Anthropic, match: dict) -> dict:
+    """
+    Ask Claude whether a fuzzy name match is a genuine company match.
+    Returns {"decision": "approve"|"deny", "reasoning": str}.
+    """
+    meta = match["_meta"]
+    prompt = f"""You are verifying whether a fuzzy name match between a supplier and a sustainability database entry refers to the same company.
+
+Supplier name: {meta['supplier_name']}
+Matched name in {meta['source_db']} database: {meta['matched_name']}
+Fuzzy similarity score: {meta['score']}/100
+Commitment type: {match['commitment_type']}
+
+Is this a genuine match — do both names refer to the same company?
+
+Consider:
+- Common suffixes (Corp, Inc, Ltd, S.A., GmbH, plc, Co., etc.)
+- Abbreviations and short forms
+- Parent company vs. subsidiary names
+- Minor spelling differences
+
+Respond with valid JSON only, no other text:
+{{"decision": "approve" or "deny", "reasoning": "one sentence explanation"}}"""
+
+    response = client.messages.create(
+        model="claude-opus-4-6",
+        max_tokens=256,
+        messages=[{"role": "user", "content": prompt}],
+    )
+    text = next(b.text for b in response.content if b.type == "text")
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        # Fallback: if Claude didn't return clean JSON, approve conservatively
+        return {"decision": "approve", "reasoning": "Could not parse AI response — approved conservatively."}
 
 
 def load_excel_or_csv(uploaded_file, sheet_name=None):
@@ -523,88 +572,181 @@ if not st.session_state.matching_done:
     st.info("Run matching first (Step 3).")
 else:
     pending = st.session_state.pending_matches
-    idx = st.session_state.review_idx
-    approved = st.session_state.approved_matches
     n_pending = len(pending)
 
-    if idx >= n_pending:
-        # Review complete
-        n_approved = len(approved)
-        n_denied = n_pending - n_approved
-        st.success(
-            f"Review complete! **{n_approved}** approved, **{n_denied}** denied/skipped."
+    # ── Review mode picker ────────────────────────────────────────────────────
+    _ai_client = get_anthropic_client()
+    _ai_available = _ai_client is not None
+
+    if _ai_available:
+        review_mode = st.radio(
+            "Review mode",
+            ["Manual — review each match yourself",
+             "AI-assisted — let Claude verify matches, then inspect results"],
+            horizontal=True,
+            label_visibility="collapsed",
         )
+        ai_mode = review_mode.startswith("AI")
     else:
-        # Progress indicator
-        reviewed = idx
-        pct = int(reviewed / n_pending * 100) if n_pending else 100
-        st.progress(pct, text=f"Reviewed {reviewed} / {n_pending} matches")
+        st.caption("AI-assisted review unavailable — `FRDM_ANTHROPIC_API_KEY` not found in secrets.")
+        ai_mode = False
 
-        # Auto-approve panel
-        with st.expander("⚡ Auto-approve by score threshold", expanded=False):
-            auto_threshold = st.number_input(
-                "Auto-approve all remaining matches with score ≥",
-                min_value=50,
-                max_value=100,
-                value=95,
-                step=1,
-            )
-            if st.button("⚡ Apply Auto-Approve"):
-                auto_count = 0
-                i = st.session_state.review_idx
-                while i < len(pending):
-                    if pending[i]["_meta"]["score"] >= auto_threshold:
-                        st.session_state.approved_matches.append(pending[i])
-                        auto_count += 1
-                    i += 1
-                st.session_state.review_idx = len(pending)
-                st.toast(f"Auto-approved {auto_count} matches with score ≥ {auto_threshold}.")
-                st.rerun()
+    st.markdown("---")
 
-        st.markdown("---")
-
-        # Current match card
-        match = pending[idx]
-        meta = match["_meta"]
-        sc = meta["score"]
-
-        st.markdown(f"#### Match {idx + 1} / {n_pending}")
-
-        info_col, score_col = st.columns([3, 1])
-        with info_col:
+    # ══════════════════════════════════════════════════════════════════════════
+    # AI-ASSISTED REVIEW
+    # ══════════════════════════════════════════════════════════════════════════
+    if ai_mode:
+        if not st.session_state.ai_review_done:
             st.markdown(
-                f"**Your supplier:** `{meta['supplier_name']}`  \n"
-                f"**Matched to ({meta['source_db']}):** `{meta['matched_name']}`"
+                f"Claude will review each of the **{n_pending}** matches and decide whether "
+                "the fuzzy-matched names refer to the same company."
             )
-        with score_col:
-            color = score_color(sc)
-            st.markdown(
-                f"<div style='text-align:center; padding:0.5rem;'>"
-                f"<div style='font-size:0.75rem; color:#888;'>Fuzzy score</div>"
-                f"<div style='font-size:2rem; font-weight:700; color:{color};'>{sc}</div>"
-                f"</div>",
-                unsafe_allow_html=True,
+            if st.button("🤖 Run AI Review", type="primary"):
+                results = []
+                progress = st.progress(0, text="Starting AI review…")
+                for i, match in enumerate(pending):
+                    verdict = ai_review_match(_ai_client, match)
+                    results.append({
+                        "match": match,
+                        "decision": verdict.get("decision", "approve"),
+                        "reasoning": verdict.get("reasoning", ""),
+                    })
+                    pct = int((i + 1) / n_pending * 100)
+                    if (i + 1) % 5 == 0 or i == n_pending - 1:
+                        progress.progress(pct, text=f"Reviewed {i+1} / {n_pending}…")
+                progress.empty()
+                st.session_state.ai_review_results = results
+                st.session_state.ai_review_done = True
+                # Pre-populate approved list from AI decisions
+                st.session_state.approved_matches = [
+                    r["match"] for r in results if r["decision"] == "approve"
+                ]
+                st.rerun()
+        else:
+            results = st.session_state.ai_review_results
+            n_approved = sum(1 for r in results if r["decision"] == "approve")
+            n_denied = len(results) - n_approved
+
+            st.success(
+                f"AI review complete — **{n_approved}** approved, **{n_denied}** denied."
             )
 
-        # Commitment details table
-        display = {k: v for k, v in match.items() if k != "_meta"}
-        st.dataframe(pd.DataFrame([display]), use_container_width=True, hide_index=True)
+            # Results table
+            rows = []
+            for r in results:
+                meta = r["match"]["_meta"]
+                rows.append({
+                    "Supplier": meta["supplier_name"],
+                    "Matched name": meta["matched_name"],
+                    "DB": meta["source_db"],
+                    "Score": meta["score"],
+                    "Commitment": r["match"]["commitment_type"],
+                    "AI decision": "✅ Approve" if r["decision"] == "approve" else "❌ Deny",
+                    "Reasoning": r["reasoning"],
+                })
+            st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True, height=350)
 
-        # Action buttons
-        btn_col1, btn_col2, btn_col3, _ = st.columns([1, 1, 1, 3])
-        with btn_col1:
-            if st.button("✅ Approve", type="primary", use_container_width=True):
-                st.session_state.approved_matches.append(pending[idx])
-                st.session_state.review_idx += 1
+            # Allow human override: flip individual decisions
+            with st.expander("Override individual decisions", expanded=False):
+                st.caption("Toggle any match to flip the AI's decision.")
+                for i, r in enumerate(results):
+                    meta = r["match"]["_meta"]
+                    label = f"{meta['supplier_name']} → {meta['matched_name']} ({meta['source_db']})"
+                    current = r["decision"] == "approve"
+                    new_val = st.checkbox(label, value=current, key=f"ai_override_{i}")
+                    if new_val != current:
+                        st.session_state.ai_review_results[i]["decision"] = (
+                            "approve" if new_val else "deny"
+                        )
+                        st.session_state.approved_matches = [
+                            rv["match"]
+                            for rv in st.session_state.ai_review_results
+                            if rv["decision"] == "approve"
+                        ]
+
+            if st.button("🔄 Re-run AI Review"):
+                st.session_state.ai_review_done = False
+                st.session_state.ai_review_results = []
+                st.session_state.approved_matches = []
                 st.rerun()
-        with btn_col2:
-            if st.button("❌ Deny", use_container_width=True):
-                st.session_state.review_idx += 1
-                st.rerun()
-        with btn_col3:
-            if st.button("⏭ Skip", use_container_width=True):
-                st.session_state.review_idx += 1
-                st.rerun()
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # MANUAL REVIEW
+    # ══════════════════════════════════════════════════════════════════════════
+    else:
+        idx = st.session_state.review_idx
+        approved = st.session_state.approved_matches
+
+        if idx >= n_pending:
+            n_approved = len(approved)
+            n_denied = n_pending - n_approved
+            st.success(
+                f"Review complete! **{n_approved}** approved, **{n_denied}** denied/skipped."
+            )
+        else:
+            pct = int(idx / n_pending * 100) if n_pending else 100
+            st.progress(pct, text=f"Reviewed {idx} / {n_pending} matches")
+
+            # Auto-approve panel
+            with st.expander("⚡ Auto-approve by score threshold", expanded=False):
+                auto_threshold = st.number_input(
+                    "Auto-approve all remaining matches with score ≥",
+                    min_value=50, max_value=100, value=95, step=1,
+                )
+                if st.button("⚡ Apply Auto-Approve"):
+                    auto_count = 0
+                    i = st.session_state.review_idx
+                    while i < len(pending):
+                        if pending[i]["_meta"]["score"] >= auto_threshold:
+                            st.session_state.approved_matches.append(pending[i])
+                            auto_count += 1
+                        i += 1
+                    st.session_state.review_idx = len(pending)
+                    st.toast(f"Auto-approved {auto_count} matches with score ≥ {auto_threshold}.")
+                    st.rerun()
+
+            st.markdown("---")
+
+            match = pending[idx]
+            meta = match["_meta"]
+            sc = meta["score"]
+
+            st.markdown(f"#### Match {idx + 1} / {n_pending}")
+
+            info_col, score_col = st.columns([3, 1])
+            with info_col:
+                st.markdown(
+                    f"**Your supplier:** `{meta['supplier_name']}`  \n"
+                    f"**Matched to ({meta['source_db']}):** `{meta['matched_name']}`"
+                )
+            with score_col:
+                color = score_color(sc)
+                st.markdown(
+                    f"<div style='text-align:center; padding:0.5rem;'>"
+                    f"<div style='font-size:0.75rem; color:#888;'>Fuzzy score</div>"
+                    f"<div style='font-size:2rem; font-weight:700; color:{color};'>{sc}</div>"
+                    f"</div>",
+                    unsafe_allow_html=True,
+                )
+
+            display = {k: v for k, v in match.items() if k != "_meta"}
+            st.dataframe(pd.DataFrame([display]), use_container_width=True, hide_index=True)
+
+            btn_col1, btn_col2, btn_col3, _ = st.columns([1, 1, 1, 3])
+            with btn_col1:
+                if st.button("✅ Approve", type="primary", use_container_width=True):
+                    st.session_state.approved_matches.append(pending[idx])
+                    st.session_state.review_idx += 1
+                    st.rerun()
+            with btn_col2:
+                if st.button("❌ Deny", use_container_width=True):
+                    st.session_state.review_idx += 1
+                    st.rerun()
+            with btn_col3:
+                if st.button("⏭ Skip", use_container_width=True):
+                    st.session_state.review_idx += 1
+                    st.rerun()
 
 st.markdown("---")
 
@@ -614,7 +756,8 @@ st.markdown("---")
 st.markdown("### Step 5 — Export Approved Commitments")
 
 review_done = st.session_state.matching_done and (
-    st.session_state.review_idx >= len(st.session_state.pending_matches)
+    st.session_state.ai_review_done
+    or st.session_state.review_idx >= len(st.session_state.pending_matches)
 )
 
 if not review_done:
