@@ -2,7 +2,7 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
-    if (url.pathname === "/api/company-search" && request.method === "POST") {
+    if (url.pathname === "/api/company-search" && (request.method === "POST" || request.method === "OPTIONS")) {
       return handleCompanySearch(request, env);
     }
 
