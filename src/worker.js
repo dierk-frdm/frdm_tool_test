@@ -310,32 +310,34 @@ async function handleDocumentSearch(request, env) {
     ? documentTypes.map(t => `- ${t}`).join("\n")
     : "- Annual Sustainability Report\n- Modern Slavery Statement\n- Code of Conduct\n- GHG Inventory\n- Human Rights Policy";
 
-  const prompt = `You are a corporate sustainability document research assistant. For the company "${supplierName}", identify ESG, sustainability, certification, and compliance documents that this company is known to have published, based on your training data.
+  const prompt = `You are a corporate sustainability document research assistant. Use web search to find actual documents published by "${supplierName}" — sustainability reports, certifications, policies, and compliance documents.
 
-Known document types to match against:
+Search strategy:
+1. Search for "${supplierName} sustainability report" to find annual/ESG reports
+2. Search for "${supplierName} ISO 14001 certificate" and other certifications listed below
+3. Search for "${supplierName} modern slavery statement", "${supplierName} code of conduct", "${supplierName} human rights policy", and similar policy documents
+4. Search the company's official website sustainability or responsibility section for document links
+
+Document types to classify against (use the closest match, or "No Type Match"):
 ${typesList}
 
-Instructions:
-1. List documents you have reasonable confidence this company has published.
-2. Classify each document against one of the types listed above. Use the closest match.
-3. If a document does not match any listed type, set document_type to "No Type Match".
-4. Provide the URL where the document can be found if you know it with reasonable confidence; otherwise set document_url to null.
-5. Do NOT fabricate documents or URLs — only include what you have genuine confidence about from your training data.
-6. Include both documents that match the known types AND other relevant ESG/sustainability documents you know about.
-7. If the same document covers multiple types (e.g. a combined report), list it once under the most specific type.
+Rules:
+- Only include documents you actually found via web search with a real, working URL
+- The URL must point directly to the PDF or the specific page hosting the document — not just the company homepage
+- Do not fabricate or guess URLs
+- Include both documents matching the known types AND other relevant ESG/sustainability documents you find
+- If the same document covers multiple types, list it once under the most specific type
 
 Return ONLY valid JSON (no markdown, no extra text):
 {
   "documents": [
     {
       "document_type": "Type from the list above, or 'No Type Match'",
-      "document_name": "Full name or title of the document",
-      "document_url": "Direct URL to the document or its hosting page, or null if not known"
+      "document_name": "Full document title",
+      "document_url": "Direct URL to the PDF or the page hosting the document"
     }
   ]
-}
-
-If you don't know of any documents for this company, return { "documents": [] }.`;
+}`;
 
   let claudeResponse;
   try {
@@ -348,7 +350,8 @@ If you don't know of any documents for this company, return { "documents": [] }.
       },
       body: JSON.stringify({
         model: "claude-sonnet-4-6",
-        max_tokens: 2048,
+        max_tokens: 4096,
+        tools: [{ type: "web_search_20260209", name: "web_search" }],
         messages: [{ role: "user", content: prompt }],
       }),
     });
@@ -368,7 +371,13 @@ If you don't know of any documents for this company, return { "documents": [] }.
   }
 
   const claudeData = await claudeResponse.json();
-  const rawText = claudeData.content?.[0]?.text || "";
+
+  // With web search, content may have multiple blocks (tool_use, tool_result, text).
+  // Extract all text blocks and join them to find the JSON output.
+  const rawText = (claudeData.content || [])
+    .filter(block => block.type === "text")
+    .map(block => block.text)
+    .join("");
 
   let parsed;
   try {
