@@ -14,6 +14,18 @@ export default {
       return handleDocumentSearch(request, env);
     }
 
+    if (url.pathname === "/api/analyze-regulation-doc" && (request.method === "POST" || request.method === "OPTIONS")) {
+      return handleAnalyzeDoc(request, env);
+    }
+
+    if (url.pathname === "/api/github-read" && (request.method === "POST" || request.method === "OPTIONS")) {
+      return handleGithubRead(request, env);
+    }
+
+    if (url.pathname === "/api/github-write" && (request.method === "POST" || request.method === "OPTIONS")) {
+      return handleGithubWrite(request, env);
+    }
+
     return env.ASSETS.fetch(request);
   },
 };
@@ -443,4 +455,229 @@ Return ONLY valid JSON (no markdown, no extra text):
   }), {
     headers: { "Content-Type": "application/json", ...corsHeaders },
   });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ANALYZE REGULATION DOCUMENT
+// POST body: { filename, content_type, data }
+//   content_type: "application/pdf" → data is base64
+//   content_type: "text/plain"      → data is plain text
+// ─────────────────────────────────────────────────────────────────────────────
+async function handleAnalyzeDoc(request, env) {
+  const corsHeaders = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+  };
+  if (request.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+
+  let body;
+  try { body = await request.json(); }
+  catch { return new Response(JSON.stringify({ error: "Invalid JSON" }), { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }); }
+
+  const { filename = "document", content_type, data } = body;
+  if (!content_type || !data) {
+    return new Response(JSON.stringify({ error: "content_type and data are required" }), { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } });
+  }
+
+  const apiKey = env.FRDM_ANTHROPIC_API_KEY;
+  if (!apiKey) return new Response(JSON.stringify({ error: "API key not configured" }), { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } });
+
+  const RISK_TAXONOMY = "human_rights, environmental, health, planet, water, cyber, geopolitical, tariff, governance, operations, people, cbp, trade";
+
+  const instruction = `Analyze this regulation/standards document and extract key information for categorization in a supply chain risk platform.
+
+Return ONLY valid JSON with no markdown wrapper:
+{
+  "regulation_name": "Short official name of the regulation or standard",
+  "description": "2-3 sentences: what industries/activities it covers, what risks it addresses, why it matters for supply chains",
+  "link": "Official source URL if identifiable from the document, otherwise null",
+  "update_frequency": "Yearly | UNKNOWN | <other period if explicitly stated>",
+  "naics_suggestions": ["list of NAICS codes and prefixes most directly affected — use 2-digit for entire sectors, 4-digit for subsectors, 6-digit for specific industries"],
+  "risk_suggestions": ["one or more from: ${RISK_TAXONOMY}"],
+  "reasoning": "2-3 sentences explaining your NAICS code selections and risk type choices"
+}`;
+
+  let messageContent;
+  if (content_type === "application/pdf") {
+    messageContent = [
+      { type: "document", source: { type: "base64", media_type: "application/pdf", data } },
+      { type: "text", text: instruction },
+    ];
+  } else {
+    // text/plain — truncate if very long to avoid token limits
+    const truncated = String(data).slice(0, 80000);
+    messageContent = `Document filename: "${filename}"\n\n${truncated}\n\n---\n${instruction}`;
+  }
+
+  let claudeResp;
+  try {
+    claudeResp = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 2048,
+        messages: [{ role: "user", content: messageContent }],
+      }),
+    });
+  } catch (err) {
+    return new Response(JSON.stringify({ error: "Failed to reach Claude API", detail: String(err) }), { status: 502, headers: { "Content-Type": "application/json", ...corsHeaders } });
+  }
+
+  if (!claudeResp.ok) {
+    const errText = await claudeResp.text();
+    return new Response(JSON.stringify({ error: `Claude API error: ${claudeResp.status}`, detail: errText }), { status: 502, headers: { "Content-Type": "application/json", ...corsHeaders } });
+  }
+
+  const claudeData = await claudeResp.json();
+  const rawText = (claudeData.content || []).filter(b => b.type === "text").map(b => b.text).join("");
+
+  let parsed;
+  try { parsed = JSON.parse(rawText); }
+  catch {
+    const match = rawText.match(/\{[\s\S]*\}/);
+    if (match) try { parsed = JSON.parse(match[0]); } catch { /* fall through */ }
+  }
+
+  if (!parsed) {
+    return new Response(JSON.stringify({ error: "Failed to parse AI response", raw: rawText }), { status: 502, headers: { "Content-Type": "application/json", ...corsHeaders } });
+  }
+
+  return new Response(JSON.stringify(parsed), { headers: { "Content-Type": "application/json", ...corsHeaders } });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GITHUB READ — proxy read of a repo file via GitHub Contents API
+// POST body: { token, owner, repo, path, ref }
+// ─────────────────────────────────────────────────────────────────────────────
+async function handleGithubRead(request, env) {
+  const corsHeaders = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+  };
+  if (request.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+
+  let body;
+  try { body = await request.json(); }
+  catch { return new Response(JSON.stringify({ error: "Invalid JSON" }), { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }); }
+
+  const { token, owner, repo, path, ref = "main" } = body;
+  if (!token || !owner || !repo || !path) {
+    return new Response(JSON.stringify({ error: "token, owner, repo, and path are required" }), { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } });
+  }
+
+  const ghUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=${encodeURIComponent(ref)}`;
+  let ghResp;
+  try {
+    ghResp = await fetch(ghUrl, {
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+        "User-Agent": "FRDM-Tools/1.0",
+      },
+    });
+  } catch (err) {
+    return new Response(JSON.stringify({ error: "Failed to reach GitHub API", detail: String(err) }), { status: 502, headers: { "Content-Type": "application/json", ...corsHeaders } });
+  }
+
+  if (ghResp.status === 404) {
+    return new Response(JSON.stringify({ content: {}, sha: null, exists: false }), { headers: { "Content-Type": "application/json", ...corsHeaders } });
+  }
+
+  if (!ghResp.ok) {
+    const errText = await ghResp.text();
+    return new Response(JSON.stringify({ error: `GitHub API error: ${ghResp.status}`, detail: errText.slice(0, 300) }), { status: ghResp.status, headers: { "Content-Type": "application/json", ...corsHeaders } });
+  }
+
+  const ghData = await ghResp.json();
+  const rawBase64 = (ghData.content || "").replace(/\n/g, "");
+  let decoded;
+  try {
+    decoded = atob(rawBase64);
+  } catch {
+    return new Response(JSON.stringify({ error: "Failed to decode file content" }), { status: 502, headers: { "Content-Type": "application/json", ...corsHeaders } });
+  }
+
+  // Handle UTF-8 encoded content
+  let text;
+  try {
+    const bytes = Uint8Array.from(decoded, c => c.charCodeAt(0));
+    text = new TextDecoder("utf-8").decode(bytes);
+  } catch {
+    text = decoded;
+  }
+
+  let parsed;
+  try { parsed = JSON.parse(text); }
+  catch { parsed = {}; }
+
+  return new Response(JSON.stringify({ content: parsed, sha: ghData.sha, exists: true }), { headers: { "Content-Type": "application/json", ...corsHeaders } });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GITHUB WRITE — proxy create/update of a repo file via GitHub Contents API
+// POST body: { token, owner, repo, path, branch, content (object), sha, message }
+// ─────────────────────────────────────────────────────────────────────────────
+async function handleGithubWrite(request, env) {
+  const corsHeaders = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+  };
+  if (request.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+
+  let body;
+  try { body = await request.json(); }
+  catch { return new Response(JSON.stringify({ error: "Invalid JSON" }), { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }); }
+
+  const { token, owner, repo, path, branch = "main", content, sha, message = "Update regulation_configurations.json" } = body;
+  if (!token || !owner || !repo || !path || content === undefined) {
+    return new Response(JSON.stringify({ error: "token, owner, repo, path, and content are required" }), { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } });
+  }
+
+  // Encode content as base64 (UTF-8 safe)
+  const jsonStr = JSON.stringify(content, null, 2);
+  const encoder = new TextEncoder();
+  const bytes = encoder.encode(jsonStr);
+  const base64 = btoa(String.fromCharCode(...bytes));
+
+  const putBody = { message, content: base64, branch };
+  if (sha) putBody.sha = sha;
+
+  const ghUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+  let ghResp;
+  try {
+    ghResp = await fetch(ghUrl, {
+      method: "PUT",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+        "User-Agent": "FRDM-Tools/1.0",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(putBody),
+    });
+  } catch (err) {
+    return new Response(JSON.stringify({ error: "Failed to reach GitHub API", detail: String(err) }), { status: 502, headers: { "Content-Type": "application/json", ...corsHeaders } });
+  }
+
+  if (!ghResp.ok) {
+    const errText = await ghResp.text();
+    return new Response(JSON.stringify({ error: `GitHub API error: ${ghResp.status}`, detail: errText.slice(0, 300) }), { status: ghResp.status, headers: { "Content-Type": "application/json", ...corsHeaders } });
+  }
+
+  const ghData = await ghResp.json();
+  return new Response(JSON.stringify({
+    success: true,
+    commit_sha: ghData.commit?.sha,
+    file_sha: ghData.content?.sha,
+  }), { headers: { "Content-Type": "application/json", ...corsHeaders } });
 }
