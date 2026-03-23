@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Commitments Matcher · FRDM Tools</title>
+<!-- SheetJS for Excel parsing -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#f8f9fa;--panel:#fff;--panel2:#f1f3f7;
+  --accent:#1a73e8;--accent-dk:#1558b0;
+  --green:#28a745;--orange:#fd7e14;--red:#dc3545;--yellow:#ffc107;
+  --text:#1a1a2e;--muted:#555;--border:#e0e4ef;
+  --mono:"SFMono-Regular",Consolas,monospace;
+}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;min-height:100vh;}
+
+/* ── Nav ── */
+nav{background:#fff;border-bottom:1px solid var(--border);padding:0 2rem;height:56px;display:flex;align-items:center;gap:.75rem;}
+nav a.logo{font-size:1.1rem;font-weight:700;color:var(--text);text-decoration:none;}
+nav .sep{color:#ccc;}
+nav .page{font-size:.9rem;color:var(--muted);}
+nav a.back{margin-left:auto;font-size:.85rem;color:var(--accent);text-decoration:none;}
+nav a.back:hover{text-decoration:underline;}
+
+/* ── Layout ── */
+.container{max-width:960px;margin:0 auto;padding:2rem;}
+
+/* ── Step shell ── */
+.step{background:var(--panel);border:1px solid var(--border);border-radius:12px;margin-bottom:1.5rem;overflow:hidden;}
+.step-header{padding:1rem 1.5rem;background:var(--panel2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.75rem;}
+.step-num{width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;font-size:.8rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.step-num.done{background:var(--green);}
+.step-num.wait{background:#adb5bd;}
+.step-title{font-size:.95rem;font-weight:700;color:var(--text);}
+.step-body{padding:1.5rem;}
+
+/* ── Upload zone ── */
+.upload-zone{border:2px dashed var(--border);border-radius:10px;padding:2.5rem;text-align:center;cursor:pointer;transition:border-color .15s,background .15s;background:#fff;position:relative;}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--accent);background:#f0f5ff;}
+.upload-zone.loaded{border-color:var(--green);background:#f0fff4;}
+.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.upload-icon{font-size:2rem;margin-bottom:.5rem;}
+.upload-title{font-size:1rem;font-weight:600;margin-bottom:.25rem;}
+.upload-sub{font-size:.85rem;color:var(--muted);}
+
+/* ── Column mapping ── */
+.col-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1.25rem;}
+.field label{display:block;font-size:.78rem;font-weight:600;color:var(--muted);margin-bottom:.35rem;text-transform:uppercase;letter-spacing:.04em;}
+.field select,.field input[type=text]{width:100%;padding:.5rem .75rem;border:1.5px solid var(--border);border-radius:7px;font-size:.9rem;color:var(--text);background:#fff;outline:none;transition:border-color .15s;}
+.field select:focus,.field input[type=text]:focus{border-color:var(--accent);}
+
+/* ── Preview table ── */
+.preview-wrap{overflow-x:auto;margin-top:1rem;border:1px solid var(--border);border-radius:8px;max-height:220px;overflow-y:auto;}
+.preview-table{width:100%;border-collapse:collapse;font-size:.78rem;}
+.preview-table th{background:var(--panel2);color:var(--muted);font-weight:600;font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;padding:.45rem .7rem;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;position:sticky;top:0;}
+.preview-table td{padding:.4rem .7rem;border-bottom:1px solid var(--border);color:var(--text);white-space:nowrap;}
+.preview-table tr:last-child td{border-bottom:none;}
+.preview-table tr:hover td{background:var(--panel2);}
+
+/* ── Alert banner ── */
+.alert{padding:.65rem 1rem;border-radius:7px;font-size:.85rem;margin-top:.75rem;line-height:1.5;}
+.alert-info{background:#e8f0fe;color:#1558b0;border:1px solid #c5d8ff;}
+.alert-success{background:#d4edda;color:#155724;border:1px solid #c3e6cb;}
+.alert-warning{background:#fff3cd;color:#856404;border:1px solid #ffeeba;}
+.alert-danger{background:#f8d7da;color:#721c24;border:1px solid #f5c6cb;}
+
+/* ── Buttons ── */
+.btn{display:inline-flex;align-items:center;gap:.4rem;padding:.55rem 1.2rem;border:none;border-radius:7px;font-size:.875rem;font-weight:600;cursor:pointer;transition:opacity .15s,box-shadow .15s;}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-primary:not(:disabled):hover{background:var(--accent-dk);}
+.btn-success{background:var(--green);color:#fff;}
+.btn-success:not(:disabled):hover{opacity:.85;}
+.btn-danger{background:var(--red);color:#fff;}
+.btn-danger:not(:disabled):hover{opacity:.85;}
+.btn-outline{background:#fff;color:var(--accent);border:1.5px solid var(--accent);}
+.btn-outline:hover{background:#f0f5ff;}
+.btn-ghost{background:var(--panel2);color:var(--muted);border:1px solid var(--border);}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent);}
+.btn-row{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:1rem;}
+
+/* ── Progress bar ── */
+.progress-track{height:6px;background:var(--border);border-radius:3px;margin:.75rem 0;overflow:hidden;}
+.progress-fill{height:100%;background:var(--accent);border-radius:3px;transition:width .3s ease;width:0%;}
+
+/* ── Slider ── */
+.slider-row{display:flex;align-items:center;gap:.75rem;margin-top:.5rem;}
+.slider-row label{font-size:.82rem;color:var(--muted);white-space:nowrap;}
+.slider-row input[type=range]{flex:1;}
+.slider-val{font-size:.85rem;font-weight:700;color:var(--accent);min-width:30px;}
+
+/* ── Review card ── */
+.review-card{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:1.25rem;margin-top:1rem;}
+.review-meta{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-bottom:1rem;}
+.review-meta-item label{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);display:block;margin-bottom:.25rem;}
+.review-meta-item .val{font-size:.95rem;font-weight:600;color:var(--text);}
+.score-pill{display:inline-block;padding:.15rem .6rem;border-radius:20px;font-size:.8rem;font-weight:700;}
+.score-high{background:#d4edda;color:#155724;}
+.score-med{background:#fff3cd;color:#856404;}
+.score-low{background:#f8d7da;color:#721c24;}
+
+.commitment-detail{font-size:.82rem;background:#fff;border:1px solid var(--border);border-radius:7px;padding:.75rem 1rem;margin-bottom:.75rem;}
+.commitment-detail dt{color:var(--muted);font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-top:.4rem;}
+.commitment-detail dd{color:var(--text);margin-left:0;margin-top:.1rem;}
+.commitment-detail dl{display:grid;grid-template-columns:max-content 1fr;gap:.1rem .75rem;}
+
+.review-counter{font-size:.82rem;color:var(--muted);margin-bottom:.75rem;}
+.review-actions{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:.75rem;}
+
+/* ── Auto-approve row ── */
+.auto-approve-row{display:flex;align-items:center;gap:.75rem;padding:.75rem 1rem;background:#fff;border:1px solid var(--border);border-radius:8px;margin-top:.75rem;flex-wrap:wrap;}
+.auto-approve-row label{font-size:.82rem;color:var(--muted);}
+.auto-approve-row input[type=number]{width:70px;padding:.35rem .5rem;border:1.5px solid var(--border);border-radius:6px;font-size:.9rem;text-align:center;}
+
+/* ── Results summary ── */
+.results-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.25rem;}
+.result-stat{background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:.9rem 1rem;text-align:center;}
+.result-stat .val{font-size:1.8rem;font-weight:700;color:var(--text);}
+.result-stat .lbl{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:.2rem;}
+
+/* ── Output table ── */
+.output-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:8px;margin-top:.75rem;max-height:320px;overflow-y:auto;}
+.output-table{width:100%;border-collapse:collapse;font-size:.78rem;}
+.output-table th{background:var(--panel2);color:var(--muted);font-weight:600;font-size:.68rem;text-transform:uppercase;letter-spacing:.05em;padding:.45rem .7rem;border-bottom:1px solid var(--border);white-space:nowrap;position:sticky;top:0;}
+.output-table td{padding:.4rem .7rem;border-bottom:1px solid var(--border);}
+.output-table tr:last-child td{border-bottom:none;}
+
+/* ── DB status ── */
+.db-status-row{display:flex;gap:.75rem;flex-wrap:wrap;margin-top:.5rem;}
+.db-chip{display:flex;align-items:center;gap:.4rem;padding:.3rem .75rem;border-radius:20px;font-size:.78rem;font-weight:600;background:var(--panel2);border:1px solid var(--border);color:var(--muted);}
+.db-chip.ok{background:#d4edda;border-color:#c3e6cb;color:#155724;}
+.db-chip.err{background:#f8d7da;border-color:#f5c6cb;color:#721c24;}
+.db-chip.loading{background:#e8f0fe;border-color:#c5d8ff;color:#1558b0;}
+
+@media(max-width:640px){
+  .col-grid{grid-template-columns:1fr;}
+  .review-meta{grid-template-columns:1fr 1fr;}
+  .results-grid{grid-template-columns:1fr 1fr;}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="logo">🛡️ FRDM Tools</a>
+  <span class="sep">›</span>
+  <span class="page">Commitments Matcher</span>
+  <a href="index.html" class="back">← Back to Tools</a>
+</nav>
+
+<div class="container">
+
+  <!-- ════════════════ STEP 1: Reference Databases ════════════════ -->
+  <div class="step" id="step1">
+    <div class="step-header">
+      <div class="step-num" id="s1num">1</div>
+      <span class="step-title">Load Reference Databases</span>
+    </div>
+    <div class="step-body">
+      <p style="font-size:.875rem;color:var(--muted);margin-bottom:.75rem;">
+        Fetching RE100, SBTi, and CDP databases from the <code>data/</code> folder in this repo.
+      </p>
+      <div class="db-status-row">
+        <div class="db-chip loading" id="chip-re100">⏳ RE100</div>
+        <div class="db-chip loading" id="chip-sbti">⏳ SBTi</div>
+        <div class="db-chip loading" id="chip-cdp">⏳ CDP</div>
+      </div>
+      <div class="progress-track" style="margin-top:1rem;"><div class="progress-fill" id="db-progress"></div></div>
+      <div id="db-status" class="alert alert-info" style="margin-top:.5rem;">Loading reference databases…</div>
+    </div>
+  </div>
+
+  <!-- ════════════════ STEP 2: Upload Supplier File ════════════════ -->
+  <div class="step" id="step2">
+    <div class="step-header">
+      <div class="step-num wait" id="s2num">2</div>
+      <span class="step-title">Upload Supplier File</span>
+    </div>
+    <div class="step-body">
+      <div class="upload-zone" id="upload-zone">
+        <input type="file" id="file-input" accept=".csv,.xlsx,.xls"/>
+        <div class="upload-icon">📋</div>
+        <div class="upload-title">Drop your supplier CSV or Excel file here</div>
+        <div class="upload-sub">Required columns: a supplier name column + a business entity ID column</div>
+      </div>
+
+      <!-- Column mapping — hidden until file loaded -->
+      <div id="col-mapping" style="display:none;">
+        <div class="col-grid">
+          <div class="field">
+            <label>Supplier Name Column</label>
+            <select id="name-col"></select>
+          </div>
+          <div class="field">
+            <label>Business Entity ID Column</label>
+            <select id="id-col"></select>
+          </div>
+        </div>
+        <div class="preview-wrap"><table class="preview-table" id="preview-table"></table></div>
+        <div id="upload-status" class="alert alert-info" style="margin-top:.75rem;"></div>
+        <div class="btn-row">
+          <button class="btn btn-primary" id="confirm-cols-btn" onclick="confirmColumns()">✅ Confirm Columns & Continue</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════ STEP 3: Matching Settings + Run ════════════════ -->
+  <div class="step" id="step3">
+    <div class="step-header">
+      <div class="step-num wait" id="s3num">3</div>
+      <span class="step-title">Run Commitment Matching</span>
+    </div>
+    <div class="step-body">
+      <div class="slider-row">
+        <label>Fuzzy match threshold:</label>
+        <input type="range" id="threshold" min="50" max="100" value="80" step="5" oninput="document.getElementById('threshold-val').textContent=this.value"/>
+        <span class="slider-val" id="threshold-val">80</span>
+      </div>
+      <p style="font-size:.78rem;color:var(--muted);margin-top:.35rem;">Higher = stricter matching. 80 is a good default.</p>
+      <div class="progress-track" style="margin-top:1rem;"><div class="progress-fill" id="match-progress"></div></div>
+      <div id="match-status" class="alert alert-info" style="margin-top:.5rem;">Waiting for supplier file and reference databases…</div>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="run-btn" onclick="runMatching()" disabled>🚀 Run Matching</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════ STEP 4: Review ════════════════ -->
+  <div class="step" id="step4" style="display:none;">
+    <div class="step-header">
+      <div class="step-num wait" id="s4num">4</div>
+      <span class="step-title">Review Matches</span>
+    </div>
+    <div class="step-body">
+      <div id="review-container">
+        <div class="review-counter" id="review-counter">Match 0 / 0</div>
+
+        <div class="review-card" id="review-card">
+          <div class="review-meta">
+            <div class="review-meta-item">
+              <label>Your Supplier</label>
+              <div class="val" id="rv-supplier">—</div>
+            </div>
+            <div class="review-meta-item">
+              <label>Matched In</label>
+              <div class="val" id="rv-db">—</div>
+            </div>
+            <div class="review-meta-item">
+              <label>Matched Name</label>
+              <div class="val" id="rv-match">—</div>
+            </div>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.75rem;">
+            <span style="font-size:.82rem;color:var(--muted);">Fuzzy score:</span>
+            <span class="score-pill" id="rv-score">—</span>
+            <span style="font-size:.82rem;color:var(--muted);margin-left:.5rem;">Commitment type:</span>
+            <span style="font-weight:700;font-size:.85rem;" id="rv-ctype">—</span>
+          </div>
+
+          <div class="commitment-detail">
+            <dl id="rv-detail"></dl>
+          </div>
+
+          <div class="review-actions">
+            <button class="btn btn-success" onclick="approve()">✅ Approve</button>
+            <button class="btn btn-danger" onclick="deny()">❌ Deny</button>
+            <button class="btn btn-ghost" onclick="skip()">⏭ Skip</button>
+          </div>
+        </div>
+
+        <div class="auto-approve-row">
+          <label>Auto-approve all remaining with score ≥</label>
+          <input type="number" id="auto-threshold" value="95" min="50" max="100"/>
+          <button class="btn btn-outline" onclick="autoApprove()">⚡ Auto-Approve High Confidence</button>
+        </div>
+
+        <div id="step4-status" class="alert alert-info" style="margin-top:.75rem;">Review each match above.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════ STEP 5: Export ════════════════ -->
+  <div class="step" id="step5" style="display:none;">
+    <div class="step-header">
+      <div class="step-num wait" id="s5num">5</div>
+      <span class="step-title">Export Approved Commitments</span>
+    </div>
+    <div class="step-body">
+      <div class="results-grid" id="results-grid"></div>
+
+      <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem;flex-wrap:wrap;">
+        <label style="display:flex;align-items:center;gap:.4rem;font-size:.85rem;cursor:pointer;">
+          <input type="checkbox" id="include-name"/> Include supplier name in export
+        </label>
+      </div>
+
+      <div class="output-wrap"><table class="output-table" id="output-table"></table></div>
+
+      <div class="btn-row" style="margin-top:1rem;">
+        <button class="btn btn-success" onclick="exportCSV()">💾 Download CSV</button>
+        <button class="btn btn-ghost" onclick="startOver()">↺ Start Over</button>
+      </div>
+      <div id="export-status" class="alert alert-info" style="margin-top:.75rem;">Ready to export.</div>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════
+const S = {
+  re100: null,   // [{Name, 'Target year', 'Joining year', Industry}]
+  sbti: null,    // [{company_name, target, scope, base_year, target_year, target_wording}]
+  cdp: null,     // [{'Company Name', Grade}]
+  supplierDf: null,   // [{...raw row}]
+  nameCol: null,
+  idCol: null,
+  pending: [],      // [{commitment fields..., _meta:{}}]
+  approved: [],
+  reviewIdx: 0,
+  dbsReady: false,
+  colsConfirmed: false,
+};
+
+const VALID_CTYPES = [
+  'SBTI_NEAR_TERM','SBTI_NET_ZERO','SBTI_LONG_TERM',
+  'SBTI_LONG_TERM_PRE_CNZS','CDP_GRADE_2024','RE100',
+];
+
+// ═══════════════════════════════════════════════════════════════
+// UTILITIES
+// ═══════════════════════════════════════════════════════════════
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function normName(s){
+  if(s==null||s===undefined) return '';
+  return String(s).toUpperCase().trim().replace(/[,.]/g,'');
+}
+
+function extractYear(v){
+  if(v==null||v===''||v===undefined) return null;
+  const m = String(v).match(/(\d{4})/);
+  return m ? parseInt(m[1]) : null;
+}
+
+// Simple fuzzy ratio (character bigram overlap, similar to fuzz.ratio)
+function fuzzyRatio(a, b){
+  if(!a||!b) return 0;
+  a = normName(a); b = normName(b);
+  if(a===b) return 100;
+  if(a.length===0||b.length===0) return 0;
+  // Build bigrams
+  function bigrams(str){ const s=new Set(); for(let i=0;i<str.length-1;i++) s.add(str[i]+str[i+1]); return s; }
+  const ba=bigrams(a), bb=bigrams(b);
+  let intersection=0;
+  for(const bg of ba) if(bb.has(bg)) intersection++;
+  return Math.round(200*intersection/(ba.size+bb.size));
+}
+
+function bestMatch(supplierName, records, key, threshold){
+  const norm = normName(supplierName);
+  let best = null, bestScore = 0;
+  for(const rec of records){
+    const score = fuzzyRatio(norm, normName(rec[key]));
+    if(score > bestScore){ bestScore = score; best = rec; }
+  }
+  if(bestScore >= threshold) return { record: best, score: bestScore };
+  return null;
+}
+
+function setAlert(id, msg, type){
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.className = `alert alert-${type}`;
+}
+
+function setChip(id, text, state){
+  const el = document.getElementById(id);
+  el.textContent = text;
+  el.className = `db-chip ${state}`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// STEP 1 — LOAD REFERENCE DATABASES
+// ═══════════════════════════════════════════════════════════════
+async function fetchExcel(url, sheetName){
+  const resp = await fetch(url);
+  if(!resp.ok) throw new Error(`${resp.status} ${resp.statusText}`);
+  const buf = await resp.arrayBuffer();
+  const wb = XLSX.read(buf, {type:'array'});
+  const sn = sheetName || wb.SheetNames[0];
+  const ws = wb.Sheets[sn];
+  return XLSX.utils.sheet_to_json(ws, {defval:null});
+}
+
+async function fetchCSV(url){
+  const resp = await fetch(url);
+  if(!resp.ok) throw new Error(`${resp.status} ${resp.statusText}`);
+  const text = await resp.text();
+  const wb = XLSX.read(text, {type:'string'});
+  return XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {defval:null});
+}
+
+async function loadDatabases(){
+  let loaded = 0;
+  const total = 3;
+  const prog = document.getElementById('db-progress');
+
+  async function tryLoad(label, loader, chipId, onSuccess){
+    setChip(chipId, `⏳ ${label}`, 'loading');
+    try {
+      const data = await loader();
+      onSuccess(data);
+      loaded++;
+      prog.style.width = (loaded/total*100)+'%';
+      setChip(chipId, `✅ ${label} (${data.length.toLocaleString()})`, 'ok');
+    } catch(e){
+      setChip(chipId, `❌ ${label}`, 'err');
+      console.warn(`${label} failed:`, e.message);
+      loaded++;
+      prog.style.width = (loaded/total*100)+'%';
+    }
+  }
+
+  await tryLoad('RE100', () => fetchExcel('./data/re_100.xlsx'), 'chip-re100', d => S.re100 = d);
+  await tryLoad('SBTi',  () => fetchExcel('./data/sbti_corrected.xlsx', 'WebsiteData'), 'chip-sbti', d => S.sbti = d);
+  await tryLoad('CDP',   () => fetchCSV('./data/cdp_grades_full.csv'), 'chip-cdp', d => S.cdp = d);
+
+  const allOk = S.re100 && S.sbti && S.cdp;
+  const someOk = S.re100 || S.sbti || S.cdp;
+
+  if(allOk){
+    setAlert('db-status', `✅ All databases loaded. RE100: ${S.re100.length.toLocaleString()}, SBTi: ${S.sbti.length.toLocaleString()}, CDP: ${S.cdp.length.toLocaleString()}`, 'success');
+    document.getElementById('s1num').classList.add('done');
+    document.getElementById('s1num').textContent = '✓';
+  } else if(someOk){
+    setAlert('db-status', '⚠️ Some databases failed to load. Matching will proceed with available data.', 'warning');
+  } else {
+    setAlert('db-status', '❌ All databases failed. Check that the data/ folder exists in this repo.', 'danger');
+  }
+
+  S.dbsReady = someOk;
+  document.getElementById('s2num').classList.remove('wait');
+  checkRunReady();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// STEP 2 — UPLOAD SUPPLIER FILE
+// ═══════════════════════════════════════════════════════════════
+const zone = document.getElementById('upload-zone');
+const fileInput = document.getElementById('file-input');
+
+zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag'); });
+zone.addEventListener('dragleave', () => zone.classList.remove('drag'));
+zone.addEventListener('drop', e => { e.preventDefault(); zone.classList.remove('drag'); handleFile(e.dataTransfer.files[0]); });
+fileInput.addEventListener('change', () => handleFile(fileInput.files[0]));
+
+function handleFile(file){
+  if(!file) return;
+  const name = file.name.toLowerCase();
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      let rows;
+      if(name.endsWith('.csv')){
+        const wb = XLSX.read(e.target.result, {type:'string'});
+        rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {defval:''});
+      } else {
+        const wb = XLSX.read(e.target.result, {type:'array'});
+        rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {defval:''});
+      }
+      if(!rows.length){ setAlert('upload-status','❌ File appears empty.','danger'); return; }
+      S.supplierDf = rows;
+      showColumnMapping(rows, file.name);
+    } catch(err){
+      document.getElementById('col-mapping').style.display = 'block';
+      setAlert('upload-status', `❌ Could not read file: ${err.message}`, 'danger');
+    }
+  };
+  if(name.endsWith('.csv')) reader.readAsText(file);
+  else reader.readAsArrayBuffer(file);
+}
+
+function showColumnMapping(rows, filename){
+  const cols = Object.keys(rows[0]);
+  const nameEl = document.getElementById('name-col');
+  const idEl = document.getElementById('id-col');
+
+  nameEl.innerHTML = cols.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  idEl.innerHTML   = cols.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
+
+  // Auto-detect
+  const namePref = cols.find(c => /supplier.?name|name|company/i.test(c)) || cols[0];
+  const idPref   = cols.find(c => /business.?entity|entity.?id|entity_id|id/i.test(c)) || cols[1] || cols[0];
+  nameEl.value = namePref;
+  idEl.value   = idPref;
+
+  // Re-render preview when columns change
+  nameEl.addEventListener('change', () => renderPreview(rows));
+  idEl.addEventListener('change', () => renderPreview(rows));
+
+  renderPreview(rows);
+
+  zone.classList.add('loaded');
+  zone.querySelector('.upload-title').textContent = `✅ ${filename}`;
+  zone.querySelector('.upload-sub').textContent = `${rows.length.toLocaleString()} rows loaded`;
+
+  document.getElementById('col-mapping').style.display = 'block';
+  setAlert('upload-status', `Loaded ${rows.length.toLocaleString()} rows with ${cols.length} columns. Confirm the column mapping below.`, 'info');
+}
+
+function renderPreview(rows){
+  const nameCol = document.getElementById('name-col').value;
+  const idCol   = document.getElementById('id-col').value;
+  const showCols = [nameCol, idCol, ...Object.keys(rows[0]).filter(c => c !== nameCol && c !== idCol).slice(0,4)];
+  const preview = rows.slice(0, 8);
+  const thead = `<thead><tr>${showCols.map(c=>`<th>${esc(c)}</th>`).join('')}</tr></thead>`;
+  const tbody = `<tbody>${preview.map(r=>`<tr>${showCols.map(c=>`<td>${esc(r[c])}</td>`).join('')}</tr>`).join('')}</tbody>`;
+  document.getElementById('preview-table').innerHTML = thead + tbody;
+}
+
+function confirmColumns(){
+  S.nameCol = document.getElementById('name-col').value;
+  S.idCol   = document.getElementById('id-col').value;
+  S.colsConfirmed = true;
+  setAlert('upload-status', `✅ Using "${S.nameCol}" for supplier name, "${S.idCol}" for entity ID.`, 'success');
+  document.getElementById('s2num').classList.add('done');
+  document.getElementById('s2num').textContent = '✓';
+  checkRunReady();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// STEP 3 — RUN MATCHING
+// ═══════════════════════════════════════════════════════════════
+function checkRunReady(){
+  const ready = S.dbsReady && S.colsConfirmed;
+  document.getElementById('run-btn').disabled = !ready;
+  if(ready){
+    setAlert('match-status', 'Ready! Adjust the threshold if needed, then click Run Matching.', 'success');
+    document.getElementById('s3num').classList.remove('wait');
+  }
+}
+
+function classifySBTiLongTerm(records){
+  const types = new Set(records.map(r => String(r.target||'').trim()));
+  const hasNetZero = types.has('Net-zero') || types.has('Net-Zero');
+  return hasNetZero ? 'SBTI_LONG_TERM' : 'SBTI_LONG_TERM_PRE_CNZS';
+}
+
+function matchOneSupplier(supplierName, entityId, threshold){
+  const results = [];
+
+  // RE100
+  if(S.re100){
+    const hit = bestMatch(supplierName, S.re100, 'Name', threshold);
+    if(hit){
+      const row = hit.record;
+      results.push({
+        business_entity_id: entityId,
+        commitment_type: 'RE100',
+        commitment_status: 'Member',
+        target_year: extractYear(row['Target year']),
+        base_year: extractYear(row['Joining year']),
+        scope_coverage: null,
+        commitment_details: `Industry: ${row['Industry']||'N/A'}`,
+        _meta: { db:'RE100', supplier: supplierName, matched: row['Name'], score: hit.score },
+      });
+    }
+  }
+
+  // SBTi
+  if(S.sbti){
+    const hit = bestMatch(supplierName, S.sbti, 'company_name', threshold);
+    if(hit){
+      const matched = hit.record['company_name'];
+      const records = S.sbti.filter(r => r['company_name'] === matched);
+      const longTermType = classifySBTiLongTerm(records);
+      for(const row of records){
+        const tt = String(row['target']||'').trim();
+        let ctype;
+        if(tt === 'Near-term')               ctype = 'SBTI_NEAR_TERM';
+        else if(tt === 'Long-term')           ctype = longTermType;
+        else if(tt==='Net-zero'||tt==='Net-Zero') ctype = 'SBTI_NET_ZERO';
+        else continue;
+        results.push({
+          business_entity_id: entityId,
+          commitment_type: ctype,
+          commitment_status: 'Committed',
+          target_year: row['target_year'] ? parseInt(row['target_year']) : null,
+          base_year: row['base_year'] ? parseInt(row['base_year']) : null,
+          scope_coverage: row['scope'] || null,
+          commitment_details: row['target_wording'] ? String(row['target_wording']).slice(0,200) : null,
+          _meta: { db:'SBTi', supplier: supplierName, matched: matched, score: hit.score, sbtiType: tt },
+        });
+      }
+    }
+  }
+
+  // CDP
+  if(S.cdp){
+    const hit = bestMatch(supplierName, S.cdp, 'Company Name', threshold);
+    if(hit && hit.record['Grade']){
+      results.push({
+        business_entity_id: entityId,
+        commitment_type: 'CDP_GRADE_2024',
+        commitment_status: hit.record['Grade'],
+        target_year: null,
+        base_year: null,
+        scope_coverage: null,
+        commitment_details: null,
+        _meta: { db:'CDP', supplier: supplierName, matched: hit.record['Company Name'], score: hit.score },
+      });
+    }
+  }
+
+  return results;
+}
+
+async function runMatching(){
+  const threshold = parseInt(document.getElementById('threshold').value);
+  const rows = S.supplierDf;
+  const total = rows.length;
+  const prog = document.getElementById('match-progress');
+  S.pending = [];
+  S.approved = [];
+  S.reviewIdx = 0;
+
+  document.getElementById('run-btn').disabled = true;
+  setAlert('match-status', `⏳ Matching 0 / ${total.toLocaleString()}…`, 'warning');
+
+  // Use setTimeout batches to keep UI responsive
+  let i = 0;
+  function processBatch(){
+    const end = Math.min(i + 50, total);
+    while(i < end){
+      const row = rows[i];
+      const name = row[S.nameCol];
+      const id   = row[S.idCol];
+      if(name && String(name).trim()){
+        const matches = matchOneSupplier(String(name).trim(), id, threshold);
+        S.pending.push(...matches);
+      }
+      i++;
+    }
+    prog.style.width = (i/total*100)+'%';
+    if(i < total){
+      setAlert('match-status', `⏳ Matching ${i.toLocaleString()} / ${total.toLocaleString()} — ${S.pending.length} matches found…`, 'warning');
+      setTimeout(processBatch, 0);
+    } else {
+      document.getElementById('run-btn').disabled = false;
+      document.getElementById('s3num').classList.add('done');
+      document.getElementById('s3num').textContent = '✓';
+      if(S.pending.length === 0){
+        setAlert('match-status', '⚠️ No matches found. Try lowering the fuzzy match threshold.', 'warning');
+      } else {
+        setAlert('match-status', `✅ Done! Found ${S.pending.length.toLocaleString()} potential matches across ${total.toLocaleString()} suppliers.`, 'success');
+        showStep4();
+      }
+    }
+  }
+  processBatch();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// STEP 4 — REVIEW
+// ═══════════════════════════════════════════════════════════════
+function showStep4(){
+  document.getElementById('step4').style.display = '';
+  document.getElementById('s4num').classList.remove('wait');
+  renderReview();
+}
+
+function renderReview(){
+  const idx = S.reviewIdx;
+  const total = S.pending.length;
+  document.getElementById('review-counter').textContent = `Match ${Math.min(idx+1, total)} / ${total} — ${S.approved.length} approved so far`;
+
+  if(idx >= total){
+    // Done
+    document.getElementById('review-card').style.display = 'none';
+    document.querySelector('.auto-approve-row').style.display = 'none';
+    setAlert('step4-status', `✅ Review complete! ${S.approved.length} approved, ${total - S.approved.length} denied/skipped.`, 'success');
+    document.getElementById('s4num').classList.add('done');
+    document.getElementById('s4num').textContent = '✓';
+    showStep5();
+    return;
+  }
+
+  document.getElementById('review-card').style.display = '';
+  const match = S.pending[idx];
+  const meta  = match._meta;
+
+  document.getElementById('rv-supplier').textContent = meta.supplier;
+  document.getElementById('rv-db').textContent = meta.db;
+  document.getElementById('rv-match').textContent = meta.matched;
+  document.getElementById('rv-ctype').textContent = match.commitment_type;
+
+  const score = meta.score;
+  const scoreEl = document.getElementById('rv-score');
+  scoreEl.textContent = score;
+  scoreEl.className = `score-pill ${score>=95?'score-high':score>=80?'score-med':'score-low'}`;
+
+  // Detail fields
+  const fields = {
+    'Commitment Status': match.commitment_status,
+    'Target Year': match.target_year,
+    'Base Year': match.base_year,
+    'Scope Coverage': match.scope_coverage,
+    'Details': match.commitment_details,
+    ...(meta.sbtiType ? {'SBTi Target Type': meta.sbtiType} : {}),
+    'Business Entity ID': match.business_entity_id,
+  };
+  document.getElementById('rv-detail').innerHTML = Object.entries(fields)
+    .filter(([,v]) => v!==null && v!==undefined && v!=='')
+    .map(([k,v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('');
+}
+
+function approve(){ S.approved.push(S.pending[S.reviewIdx]); S.reviewIdx++; renderReview(); }
+function deny(){    S.reviewIdx++; renderReview(); }
+function skip(){    S.reviewIdx++; renderReview(); }
+
+function autoApprove(){
+  const minScore = parseInt(document.getElementById('auto-threshold').value);
+  let count = 0;
+  while(S.reviewIdx < S.pending.length){
+    const m = S.pending[S.reviewIdx];
+    if(m._meta.score >= minScore){ S.approved.push(m); count++; }
+    S.reviewIdx++;
+  }
+  setAlert('step4-status', `⚡ Auto-approved ${count} matches with score ≥ ${minScore}. Total approved: ${S.approved.length}.`, 'success');
+  renderReview();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// STEP 5 — EXPORT
+// ═══════════════════════════════════════════════════════════════
+function showStep5(){
+  document.getElementById('step5').style.display = '';
+  document.getElementById('s5num').classList.remove('wait');
+  renderOutputPreview();
+}
+
+function cleanRow(m, includeName){
+  const r = {
+    business_entity_id: m.business_entity_id,
+    ...(includeName ? {supplier_name: m._meta.supplier} : {}),
+    commitment_type: m.commitment_type,
+    commitment_status: m.commitment_status,
+    target_year: m.target_year,
+    base_year: m.base_year,
+    scope_coverage: m.scope_coverage,
+    commitment_details: m.commitment_details,
+  };
+  return r;
+}
+
+function renderOutputPreview(){
+  const approved = S.approved;
+  const includeName = document.getElementById('include-name').checked;
+
+  // Stats
+  const byDb = {};
+  const byCtype = {};
+  for(const m of approved){
+    byDb[m._meta.db] = (byDb[m._meta.db]||0)+1;
+    byCtype[m.commitment_type] = (byCtype[m.commitment_type]||0)+1;
+  }
+  document.getElementById('results-grid').innerHTML = `
+    <div class="result-stat"><div class="val">${approved.length}</div><div class="lbl">Approved Commitments</div></div>
+    <div class="result-stat"><div class="val">${S.pending.length - approved.length}</div><div class="lbl">Denied / Skipped</div></div>
+    <div class="result-stat"><div class="val">${Object.keys(byCtype).length}</div><div class="lbl">Commitment Types</div></div>
+  `;
+
+  if(!approved.length){
+    document.getElementById('output-table').innerHTML = '<tr><td style="padding:1rem;color:var(--muted);">No approved matches to export.</td></tr>';
+    return;
+  }
+
+  const sample = approved.slice(0,20);
+  const cols = Object.keys(cleanRow(sample[0], includeName));
+  const thead = `<thead><tr>${cols.map(c=>`<th>${esc(c)}</th>`).join('')}</tr></thead>`;
+  const tbody = `<tbody>${sample.map(m=>{
+    const r = cleanRow(m, includeName);
+    return `<tr>${cols.map(c=>`<td>${esc(r[c]??'')}</td>`).join('')}</tr>`;
+  }).join('')}${approved.length>20?`<tr><td colspan="${cols.length}" style="padding:.5rem .7rem;color:var(--muted);font-style:italic;">… and ${approved.length-20} more rows</td></tr>`:''}</tbody>`;
+  document.getElementById('output-table').innerHTML = thead+tbody;
+}
+
+document.getElementById('include-name').addEventListener('change', renderOutputPreview);
+
+function exportCSV(){
+  const approved = S.approved;
+  if(!approved.length){ setAlert('export-status','No approved matches to export.','warning'); return; }
+  const includeName = document.getElementById('include-name').checked;
+  const rows = approved.map(m => cleanRow(m, includeName))
+    .sort((a,b) => String(a.business_entity_id).localeCompare(String(b.business_entity_id)) || a.commitment_type.localeCompare(b.commitment_type));
+
+  const cols = Object.keys(rows[0]);
+  const csv = [cols.join(','), ...rows.map(r => cols.map(c => `"${String(r[c]??'').replace(/"/g,'""')}"`).join(','))].join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `commitments_output_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  setAlert('export-status', `✅ Downloaded ${rows.length.toLocaleString()} commitment rows.`, 'success');
+}
+
+function startOver(){
+  S.supplierDf = null; S.nameCol = null; S.idCol = null;
+  S.pending = []; S.approved = []; S.reviewIdx = 0;
+  S.colsConfirmed = false;
+  document.getElementById('file-input').value = '';
+  zone.classList.remove('loaded');
+  zone.querySelector('.upload-title').textContent = 'Drop your supplier CSV or Excel file here';
+  zone.querySelector('.upload-sub').textContent = 'Required columns: a supplier name column + a business entity ID column';
+  document.getElementById('col-mapping').style.display = 'none';
+  document.getElementById('step4').style.display = 'none';
+  document.getElementById('step5').style.display = 'none';
+  document.getElementById('s2num').classList.remove('done'); document.getElementById('s2num').textContent = '2';
+  document.getElementById('s3num').classList.remove('done'); document.getElementById('s3num').textContent = '3';
+  document.getElementById('s4num').classList.remove('wait'); document.getElementById('s4num').classList.remove('done'); document.getElementById('s4num').textContent = '4';
+  document.getElementById('s5num').classList.remove('wait'); document.getElementById('s5num').classList.remove('done'); document.getElementById('s5num').textContent = '5';
+  document.getElementById('run-btn').disabled = true;
+  document.getElementById('match-progress').style.width = '0%';
+  setAlert('match-status','Waiting for supplier file and reference databases…','info');
+  checkRunReady();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════
+loadDatabases();
+</script>
+</body>
+</html>
