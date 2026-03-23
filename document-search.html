@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Document Search · FRDM Tools</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#f8f9fa;--panel:#fff;--panel2:#f1f3f7;
+  --accent:#1a73e8;--accent-dk:#1558b0;
+  --green:#28a745;--orange:#fd7e14;--red:#dc3545;
+  --text:#1a1a2e;--muted:#555;--border:#e0e4ef;
+}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;min-height:100vh;}
+
+/* ── Nav ── */
+nav{background:#fff;border-bottom:1px solid var(--border);padding:0 2rem;height:56px;display:flex;align-items:center;gap:.75rem;}
+nav a.logo{font-size:1.1rem;font-weight:700;color:var(--text);text-decoration:none;}
+nav .sep{color:#ccc;}
+nav .page{font-size:.9rem;color:var(--muted);}
+nav a.back{margin-left:auto;font-size:.85rem;color:var(--accent);text-decoration:none;}
+nav a.back:hover{text-decoration:underline;}
+
+/* ── Layout ── */
+.container{max-width:960px;margin:0 auto;padding:2rem;}
+
+/* ── Step shell ── */
+.step{background:var(--panel);border:1px solid var(--border);border-radius:12px;margin-bottom:1.5rem;overflow:hidden;}
+.step-header{padding:1rem 1.5rem;background:var(--panel2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.75rem;}
+.step-num{width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;font-size:.8rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.step-num.done{background:var(--green);}
+.step-num.wait{background:#adb5bd;}
+.step-title{font-size:.95rem;font-weight:700;color:var(--text);}
+.step-body{padding:1.5rem;}
+
+/* ── Upload zone ── */
+.upload-zone{border:2px dashed var(--border);border-radius:10px;padding:2.5rem;text-align:center;cursor:pointer;transition:border-color .15s,background .15s;background:#fff;position:relative;}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--accent);background:#f0f5ff;}
+.upload-zone.loaded{border-color:var(--green);background:#f0fff4;}
+.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.upload-icon{font-size:2rem;margin-bottom:.5rem;}
+.upload-title{font-size:1rem;font-weight:600;margin-bottom:.25rem;}
+.upload-sub{font-size:.85rem;color:var(--muted);}
+
+/* ── Column mapping ── */
+.col-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1.25rem;}
+.field label{display:block;font-size:.78rem;font-weight:600;color:var(--muted);margin-bottom:.35rem;text-transform:uppercase;letter-spacing:.04em;}
+.field select{width:100%;padding:.5rem .75rem;border:1.5px solid var(--border);border-radius:7px;font-size:.9rem;color:var(--text);background:#fff;outline:none;transition:border-color .15s;}
+.field select:focus{border-color:var(--accent);}
+
+/* ── Preview table ── */
+.preview-wrap{overflow-x:auto;margin-top:1rem;border:1px solid var(--border);border-radius:8px;max-height:220px;overflow-y:auto;}
+.preview-table{width:100%;border-collapse:collapse;font-size:.78rem;}
+.preview-table th{background:var(--panel2);color:var(--muted);font-weight:600;font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;padding:.45rem .7rem;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;position:sticky;top:0;}
+.preview-table td{padding:.4rem .7rem;border-bottom:1px solid var(--border);color:var(--text);white-space:nowrap;}
+.preview-table tr:last-child td{border-bottom:none;}
+.preview-table tr:hover td{background:var(--panel2);}
+
+/* ── Alerts ── */
+.alert{padding:.65rem 1rem;border-radius:7px;font-size:.85rem;margin-top:.75rem;line-height:1.5;}
+.alert-info{background:#e8f0fe;color:#1558b0;border:1px solid #c5d8ff;}
+.alert-success{background:#d4edda;color:#155724;border:1px solid #c3e6cb;}
+.alert-warning{background:#fff3cd;color:#856404;border:1px solid #ffeeba;}
+.alert-danger{background:#f8d7da;color:#721c24;border:1px solid #f5c6cb;}
+
+/* ── Buttons ── */
+.btn{display:inline-flex;align-items:center;gap:.4rem;padding:.55rem 1.2rem;border:none;border-radius:7px;font-size:.875rem;font-weight:600;cursor:pointer;transition:opacity .15s;}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-primary:not(:disabled):hover{background:var(--accent-dk);}
+.btn-success{background:var(--green);color:#fff;}
+.btn-success:not(:disabled):hover{opacity:.85;}
+.btn-row{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:1rem;}
+
+/* ── Progress ── */
+.progress-track{height:6px;background:var(--border);border-radius:3px;margin:.75rem 0;overflow:hidden;}
+.progress-fill{height:100%;background:var(--accent);border-radius:3px;transition:width .3s ease;width:0%;}
+
+/* ── Status chip ── */
+.db-chip{display:inline-flex;align-items:center;gap:.4rem;padding:.3rem .75rem;border-radius:20px;font-size:.78rem;font-weight:600;background:var(--panel2);border:1px solid var(--border);color:var(--muted);}
+.db-chip.ok{background:#d4edda;border-color:#c3e6cb;color:#155724;}
+.db-chip.err{background:#f8d7da;border-color:#f5c6cb;color:#721c24;}
+.db-chip.loading{background:#e8f0fe;border-color:#c5d8ff;color:#1558b0;}
+
+/* ── Stats ── */
+.stats-row{display:flex;gap:1rem;margin:.75rem 0;flex-wrap:wrap;}
+.stat-box{background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:.6rem 1rem;text-align:center;min-width:110px;}
+.stat-box .val{font-size:1.5rem;font-weight:700;color:var(--text);}
+.stat-box .lbl{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:.1rem;}
+
+/* ── Results table ── */
+.results-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:8px;margin-top:.75rem;max-height:420px;overflow-y:auto;}
+.results-table{width:100%;border-collapse:collapse;font-size:.78rem;}
+.results-table th{background:var(--panel2);color:var(--muted);font-weight:600;font-size:.68rem;text-transform:uppercase;letter-spacing:.05em;padding:.45rem .7rem;border-bottom:1px solid var(--border);white-space:nowrap;position:sticky;top:0;}
+.results-table td{padding:.4rem .7rem;border-bottom:1px solid var(--border);vertical-align:top;}
+.results-table tr:last-child td{border-bottom:none;}
+.results-table tr:hover td{background:var(--panel2);}
+.results-table a{color:var(--accent);text-decoration:none;}
+.results-table a:hover{text-decoration:underline;}
+.type-badge{display:inline-block;padding:.1rem .5rem;border-radius:20px;font-size:.7rem;font-weight:600;background:#e8f0fe;color:#1558b0;white-space:nowrap;max-width:200px;overflow:hidden;text-overflow:ellipsis;}
+.type-badge.no-match{background:#f1f3f7;color:#888;}
+
+@media(max-width:640px){.col-grid{grid-template-columns:1fr;}.stats-row{gap:.5rem;}.stat-box{min-width:80px;}}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="logo">🛡️ FRDM Tools</a>
+  <span class="sep">›</span>
+  <span class="page">Document Search</span>
+  <a href="index.html" class="back">← Back to Tools</a>
+</nav>
+
+<div class="container">
+
+  <!-- ════════════════ STEP 1: Load Document Types ════════════════ -->
+  <div class="step" id="step1">
+    <div class="step-header">
+      <div class="step-num" id="s1num">1</div>
+      <span class="step-title">Load Document Types</span>
+    </div>
+    <div class="step-body">
+      <p style="font-size:.875rem;color:var(--muted);margin-bottom:.75rem;">
+        Loading the FRDM document type registry from <code>data/document-types-2026-03-23.csv</code>.
+        These types will be used to classify documents found for each supplier. Documents that don't match any type will be labelled <strong>No Type Match</strong>.
+      </p>
+      <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;">
+        <span class="db-chip loading" id="dt-chip">⏳ Loading…</span>
+      </div>
+      <div id="dt-status" class="alert alert-info" style="margin-top:.75rem;">Fetching document types…</div>
+    </div>
+  </div>
+
+  <!-- ════════════════ STEP 2: Upload Supplier File ════════════════ -->
+  <div class="step" id="step2">
+    <div class="step-header">
+      <div class="step-num wait" id="s2num">2</div>
+      <span class="step-title">Upload Supplier File</span>
+    </div>
+    <div class="step-body">
+      <div class="upload-zone" id="upload-zone">
+        <input type="file" id="file-input" accept=".csv,.xlsx,.xls"/>
+        <div class="upload-icon">📋</div>
+        <div class="upload-title">Drop your supplier CSV or Excel file here</div>
+        <div class="upload-sub">Required columns: a supplier name column + a business entity ID column</div>
+      </div>
+      <p style="font-size:.8rem;color:var(--muted);margin-top:.6rem;">
+        Need a template? <a href="./data/document-search sample upload file.csv" download style="color:var(--accent);">Download sample upload file</a>
+      </p>
+
+      <div id="col-mapping" style="display:none;">
+        <div class="col-grid">
+          <div class="field">
+            <label>Supplier Name Column</label>
+            <select id="name-col"></select>
+          </div>
+          <div class="field">
+            <label>Business Entity ID Column</label>
+            <select id="id-col"></select>
+          </div>
+        </div>
+        <div class="preview-wrap"><table class="preview-table" id="preview-table"></table></div>
+        <div id="upload-status" class="alert alert-info" style="margin-top:.75rem;"></div>
+        <div class="btn-row">
+          <button class="btn btn-primary" id="confirm-cols-btn" onclick="confirmColumns()">✅ Confirm Columns &amp; Continue</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════ STEP 3: Search & Export ════════════════ -->
+  <div class="step" id="step3">
+    <div class="step-header">
+      <div class="step-num wait" id="s3num">3</div>
+      <span class="step-title">Search &amp; Export</span>
+    </div>
+    <div class="step-body">
+      <p id="search-summary" style="font-size:.875rem;color:var(--muted);margin-bottom:.5rem;"></p>
+      <div class="progress-track"><div class="progress-fill" id="search-progress"></div></div>
+      <div id="search-status" class="alert alert-info">Waiting for supplier file and document types…</div>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="run-btn" onclick="runSearch()" disabled>🔍 Run Document Search</button>
+        <button class="btn btn-success" id="export-btn" onclick="exportCSV()" disabled>⬇️ Export CSV</button>
+      </div>
+
+      <div id="results-section" style="display:none;margin-top:1.5rem;">
+        <div class="stats-row">
+          <div class="stat-box"><div class="val" id="stat-suppliers">0</div><div class="lbl">Suppliers Done</div></div>
+          <div class="stat-box"><div class="val" id="stat-docs">0</div><div class="lbl">Docs Found</div></div>
+          <div class="stat-box"><div class="val" id="stat-typed">0</div><div class="lbl">Type Matches</div></div>
+          <div class="stat-box"><div class="val" id="stat-nomatch">0</div><div class="lbl">No Type Match</div></div>
+        </div>
+        <div class="results-wrap">
+          <table class="results-table" id="results-table">
+            <thead>
+              <tr>
+                <th>Supplier</th>
+                <th>Entity ID</th>
+                <th>Document Type</th>
+                <th>Document Name</th>
+                <th>URL</th>
+              </tr>
+            </thead>
+            <tbody id="results-body"></tbody>
+          </table>
+        </div>
+        <p style="font-size:.75rem;color:var(--muted);margin-top:.5rem;">
+          ⚠️ Document URLs are sourced from Claude's training knowledge and may be outdated. Always verify links before use.
+        </p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────
+const S = {
+  docTypes: [],
+  dtLoaded: false,
+  rows: [],
+  headers: [],
+  suppliers: [],
+  fileReady: false,
+  running: false,
+  done: false,
+  results: [],
+  processed: 0,
+};
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+function qs(id) { return document.getElementById(id); }
+
+function setStepNum(id, state) {
+  const el = qs(id);
+  el.className = 'step-num' + (state === 'done' ? ' done' : state === 'wait' ? ' wait' : '');
+  if (state === 'done') el.textContent = '✓';
+}
+
+function escHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function escAttr(s) {
+  return String(s).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function csvCell(v) {
+  const s = String(v);
+  return (s.includes(',') || s.includes('"') || s.includes('\n'))
+    ? '"' + s.replace(/"/g, '""') + '"'
+    : s;
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ── Step 1: Load Document Types ────────────────────────────────────────────
+async function loadDocTypes() {
+  try {
+    const res = await fetch('./data/document-types-2026-03-23.csv');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const text = await res.text();
+    const lines = text.trim().split('\n');
+    const seen = new Set();
+    for (let i = 1; i < lines.length; i++) {
+      // Parse CSV: Id,Name,... (Name may be quoted)
+      const line = lines[i];
+      const firstComma = line.indexOf(',');
+      if (firstComma < 0) continue;
+      let name = line.slice(firstComma + 1).split(',')[0].trim().replace(/^"|"$/g, '').trim();
+      if (name && name.toLowerCase() !== 'other' && !seen.has(name)) {
+        seen.add(name);
+        S.docTypes.push(name);
+      }
+    }
+    S.dtLoaded = true;
+    qs('dt-chip').className = 'db-chip ok';
+    qs('dt-chip').textContent = `✅ ${S.docTypes.length} unique types loaded`;
+    qs('dt-status').className = 'alert alert-success';
+    qs('dt-status').textContent = `Loaded ${S.docTypes.length} unique document types. Claude will classify found documents against these types.`;
+    setStepNum('s1num', 'done');
+    checkReady();
+  } catch (err) {
+    qs('dt-chip').className = 'db-chip err';
+    qs('dt-chip').textContent = '❌ Failed to load';
+    qs('dt-status').className = 'alert alert-danger';
+    qs('dt-status').textContent = `Error loading document types: ${err.message}`;
+  }
+}
+
+// ── Step 2: File Upload ────────────────────────────────────────────────────
+function setupUpload() {
+  const zone = qs('upload-zone');
+  const input = qs('file-input');
+
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.classList.remove('drag');
+    const f = e.dataTransfer.files[0];
+    if (f) handleFile(f);
+  });
+  input.addEventListener('change', () => {
+    if (input.files[0]) handleFile(input.files[0]);
+  });
+}
+
+function handleFile(file) {
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (!['csv', 'xlsx', 'xls'].includes(ext)) {
+    alert('Please upload a CSV or Excel file.');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb = XLSX.read(e.target.result, { type: 'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+      if (!data || data.length < 2) { alert('File appears empty.'); return; }
+      S.headers = data[0].map(h => String(h).trim());
+      S.rows = data.slice(1).filter(r => r.some(c => String(c).trim()));
+      setupColumnMapping();
+      qs('upload-zone').classList.add('loaded');
+    } catch (err) {
+      alert('Error reading file: ' + err.message);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function setupColumnMapping() {
+  const nameGuess = ['supplier_name', 'name', 'company', 'company_name', 'supplier'];
+  const idGuess = ['business_entity_id', 'entity_id', 'id', 'supplier_id', 'beid'];
+
+  const normalize = h => h.toLowerCase().replace(/[\s-]/g, '_');
+  const nameIdx = S.headers.findIndex(h => nameGuess.includes(normalize(h)));
+  const idIdx = S.headers.findIndex(h => idGuess.includes(normalize(h)));
+
+  ['name-col', 'id-col'].forEach(id => {
+    const sel = qs(id);
+    sel.innerHTML = S.headers.map((h, i) => `<option value="${i}">${escHtml(h)}</option>`).join('');
+  });
+  if (nameIdx >= 0) qs('name-col').value = nameIdx;
+  if (idIdx >= 0) qs('id-col').value = idIdx;
+
+  renderPreview();
+  qs('col-mapping').style.display = 'block';
+  qs('upload-status').className = 'alert alert-info';
+  qs('upload-status').textContent = `${S.rows.length} rows loaded. Confirm column mapping below.`;
+  setStepNum('s2num', '');
+
+  qs('name-col').addEventListener('change', renderPreview);
+  qs('id-col').addEventListener('change', renderPreview);
+}
+
+function renderPreview() {
+  const nameIdx = parseInt(qs('name-col').value);
+  const idIdx = parseInt(qs('id-col').value);
+  const preview = S.rows.slice(0, 8);
+  const th = `<tr><th>${escHtml(S.headers[nameIdx] || 'Supplier Name')}</th><th>${escHtml(S.headers[idIdx] || 'Entity ID')}</th></tr>`;
+  const rows = preview.map(r => `<tr><td>${escHtml(r[nameIdx] || '')}</td><td>${escHtml(r[idIdx] || '')}</td></tr>`).join('');
+  qs('preview-table').innerHTML = `<thead>${th}</thead><tbody>${rows}</tbody>`;
+}
+
+function confirmColumns() {
+  const nameIdx = parseInt(qs('name-col').value);
+  const idIdx = parseInt(qs('id-col').value);
+  S.suppliers = S.rows
+    .map(r => ({
+      supplier_name: String(r[nameIdx] || '').trim(),
+      business_entity_id: String(r[idIdx] || '').trim(),
+    }))
+    .filter(s => s.supplier_name);
+
+  if (!S.suppliers.length) { alert('No valid suppliers found.'); return; }
+
+  S.fileReady = true;
+  setStepNum('s2num', 'done');
+  qs('confirm-cols-btn').disabled = true;
+  qs('upload-status').className = 'alert alert-success';
+  qs('upload-status').textContent = `✅ ${S.suppliers.length} suppliers ready for document search.`;
+  setStepNum('s3num', '');
+  checkReady();
+}
+
+// ── Step 3: Search ─────────────────────────────────────────────────────────
+function checkReady() {
+  const ready = S.dtLoaded && S.fileReady;
+  qs('run-btn').disabled = !ready || S.running || S.done;
+  if (ready && !S.running && !S.done) {
+    const n = S.suppliers.length;
+    qs('search-summary').textContent =
+      `Ready to search ${n} supplier${n !== 1 ? 's' : ''} against ${S.docTypes.length} document types.`;
+    qs('search-status').className = 'alert alert-success';
+    qs('search-status').textContent = 'Ready. Click "Run Document Search" to begin.';
+  }
+}
+
+async function runSearch() {
+  if (S.running) return;
+  S.running = true;
+  S.results = [];
+  S.processed = 0;
+  S.done = false;
+
+  qs('run-btn').disabled = true;
+  qs('export-btn').disabled = true;
+  qs('results-section').style.display = 'block';
+  qs('results-body').innerHTML = '';
+  resetStats();
+  setStepNum('s3num', '');
+
+  const total = S.suppliers.length;
+  for (let i = 0; i < total; i++) {
+    const sup = S.suppliers[i];
+    qs('search-progress').style.width = Math.round((i / total) * 100) + '%';
+    qs('search-status').className = 'alert alert-info';
+    qs('search-status').textContent = `Searching ${i + 1} / ${total}: ${sup.supplier_name}…`;
+
+    try {
+      await processSupplier(sup);
+    } catch (err) {
+      console.error('Error for', sup.supplier_name, err);
+    }
+
+    S.processed++;
+    updateStats();
+
+    if (i < total - 1) await sleep(300);
+  }
+
+  qs('search-progress').style.width = '100%';
+  S.running = false;
+  S.done = true;
+  qs('search-status').className = 'alert alert-success';
+  qs('search-status').textContent =
+    `✅ Done! Found ${S.results.length} document${S.results.length !== 1 ? 's' : ''} across ${total} supplier${total !== 1 ? 's' : ''}.`;
+  qs('export-btn').disabled = false;
+  setStepNum('s3num', 'done');
+}
+
+async function processSupplier(sup) {
+  const res = await fetch('/api/document-search', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      supplier_name: sup.supplier_name,
+      business_entity_id: sup.business_entity_id,
+      document_types: S.docTypes,
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: 'Unknown error' }));
+    console.warn('API error for', sup.supplier_name, err);
+    return;
+  }
+
+  const data = await res.json();
+  addResults(sup.supplier_name, sup.business_entity_id, data.documents || []);
+}
+
+function addResults(supplierName, entityId, docs) {
+  const tbody = qs('results-body');
+  for (const doc of docs) {
+    const row = {
+      supplier_name: supplierName,
+      business_entity_id: entityId,
+      document_type: doc.document_type || 'No Type Match',
+      document_name: doc.document_name || '',
+      document_url: doc.document_url || '',
+    };
+    S.results.push(row);
+
+    const isNoMatch = row.document_type === 'No Type Match';
+    const typeHtml = `<span class="type-badge${isNoMatch ? ' no-match' : ''}" title="${escAttr(row.document_type)}">${escHtml(row.document_type)}</span>`;
+    const urlHtml = row.document_url
+      ? `<a href="${escAttr(row.document_url)}" target="_blank" rel="noopener noreferrer">View ↗</a>`
+      : '<span style="color:#bbb">—</span>';
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${escHtml(supplierName)}</td><td>${escHtml(entityId)}</td><td>${typeHtml}</td><td>${escHtml(row.document_name)}</td><td>${urlHtml}</td>`;
+    tbody.appendChild(tr);
+  }
+  // Auto-scroll results table
+  const wrap = tbody.closest('.results-wrap');
+  if (wrap) wrap.scrollTop = wrap.scrollHeight;
+}
+
+function resetStats() {
+  ['stat-suppliers', 'stat-docs', 'stat-typed', 'stat-nomatch'].forEach(id => {
+    qs(id).textContent = '0';
+  });
+}
+
+function updateStats() {
+  qs('stat-suppliers').textContent = S.processed;
+  qs('stat-docs').textContent = S.results.length;
+  const typed = S.results.filter(r => r.document_type !== 'No Type Match').length;
+  qs('stat-typed').textContent = typed;
+  qs('stat-nomatch').textContent = S.results.length - typed;
+}
+
+// ── Export ─────────────────────────────────────────────────────────────────
+function exportCSV() {
+  if (!S.results.length) return;
+  const cols = ['supplier_name', 'business_entity_id', 'document_type', 'document_name', 'document_url'];
+  const lines = [cols.join(',')];
+  for (const r of S.results) {
+    lines.push(cols.map(c => csvCell(r[c] || '')).join(','));
+  }
+  const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `document_search_${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  setupUpload();
+  loadDocTypes();
+});
+</script>
+</body>
+</html>

@@ -10,6 +10,10 @@ export default {
       return handleSupplierEnrichment(request, env);
     }
 
+    if (url.pathname === "/api/document-search" && (request.method === "POST" || request.method === "OPTIONS")) {
+      return handleDocumentSearch(request, env);
+    }
+
     return env.ASSETS.fetch(request);
   },
 };
@@ -258,6 +262,141 @@ If a field is unknown, use null. For key_officers, include the top executives yo
   }
 
   return new Response(JSON.stringify(enriched), {
+    headers: { "Content-Type": "application/json", ...corsHeaders },
+  });
+}
+
+async function handleDocumentSearch(request, env) {
+  const corsHeaders = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+  };
+
+  if (request.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return new Response(JSON.stringify({ error: "Invalid JSON" }), {
+      status: 400,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
+    });
+  }
+
+  const supplierName = (body.supplier_name || "").trim();
+  const businessEntityId = (body.business_entity_id || "").trim();
+  const documentTypes = Array.isArray(body.document_types) ? body.document_types : [];
+
+  if (!supplierName) {
+    return new Response(JSON.stringify({ error: "supplier_name is required" }), {
+      status: 400,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
+    });
+  }
+
+  const apiKey = env.FRDM_ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    return new Response(JSON.stringify({ error: "API key not configured" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
+    });
+  }
+
+  const typesList = documentTypes.length > 0
+    ? documentTypes.map(t => `- ${t}`).join("\n")
+    : "- Annual Sustainability Report\n- Modern Slavery Statement\n- Code of Conduct\n- GHG Inventory\n- Human Rights Policy";
+
+  const prompt = `You are a corporate sustainability document research assistant. For the company "${supplierName}", identify ESG, sustainability, certification, and compliance documents that this company is known to have published, based on your training data.
+
+Known document types to match against:
+${typesList}
+
+Instructions:
+1. List documents you have reasonable confidence this company has published.
+2. Classify each document against one of the types listed above. Use the closest match.
+3. If a document does not match any listed type, set document_type to "No Type Match".
+4. Provide the URL where the document can be found if you know it with reasonable confidence; otherwise set document_url to null.
+5. Do NOT fabricate documents or URLs — only include what you have genuine confidence about from your training data.
+6. Include both documents that match the known types AND other relevant ESG/sustainability documents you know about.
+7. If the same document covers multiple types (e.g. a combined report), list it once under the most specific type.
+
+Return ONLY valid JSON (no markdown, no extra text):
+{
+  "documents": [
+    {
+      "document_type": "Type from the list above, or 'No Type Match'",
+      "document_name": "Full name or title of the document",
+      "document_url": "Direct URL to the document or its hosting page, or null if not known"
+    }
+  ]
+}
+
+If you don't know of any documents for this company, return { "documents": [] }.`;
+
+  let claudeResponse;
+  try {
+    claudeResponse = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 2048,
+        messages: [{ role: "user", content: prompt }],
+      }),
+    });
+  } catch (err) {
+    return new Response(JSON.stringify({ error: "Failed to reach Claude API" }), {
+      status: 502,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
+    });
+  }
+
+  if (!claudeResponse.ok) {
+    const errText = await claudeResponse.text();
+    return new Response(JSON.stringify({ error: `Claude API error: ${claudeResponse.status}`, detail: errText }), {
+      status: 502,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
+    });
+  }
+
+  const claudeData = await claudeResponse.json();
+  const rawText = claudeData.content?.[0]?.text || "";
+
+  let parsed;
+  try {
+    parsed = JSON.parse(rawText);
+  } catch {
+    const match = rawText.match(/\{[\s\S]*\}/);
+    if (match) {
+      try {
+        parsed = JSON.parse(match[0]);
+      } catch {
+        return new Response(JSON.stringify({ error: "Failed to parse Claude response", raw: rawText }), {
+          status: 502,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        });
+      }
+    } else {
+      return new Response(JSON.stringify({ error: "No JSON in Claude response", raw: rawText }), {
+        status: 502,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+  }
+
+  return new Response(JSON.stringify({
+    supplier_name: supplierName,
+    business_entity_id: businessEntityId,
+    documents: parsed.documents || [],
+  }), {
     headers: { "Content-Type": "application/json", ...corsHeaders },
   });
 }
