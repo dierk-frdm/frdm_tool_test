@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Supplier Enrichment | FRDM Internal Tools</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<style>
+:root {
+  --bg:#f8f9fa;--panel:#fff;--panel2:#f8f9fa;
+  --accent:#1a73e8;--accent3:#28a745;
+  --text:#1a1a2e;--muted:#555;--border:#e0e4ef;
+  --critical:#dc3545;--high-conf:#28a745;--med-conf:#e0a800;--low-conf:#fd7e14;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;min-height:100vh;}
+
+nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;gap:.75rem;padding:0 2rem;height:56px;background:#fff;border-bottom:1px solid var(--border);}
+.nav-logo{font-size:1.25rem;font-weight:700;color:#1a1a2e;text-decoration:none;}
+.nav-badge{font-size:.7rem;font-weight:600;color:#1a73e8;background:#e8f0fe;border-radius:20px;padding:2px 8px;}
+.nav-title{font-size:.75rem;color:#888;flex:1;text-align:center;}
+.nav-back{font-size:.875rem;color:#1a73e8;text-decoration:none;white-space:nowrap;}
+.nav-back:hover{text-decoration:underline;}
+
+.hero{padding:3rem 2rem 1.5rem;max-width:960px;margin:0 auto;}
+.hero-tag{font-size:.7rem;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:.75rem;}
+.hero-title{font-size:clamp(1.6rem,4vw,2.2rem);font-weight:700;color:var(--text);line-height:1.2;margin-bottom:.5rem;}
+.hero-title em{font-style:normal;color:var(--accent);}
+.hero-sub{font-size:.9rem;color:var(--muted);line-height:1.6;margin-bottom:2rem;}
+
+.section{max-width:960px;margin:0 auto;padding:0 2rem 2rem;}
+.section-label{font-size:.7rem;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.75rem;}
+
+/* Template bar */
+.template-bar{display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;padding:1rem 1.2rem;background:#fff;border:1px solid var(--border);border-radius:8px;}
+.template-bar-text{font-size:.85rem;color:var(--muted);line-height:1.6;flex:1;}
+.template-bar-text strong{color:var(--text);}
+.btn-template{font-size:.8rem;font-weight:600;padding:.5rem 1rem;background:#fff;border:1px solid var(--accent);color:var(--accent);cursor:pointer;border-radius:6px;white-space:nowrap;transition:background .15s,color .15s;}
+.btn-template:hover{background:var(--accent);color:#fff;}
+
+/* Upload */
+.upload-zone{border:2px dashed var(--border);border-radius:10px;padding:3rem 2rem;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;position:relative;background:#fff;}
+.upload-zone:hover,.upload-zone.dragover{border-color:var(--accent);background:#f0f6ff;}
+.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.upload-icon{font-size:2.5rem;margin-bottom:1rem;display:block;}
+.upload-title{font-size:1.1rem;font-weight:600;color:var(--text);margin-bottom:.3rem;}
+.upload-sub{font-size:.85rem;color:var(--muted);}
+
+/* Validation bar */
+.validation-bar{display:flex;align-items:center;justify-content:space-between;padding:.6rem 1rem;background:#fff;border:1px solid var(--border);border-radius:6px;margin-bottom:1rem;}
+.val-info{font-size:.8rem;color:var(--muted);}
+.val-info strong{color:var(--accent3);}
+.btn-reset{font-size:.8rem;color:var(--muted);background:none;border:none;cursor:pointer;}
+.btn-reset:hover{color:var(--critical);}
+
+/* Column mapping */
+.mapping-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem;}
+@media(max-width:640px){.mapping-grid{grid-template-columns:1fr;}}
+.map-row{display:flex;flex-direction:column;gap:.4rem;}
+.map-label{font-size:.8rem;font-weight:600;color:var(--text);}
+.map-label span{font-size:.72rem;font-weight:400;color:var(--muted);}
+.map-select{width:100%;padding:.45rem .7rem;border:1px solid var(--border);border-radius:6px;font-size:.85rem;color:var(--text);background:#fff;}
+.map-select:focus{outline:none;border-color:var(--accent);}
+
+/* Preview table */
+.preview-wrap{overflow-x:auto;margin-bottom:1rem;border:1px solid var(--border);border-radius:8px;}
+.preview-table{width:100%;border-collapse:collapse;font-size:.82rem;}
+.preview-table th{background:var(--panel2);color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-size:.72rem;font-weight:600;padding:.55rem .8rem;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;}
+.preview-table td{padding:.5rem .8rem;border-bottom:1px solid var(--border);color:var(--text);}
+.preview-table tr:last-child td{border-bottom:none;}
+.preview-table tr:hover td{background:var(--panel2);}
+.preview-more{font-size:.78rem;color:var(--muted);padding:.6rem .8rem;text-align:center;border-top:1px solid var(--border);}
+
+/* Run button */
+.btn-run{width:100%;font-size:.875rem;font-weight:600;padding:.85rem;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;transition:box-shadow .2s,opacity .2s;margin-top:.5rem;}
+.btn-run:hover{box-shadow:0 4px 16px rgba(26,115,232,.35);}
+.btn-run:disabled{opacity:.4;cursor:not-allowed;box-shadow:none;}
+
+/* Progress */
+.progress-panel{background:#fff;border:1px solid var(--border);border-radius:10px;padding:1.5rem;margin-bottom:1.5rem;}
+.progress-track{height:4px;background:var(--border);border-radius:2px;margin:1rem 0;position:relative;}
+.progress-fill{height:100%;background:var(--accent);border-radius:2px;width:0%;transition:width .4s ease;}
+.progress-label{font-size:.82rem;color:var(--muted);display:flex;justify-content:space-between;}
+.status-log{display:flex;flex-direction:column;gap:.35rem;padding:.5rem 0;max-height:200px;overflow-y:auto;}
+.status-line{font-size:.8rem;display:flex;align-items:center;gap:.5rem;}
+.status-line.done{color:var(--accent3);}
+.status-line.active{color:var(--accent);}
+.status-line.err{color:var(--critical);}
+.status-line.wait{color:var(--muted);}
+
+/* Summary stats */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem;}
+@media(max-width:700px){.stats-grid{grid-template-columns:repeat(2,1fr);}}
+.stat-card{background:#fff;padding:1rem 1.2rem;border:1px solid var(--border);border-radius:8px;}
+.stat-label{font-size:.7rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.3rem;}
+.stat-value{font-size:1.6rem;font-weight:700;color:var(--text);}
+.stat-sub{font-size:.72rem;color:var(--muted);margin-top:.2rem;}
+
+/* Results toolbar */
+.results-toolbar{display:flex;align-items:center;gap:.75rem;margin-bottom:1rem;flex-wrap:wrap;}
+.toolbar-search{flex:1;min-width:200px;padding:.45rem .75rem;border:1px solid var(--border);border-radius:6px;font-size:.85rem;}
+.toolbar-search:focus{outline:none;border-color:var(--accent);}
+.btn-export{font-size:.8rem;font-weight:600;padding:.45rem 1rem;background:#fff;border:1px solid var(--accent);color:var(--accent);border-radius:6px;cursor:pointer;white-space:nowrap;transition:background .15s,color .15s;}
+.btn-export:hover{background:var(--accent);color:#fff;}
+
+/* Results table */
+.results-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:8px;background:#fff;}
+.results-table{width:100%;border-collapse:collapse;font-size:.82rem;}
+.results-table th{background:var(--panel2);color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-size:.72rem;font-weight:600;padding:.6rem .8rem;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none;}
+.results-table th:hover{color:var(--accent);}
+.results-table td{padding:.55rem .8rem;border-bottom:1px solid var(--border);color:var(--text);vertical-align:top;}
+.results-table tr:last-child td{border-bottom:none;}
+.results-table tr:hover td{background:#fafbff;}
+
+.conf-badge{display:inline-block;font-size:.68rem;font-weight:700;padding:2px 7px;border-radius:20px;white-space:nowrap;}
+.conf-High{background:#d4edda;color:#1e7e34;}
+.conf-Medium{background:#fff3cd;color:#856404;}
+.conf-Low{background:#ffe5cc;color:#c05200;}
+
+.officer-list{display:flex;flex-direction:column;gap:.2rem;}
+.officer-item{font-size:.78rem;color:var(--text);}
+.officer-role{font-weight:600;color:var(--muted);font-size:.72rem;}
+
+.tag-list{display:flex;flex-wrap:wrap;gap:.3rem;}
+.tag{font-size:.72rem;background:var(--panel2);border:1px solid var(--border);border-radius:4px;padding:1px 6px;color:var(--muted);}
+
+.cell-null{color:#ccc;font-style:italic;}
+
+/* Expandable rows */
+.row-detail{display:none;background:#fafbff;}
+.row-detail td{padding:1rem 1.5rem;border-bottom:1px solid var(--border);}
+.detail-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.75rem 1.5rem;}
+.detail-field label{font-size:.68rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:block;margin-bottom:.2rem;}
+.detail-field span{font-size:.82rem;color:var(--text);}
+
+.expand-btn{background:none;border:none;cursor:pointer;font-size:.85rem;color:var(--muted);padding:0 .4rem;}
+.expand-btn:hover{color:var(--accent);}
+
+.hidden{display:none;}
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">🛡️ FRDM Tools</a>
+  <span class="nav-badge">Internal</span>
+  <span class="nav-title">Supplier Enrichment</span>
+  <a class="nav-back" href="index.html">← All Tools</a>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-tag">AI-Powered · Firmographic Data</div>
+  <h1 class="hero-title">Supplier <em>Enrichment</em></h1>
+  <p class="hero-sub">Upload a list of company names and enrich them with AI-sourced firmographic data — headquarters address, key officers, parent company, subsidiaries, revenue, and more.</p>
+</div>
+
+<!-- UPLOAD SECTION -->
+<div class="section" id="uploadSection">
+  <p class="section-label">Step 1 — Upload</p>
+
+  <div class="template-bar">
+    <div class="template-bar-text">
+      <strong>CSV format:</strong> One column must contain company names. Optionally include country or industry columns to improve accuracy.
+    </div>
+    <button class="btn-template" onclick="downloadTemplate()">Download Template</button>
+  </div>
+
+  <div class="upload-zone" id="uploadZone">
+    <input type="file" accept=".csv" id="fileInput" onchange="handleFile(this.files[0])"/>
+    <span class="upload-icon">📂</span>
+    <div class="upload-title">Drop CSV here or click to browse</div>
+    <div class="upload-sub">CSV files only</div>
+  </div>
+</div>
+
+<!-- MAPPING SECTION -->
+<div class="section hidden" id="mappingSection">
+  <p class="section-label">Step 2 — Map Columns</p>
+
+  <div class="validation-bar">
+    <span class="val-info" id="valInfo"></span>
+    <button class="btn-reset" onclick="resetTool()">✕ Reset</button>
+  </div>
+
+  <div class="mapping-grid">
+    <div class="map-row">
+      <label class="map-label">Company Name <span>* Required</span></label>
+      <select class="map-select" id="mapCompany"></select>
+    </div>
+    <div class="map-row">
+      <label class="map-label">Country <span>(optional — improves accuracy)</span></label>
+      <select class="map-select" id="mapCountry"></select>
+    </div>
+    <div class="map-row">
+      <label class="map-label">Industry <span>(optional — improves accuracy)</span></label>
+      <select class="map-select" id="mapIndustry"></select>
+    </div>
+  </div>
+
+  <p class="section-label" style="margin-top:.5rem;">Preview (first 5 rows)</p>
+  <div class="preview-wrap">
+    <table class="preview-table" id="previewTable"></table>
+    <div class="preview-more" id="previewMore"></div>
+  </div>
+
+  <button class="btn-run" id="runBtn" onclick="runEnrichment()">Enrich Suppliers</button>
+</div>
+
+<!-- PROGRESS SECTION -->
+<div class="section hidden" id="progressSection">
+  <p class="section-label">Step 3 — Processing</p>
+  <div class="progress-panel">
+    <div class="progress-label">
+      <span id="progressText">Starting...</span>
+      <span id="progressPct">0%</span>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="status-log" id="statusLog"></div>
+  </div>
+</div>
+
+<!-- RESULTS SECTION -->
+<div class="section hidden" id="resultsSection">
+  <p class="section-label">Results</p>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">Total</div>
+      <div class="stat-value" id="statTotal">0</div>
+      <div class="stat-sub">companies processed</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">High Confidence</div>
+      <div class="stat-value" id="statHigh" style="color:var(--high-conf)">0</div>
+      <div class="stat-sub">enriched records</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Parent Companies</div>
+      <div class="stat-value" id="statParent">0</div>
+      <div class="stat-sub">subsidiaries identified</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Errors</div>
+      <div class="stat-value" id="statErrors" style="color:var(--critical)">0</div>
+      <div class="stat-sub">failed lookups</div>
+    </div>
+  </div>
+
+  <div class="results-toolbar">
+    <input type="text" class="toolbar-search" placeholder="Filter by name, country, parent..." oninput="filterResults(this.value)" id="searchInput"/>
+    <button class="btn-export" onclick="exportCSV()">Export CSV</button>
+    <button class="btn-reset" onclick="resetTool()" style="white-space:nowrap">✕ New Upload</button>
+  </div>
+
+  <div class="results-wrap">
+    <table class="results-table" id="resultsTable">
+      <thead>
+        <tr>
+          <th style="width:28px"></th>
+          <th onclick="sortBy('input_name')">Input Name ↕</th>
+          <th onclick="sortBy('legal_name')">Legal Name ↕</th>
+          <th onclick="sortBy('headquarters_city')">HQ City ↕</th>
+          <th onclick="sortBy('headquarters_country')">Country ↕</th>
+          <th onclick="sortBy('parent_company')">Parent Company ↕</th>
+          <th onclick="sortBy('ownership_type')">Type ↕</th>
+          <th onclick="sortBy('employee_count')">Employees ↕</th>
+          <th onclick="sortBy('confidence')">Confidence ↕</th>
+        </tr>
+      </thead>
+      <tbody id="resultsBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<footer style="text-align:center;color:#aaa;font-size:.8rem;padding:2.5rem 1rem;border-top:1px solid #e8eaf0;margin-top:4rem;">
+  FRDM Internal Tools &nbsp;·&nbsp; For internal QA use only
+</footer>
+
+<script>
+const API_URL = '/api/supplier-enrichment';
+const BATCH_SIZE = 5;
+const BATCH_DELAY_MS = 500;
+
+let parsedData = [];
+let headers = [];
+let enrichedResults = [];
+let filteredResults = [];
+let sortCol = null;
+let sortAsc = true;
+
+// ── Upload ──────────────────────────────────────────────────────────────────
+function downloadTemplate() {
+  const csv = 'company_name,country,industry\nApple Inc,United States,Technology\nNestlé,Switzerland,Food & Beverage\nSamsung Electronics,South Korea,Electronics\n';
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'supplier_enrichment_template.csv';
+  a.click();
+}
+
+function handleFile(file) {
+  if (!file) return;
+  Papa.parse(file, {
+    header: true,
+    skipEmptyLines: true,
+    complete: (results) => {
+      if (!results.data.length) { alert('CSV appears to be empty.'); return; }
+      parsedData = results.data;
+      headers = results.meta.fields;
+      setupMapping();
+    },
+    error: (err) => alert('Error parsing CSV: ' + err.message),
+  });
+}
+
+const uploadZone = document.getElementById('uploadZone');
+uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+uploadZone.addEventListener('drop', e => {
+  e.preventDefault();
+  uploadZone.classList.remove('dragover');
+  handleFile(e.dataTransfer.files[0]);
+});
+
+// ── Mapping ──────────────────────────────────────────────────────────────────
+function setupMapping() {
+  document.getElementById('uploadSection').classList.add('hidden');
+  document.getElementById('mappingSection').classList.remove('hidden');
+
+  document.getElementById('valInfo').innerHTML = `<strong>${parsedData.length}</strong> rows detected`;
+
+  const none = '<option value="">— None —</option>';
+  const opts = headers.map(h => `<option value="${h}">${h}</option>`).join('');
+
+  ['mapCompany', 'mapCountry', 'mapIndustry'].forEach(id => {
+    document.getElementById(id).innerHTML = none + opts;
+  });
+
+  // Auto-detect
+  autoDetect('mapCompany', ['company', 'supplier', 'name', 'vendor', 'company_name', 'supplier_name']);
+  autoDetect('mapCountry', ['country', 'nation', 'location', 'country_name']);
+  autoDetect('mapIndustry', ['industry', 'sector', 'category', 'type']);
+
+  renderPreview();
+  document.getElementById('runBtn').disabled = false;
+}
+
+function autoDetect(selectId, keywords) {
+  const sel = document.getElementById(selectId);
+  const lh = headers.map(h => h.toLowerCase());
+  for (const kw of keywords) {
+    const idx = lh.findIndex(h => h.includes(kw));
+    if (idx >= 0) { sel.value = headers[idx]; return; }
+  }
+}
+
+function renderPreview() {
+  const cols = headers.slice(0, 6);
+  const thead = '<tr>' + cols.map(h => `<th>${h}</th>`).join('') + '</tr>';
+  const rows = parsedData.slice(0, 5).map(row =>
+    '<tr>' + cols.map(h => `<td>${row[h] ?? ''}</td>`).join('') + '</tr>'
+  ).join('');
+  document.getElementById('previewTable').innerHTML = thead + rows;
+  const more = parsedData.length > 5 ? `+ ${parsedData.length - 5} more rows` : '';
+  document.getElementById('previewMore').textContent = more;
+}
+
+// ── Enrichment ───────────────────────────────────────────────────────────────
+async function runEnrichment() {
+  const companyCol = document.getElementById('mapCompany').value;
+  if (!companyCol) { alert('Please select the Company Name column.'); return; }
+
+  const countryCol = document.getElementById('mapCountry').value;
+  const industryCol = document.getElementById('mapIndustry').value;
+
+  document.getElementById('mappingSection').classList.add('hidden');
+  document.getElementById('progressSection').classList.remove('hidden');
+  document.getElementById('runBtn').disabled = true;
+
+  enrichedResults = [];
+  let errors = 0;
+  const total = parsedData.length;
+
+  const batches = [];
+  for (let i = 0; i < parsedData.length; i += BATCH_SIZE) {
+    batches.push(parsedData.slice(i, i + BATCH_SIZE));
+  }
+
+  let processed = 0;
+  for (let bi = 0; bi < batches.length; bi++) {
+    const batch = batches[bi];
+    addStatus(`Processing batch ${bi + 1} / ${batches.length}…`, 'active');
+
+    const promises = batch.map(row => {
+      const company = (row[companyCol] || '').trim();
+      if (!company) return Promise.resolve({ input_name: '', error: 'Empty company name' });
+      return fetchEnrichment(company, row[countryCol] || '', row[industryCol] || '');
+    });
+
+    const batchResults = await Promise.allSettled(promises);
+    batchResults.forEach((res, idx) => {
+      const row = batch[idx];
+      const inputName = (row[companyCol] || '').trim();
+      if (res.status === 'fulfilled' && !res.value.error) {
+        enrichedResults.push({ ...res.value, _original: row });
+        addStatus(`✓ ${inputName || '(blank)'}`, 'done');
+      } else {
+        const errMsg = res.status === 'rejected' ? res.reason?.message : res.value?.error;
+        enrichedResults.push({ input_name: inputName, error: errMsg, confidence: 'Low', _original: row });
+        errors++;
+        addStatus(`✗ ${inputName || '(blank)'}: ${errMsg}`, 'err');
+      }
+    });
+
+    processed += batch.length;
+    setProgress(processed, total);
+
+    if (bi < batches.length - 1) await sleep(BATCH_DELAY_MS);
+  }
+
+  showResults(errors);
+}
+
+async function fetchEnrichment(company, country, industry) {
+  const resp = await fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ company, country, industry }),
+  });
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error(err.error || `HTTP ${resp.status}`);
+  }
+  return resp.json();
+}
+
+// ── Progress helpers ─────────────────────────────────────────────────────────
+function setProgress(done, total) {
+  const pct = Math.round((done / total) * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressPct').textContent = pct + '%';
+  document.getElementById('progressText').textContent = `${done} / ${total} companies enriched`;
+}
+
+function addStatus(msg, cls) {
+  const log = document.getElementById('statusLog');
+  const line = document.createElement('div');
+  line.className = 'status-line ' + cls;
+  line.textContent = msg;
+  log.appendChild(line);
+  log.scrollTop = log.scrollHeight;
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ── Results ──────────────────────────────────────────────────────────────────
+function showResults(errors) {
+  document.getElementById('progressSection').classList.add('hidden');
+  document.getElementById('resultsSection').classList.remove('hidden');
+
+  const highConf = enrichedResults.filter(r => r.confidence === 'High').length;
+  const withParent = enrichedResults.filter(r => r.parent_company && r.parent_company !== 'null' && r.parent_company !== null).length;
+
+  document.getElementById('statTotal').textContent = enrichedResults.length;
+  document.getElementById('statHigh').textContent = highConf;
+  document.getElementById('statParent').textContent = withParent;
+  document.getElementById('statErrors').textContent = errors;
+
+  filteredResults = [...enrichedResults];
+  renderTable();
+}
+
+function renderTable() {
+  const tbody = document.getElementById('resultsBody');
+  tbody.innerHTML = '';
+
+  filteredResults.forEach((r, idx) => {
+    const conf = r.confidence || 'Low';
+    const mainRow = document.createElement('tr');
+    mainRow.innerHTML = `
+      <td><button class="expand-btn" onclick="toggleDetail(${idx})" title="Expand">▶</button></td>
+      <td>${escHtml(r.input_name || '')}</td>
+      <td>${escHtml(r.legal_name || r.input_name || '')}</td>
+      <td>${r.headquarters_city ? escHtml(r.headquarters_city) : '<span class="cell-null">—</span>'}</td>
+      <td>${r.headquarters_country ? escHtml(r.headquarters_country) : '<span class="cell-null">—</span>'}</td>
+      <td>${r.parent_company && r.parent_company !== 'null' ? escHtml(r.parent_company) : '<span class="cell-null">Independent</span>'}</td>
+      <td>${escHtml(r.ownership_type || '—')}</td>
+      <td>${escHtml(r.employee_count || '—')}</td>
+      <td><span class="conf-badge conf-${conf}">${conf}</span></td>
+    `;
+    mainRow.dataset.idx = idx;
+    tbody.appendChild(mainRow);
+
+    // Detail row
+    const officers = (r.key_officers || []).filter(o => o.name && o.name !== 'null');
+    const subs = (r.notable_subsidiaries || []).filter(Boolean);
+    const detailRow = document.createElement('tr');
+    detailRow.className = 'row-detail';
+    detailRow.id = `detail-${idx}`;
+    detailRow.innerHTML = `
+      <td></td>
+      <td colspan="8">
+        <div class="detail-grid">
+          <div class="detail-field">
+            <label>Full Address</label>
+            <span>${[r.headquarters_address, r.headquarters_city, r.headquarters_state, r.headquarters_country].filter(v => v && v !== 'null').join(', ') || '—'}</span>
+          </div>
+          <div class="detail-field">
+            <label>Website</label>
+            <span>${r.website && r.website !== 'null' ? `<a href="${escHtml(r.website)}" target="_blank" rel="noopener">${escHtml(r.website)}</a>` : '—'}</span>
+          </div>
+          <div class="detail-field">
+            <label>Industry / Sector</label>
+            <span>${[r.industry, r.sector].filter(v => v && v !== 'null').join(' / ') || '—'}</span>
+          </div>
+          <div class="detail-field">
+            <label>Founded</label>
+            <span>${r.founded_year && r.founded_year !== 'null' ? r.founded_year : '—'}</span>
+          </div>
+          <div class="detail-field">
+            <label>Revenue</label>
+            <span>${r.revenue && r.revenue !== 'null' ? escHtml(r.revenue) : '—'}</span>
+          </div>
+          <div class="detail-field">
+            <label>Stock Ticker</label>
+            <span>${r.stock_ticker && r.stock_ticker !== 'null' ? escHtml(r.stock_ticker) : 'Private'}</span>
+          </div>
+          <div class="detail-field">
+            <label>Trade Name</label>
+            <span>${r.trade_name && r.trade_name !== 'null' ? escHtml(r.trade_name) : '—'}</span>
+          </div>
+          <div class="detail-field">
+            <label>Key Officers</label>
+            <span>${officers.length ? officers.map(o => `<span class="officer-role">${escHtml(o.role)}:</span> ${escHtml(o.name)}`).join('<br>') : '—'}</span>
+          </div>
+          <div class="detail-field">
+            <label>Subsidiaries</label>
+            <span>${subs.length ? subs.map(escHtml).join(', ') : '—'}</span>
+          </div>
+          <div class="detail-field" style="grid-column:1/-1">
+            <label>Notes</label>
+            <span>${r.notes && r.notes !== 'null' ? escHtml(r.notes) : '—'}</span>
+          </div>
+          ${r.error ? `<div class="detail-field" style="grid-column:1/-1"><label>Error</label><span style="color:var(--critical)">${escHtml(r.error)}</span></div>` : ''}
+        </div>
+      </td>
+    `;
+    tbody.appendChild(detailRow);
+  });
+}
+
+function toggleDetail(idx) {
+  const row = document.getElementById(`detail-${idx}`);
+  const btn = document.querySelector(`tr[data-idx="${idx}"] .expand-btn`);
+  const open = row.style.display === 'table-row';
+  row.style.display = open ? 'none' : 'table-row';
+  if (btn) btn.textContent = open ? '▶' : '▼';
+}
+
+function filterResults(query) {
+  const q = query.toLowerCase().trim();
+  if (!q) {
+    filteredResults = [...enrichedResults];
+  } else {
+    filteredResults = enrichedResults.filter(r =>
+      [r.input_name, r.legal_name, r.headquarters_city, r.headquarters_country, r.parent_company, r.industry, r.ownership_type]
+        .some(v => v && String(v).toLowerCase().includes(q))
+    );
+  }
+  renderTable();
+}
+
+function sortBy(col) {
+  if (sortCol === col) sortAsc = !sortAsc;
+  else { sortCol = col; sortAsc = true; }
+  filteredResults.sort((a, b) => {
+    const av = (a[col] || '').toString().toLowerCase();
+    const bv = (b[col] || '').toString().toLowerCase();
+    return sortAsc ? av.localeCompare(bv) : bv.localeCompare(av);
+  });
+  renderTable();
+}
+
+// ── Export ───────────────────────────────────────────────────────────────────
+function exportCSV() {
+  const rows = filteredResults.map(r => {
+    const officers = (r.key_officers || []).filter(o => o.name && o.name !== 'null')
+      .map(o => `${o.role}: ${o.name}`).join('; ');
+    const subs = (r.notable_subsidiaries || []).filter(Boolean).join('; ');
+    return {
+      'Input Name': r.input_name || '',
+      'Legal Name': r.legal_name || '',
+      'Trade Name': r.trade_name || '',
+      'HQ Address': r.headquarters_address || '',
+      'HQ City': r.headquarters_city || '',
+      'HQ State': r.headquarters_state || '',
+      'HQ Country': r.headquarters_country || '',
+      'Website': r.website || '',
+      'Industry': r.industry || '',
+      'Sector': r.sector || '',
+      'Employees': r.employee_count || '',
+      'Revenue': r.revenue || '',
+      'Founded': r.founded_year || '',
+      'Stock Ticker': r.stock_ticker || '',
+      'Parent Company': r.parent_company || '',
+      'Ownership Type': r.ownership_type || '',
+      'Key Officers': officers,
+      'Subsidiaries': subs,
+      'Confidence': r.confidence || '',
+      'Notes': r.notes || '',
+      'Error': r.error || '',
+    };
+  });
+  const csv = Papa.unparse(rows);
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `supplier_enrichment_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+}
+
+// ── Utilities ─────────────────────────────────────────────────────────────────
+function resetTool() {
+  parsedData = [];
+  headers = [];
+  enrichedResults = [];
+  filteredResults = [];
+  document.getElementById('fileInput').value = '';
+  document.getElementById('statusLog').innerHTML = '';
+  document.getElementById('progressFill').style.width = '0%';
+  document.getElementById('searchInput').value = '';
+  ['mappingSection','progressSection','resultsSection'].forEach(id => {
+    document.getElementById(id).classList.add('hidden');
+  });
+  document.getElementById('uploadSection').classList.remove('hidden');
+}
+
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>
