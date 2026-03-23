@@ -1,0 +1,11 @@
+supplier_id,supplier_name,business_entity_id,tag_name
+1001,Unilever,3001001,sample
+1002,Patagonia,3001002,sample
+1003,Apple Inc,3001003,sample
+1004,Interface Inc,3001004,sample
+1005,IKEA,3001005,sample
+1006,Nike,3001006,sample
+1007,H&M Group,3001007,sample
+1008,Nestle,3001008,sample
+1009,Microsoft,3001009,sample
+1010,Walmart,3001010,sample
