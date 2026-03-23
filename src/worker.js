@@ -312,33 +312,40 @@ async function handleDocumentSearch(request, env) {
 
   const prompt = `You are a corporate sustainability document research assistant. Find documents published by "${supplierName}" — sustainability reports, certifications, policies, and compliance documents.
 
-Use web search to locate real, current URLs for documents. Also draw on your training knowledge for documents you are confident this company has published.
+Use web search to find these documents and confirm their URLs.
 
-Document types to classify against (pick the closest match, or "No Type Match" if none fit):
+Document types to classify against (pick closest match, or "No Type Match"):
 ${typesList}
 
+CRITICAL URL RULE:
+Provide the URL of the stable SECTION PAGE or LANDING PAGE that hosts the document — NOT a direct PDF link, CDN path, or file storage path (e.g. no /siteassets/, /globalassets/, /media/, /dam/ paths). These file paths change frequently and break.
+Good examples:
+  company.com/sustainability/reports/
+  company.com/investors/reports-and-presentations/annualreport/
+  company.com/responsibility/certifications/
+Bad examples (do not use):
+  company.com/siteassets/docs/report-2023.pdf
+  company.com/globalassets/files/certificate.pdf
+
 Instructions:
-1. Search the web for "${supplierName} sustainability report", "${supplierName} annual report ESG", "${supplierName} code of conduct", "${supplierName} modern slavery statement", "${supplierName} ISO 14001", and other relevant queries.
-2. Also check the company's sustainability or responsibility web pages for links to documents.
-3. For each document found (via search OR from training knowledge), provide:
-   - The document type (closest match from list above, or "No Type Match")
-   - The full document name/title
-   - A direct URL to the PDF or the page that hosts the document (use the real URL found via search; if not found via search, use the best URL you know — flag uncertain ones with "(unverified)" appended to the name)
-4. Include documents matching the known types AND other relevant ESG/sustainability documents you find.
+1. Search for "${supplierName} sustainability", "${supplierName} annual report investors page", "${supplierName} ESG report", "${supplierName} certifications page", "${supplierName} code of conduct", "${supplierName} modern slavery statement", etc.
+2. For each document found, link to the section page that hosts it — the reports listing page, the certifications page, the policies page.
+3. Include documents found via search AND documents you are confident about from training knowledge.
+4. Classify each against the document types above.
 5. List each distinct document once under its most specific type.
 
 Return ONLY valid JSON (no markdown, no extra text):
 {
   "documents": [
     {
-      "document_type": "Type from the list above, or 'No Type Match'",
+      "document_type": "Type from list above, or 'No Type Match'",
       "document_name": "Full document title",
-      "document_url": "URL to the PDF or hosting page, or null if genuinely unknown"
+      "document_url": "Stable section page URL, or null if genuinely unknown"
     }
   ]
 }`;
 
-  // Helper: call Claude, return parsed content text or throw
+  // Helper: call Claude with optional web-search tool, aborts after 25s
   async function callClaude(extraHeaders, bodyExtra) {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 25000);
@@ -372,14 +379,12 @@ Return ONLY valid JSON (no markdown, no extra text):
 
   // Try web search first; fall back to training-knowledge only on timeout/error
   let rawText = "";
-  let usingWebSearch = true;
   try {
     rawText = await callClaude(
       { "anthropic-beta": "web-search-2025-03-05" },
       { tools: [{ type: "web_search_20250305", name: "web_search" }] }
     );
-  } catch (err) {
-    usingWebSearch = false;
+  } catch {
     try {
       rawText = await callClaude({}, {});
     } catch (err2) {
@@ -390,32 +395,51 @@ Return ONLY valid JSON (no markdown, no extra text):
     }
   }
 
-  let parsed;
+  let documents = [];
   try {
-    parsed = JSON.parse(rawText);
+    const parsed = JSON.parse(rawText);
+    documents = parsed.documents || [];
   } catch {
     const match = rawText.match(/\{[\s\S]*\}/);
     if (match) {
-      try {
-        parsed = JSON.parse(match[0]);
-      } catch {
-        return new Response(JSON.stringify({ error: "Failed to parse Claude response", raw: rawText }), {
-          status: 502,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        });
-      }
-    } else {
-      return new Response(JSON.stringify({ error: "No JSON in Claude response", raw: rawText }), {
-        status: 502,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      });
+      try { documents = JSON.parse(match[0]).documents || []; } catch { /* leave empty */ }
     }
   }
+
+  // Verify each URL in parallel (HEAD request, 5s timeout per URL)
+  async function verifyUrl(url) {
+    if (!url) return null;
+    try {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 5000);
+      const res = await fetch(url, {
+        method: "HEAD",
+        signal: ctrl.signal,
+        redirect: "follow",
+        headers: { "User-Agent": "Mozilla/5.0 (compatible; FRDM-Tools/1.0)" },
+      });
+      clearTimeout(t);
+      if (res.status >= 200 && res.status < 400) return true;
+      if (res.status === 401 || res.status === 403) return null; // access-controlled, URL may still be valid
+      return false;
+    } catch {
+      return null; // timeout or network error — uncertain
+    }
+  }
+
+  const verifiedDocuments = await Promise.all(
+    documents.map(async doc => ({
+      document_type: doc.document_type || "No Type Match",
+      document_name: doc.document_name || "",
+      document_url: doc.document_url || null,
+      url_verified: await verifyUrl(doc.document_url),
+    }))
+  );
 
   return new Response(JSON.stringify({
     supplier_name: supplierName,
     business_entity_id: businessEntityId,
-    documents: parsed.documents || [],
+    documents: verifiedDocuments,
   }), {
     headers: { "Content-Type": "application/json", ...corsHeaders },
   });
