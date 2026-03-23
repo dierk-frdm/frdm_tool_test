@@ -186,6 +186,9 @@ nav a.back:hover{text-decoration:underline;}
         <div class="upload-title">Drop your supplier CSV or Excel file here</div>
         <div class="upload-sub">Required columns: a supplier name column + a business entity ID column</div>
       </div>
+      <p style="font-size:.8rem;color:var(--muted);margin-top:.6rem;">
+        Need a template? <a href="./data/commitment sample upload file.csv" download style="color:var(--accent);">Download sample upload file</a>
+      </p>
 
       <!-- Column mapping — hidden until file loaded -->
       <div id="col-mapping" style="display:none;">
@@ -430,7 +433,7 @@ async function loadDatabases(){
   }
 
   await tryLoad('RE100', () => fetchExcel('./data/re_100.xlsx'), 'chip-re100', d => S.re100 = d);
-  await tryLoad('SBTi',  () => fetchExcel('./data/sbti_corrected.xlsx', 'WebsiteData'), 'chip-sbti', d => S.sbti = d);
+  await tryLoad('SBTi',  () => fetchExcel('./data/sbti_most_update.xlsx', 'WebsiteData'), 'chip-sbti', d => S.sbti = d);
   await tryLoad('CDP',   () => fetchCSV('./data/cdp_grades_full.csv'), 'chip-cdp', d => S.cdp = d);
 
   const allOk = S.re100 && S.sbti && S.cdp;
