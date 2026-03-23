@@ -178,6 +178,9 @@ nav a.back:hover{text-decoration:underline;}
       <span class="step-title">Search &amp; Export</span>
     </div>
     <div class="step-body">
+      <p style="font-size:.875rem;color:var(--muted);margin-bottom:.75rem;">
+        Each supplier triggers a live web search via Claude — expect 15–30 seconds per supplier. Links will point directly to PDFs or document pages found on the web.
+      </p>
       <p id="search-summary" style="font-size:.875rem;color:var(--muted);margin-bottom:.5rem;"></p>
       <div class="progress-track"><div class="progress-fill" id="search-progress"></div></div>
       <div id="search-status" class="alert alert-info">Waiting for supplier file and document types…</div>
@@ -208,7 +211,7 @@ nav a.back:hover{text-decoration:underline;}
           </table>
         </div>
         <p style="font-size:.75rem;color:var(--muted);margin-top:.5rem;">
-          ⚠️ Document URLs are sourced from Claude's training knowledge and may be outdated. Always verify links before use.
+          🔍 URLs are found via live web search. Links should point directly to the document PDF or its hosting page — verify any that don't load as expected.
         </p>
       </div>
     </div>
