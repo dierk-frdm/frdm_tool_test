@@ -310,23 +310,22 @@ async function handleDocumentSearch(request, env) {
     ? documentTypes.map(t => `- ${t}`).join("\n")
     : "- Annual Sustainability Report\n- Modern Slavery Statement\n- Code of Conduct\n- GHG Inventory\n- Human Rights Policy";
 
-  const prompt = `You are a corporate sustainability document research assistant. Use web search to find actual documents published by "${supplierName}" — sustainability reports, certifications, policies, and compliance documents.
+  const prompt = `You are a corporate sustainability document research assistant. Find documents published by "${supplierName}" — sustainability reports, certifications, policies, and compliance documents.
 
-Search strategy:
-1. Search for "${supplierName} sustainability report" to find annual/ESG reports
-2. Search for "${supplierName} ISO 14001 certificate" and other certifications listed below
-3. Search for "${supplierName} modern slavery statement", "${supplierName} code of conduct", "${supplierName} human rights policy", and similar policy documents
-4. Search the company's official website sustainability or responsibility section for document links
+Use web search to locate real, current URLs for documents. Also draw on your training knowledge for documents you are confident this company has published.
 
-Document types to classify against (use the closest match, or "No Type Match"):
+Document types to classify against (pick the closest match, or "No Type Match" if none fit):
 ${typesList}
 
-Rules:
-- Only include documents you actually found via web search with a real, working URL
-- The URL must point directly to the PDF or the specific page hosting the document — not just the company homepage
-- Do not fabricate or guess URLs
-- Include both documents matching the known types AND other relevant ESG/sustainability documents you find
-- If the same document covers multiple types, list it once under the most specific type
+Instructions:
+1. Search the web for "${supplierName} sustainability report", "${supplierName} annual report ESG", "${supplierName} code of conduct", "${supplierName} modern slavery statement", "${supplierName} ISO 14001", and other relevant queries.
+2. Also check the company's sustainability or responsibility web pages for links to documents.
+3. For each document found (via search OR from training knowledge), provide:
+   - The document type (closest match from list above, or "No Type Match")
+   - The full document name/title
+   - A direct URL to the PDF or the page that hosts the document (use the real URL found via search; if not found via search, use the best URL you know — flag uncertain ones with "(unverified)" appended to the name)
+4. Include documents matching the known types AND other relevant ESG/sustainability documents you find.
+5. List each distinct document once under its most specific type.
 
 Return ONLY valid JSON (no markdown, no extra text):
 {
@@ -334,50 +333,62 @@ Return ONLY valid JSON (no markdown, no extra text):
     {
       "document_type": "Type from the list above, or 'No Type Match'",
       "document_name": "Full document title",
-      "document_url": "Direct URL to the PDF or the page hosting the document"
+      "document_url": "URL to the PDF or hosting page, or null if genuinely unknown"
     }
   ]
 }`;
 
-  let claudeResponse;
+  // Helper: call Claude, return parsed content text or throw
+  async function callClaude(extraHeaders, bodyExtra) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 25000);
+    try {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        signal: controller.signal,
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": apiKey,
+          "anthropic-version": "2023-06-01",
+          ...extraHeaders,
+        },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-6",
+          max_tokens: 4096,
+          messages: [{ role: "user", content: prompt }],
+          ...bodyExtra,
+        }),
+      });
+      if (!res.ok) throw new Error(`status:${res.status}`);
+      const data = await res.json();
+      return (data.content || [])
+        .filter(b => b.type === "text")
+        .map(b => b.text)
+        .join("");
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  // Try web search first; fall back to training-knowledge only on timeout/error
+  let rawText = "";
+  let usingWebSearch = true;
   try {
-    claudeResponse = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 4096,
-        tools: [{ type: "web_search_20260209", name: "web_search" }],
-        messages: [{ role: "user", content: prompt }],
-      }),
-    });
+    rawText = await callClaude(
+      { "anthropic-beta": "web-search-2025-03-05" },
+      { tools: [{ type: "web_search_20250305", name: "web_search" }] }
+    );
   } catch (err) {
-    return new Response(JSON.stringify({ error: "Failed to reach Claude API" }), {
-      status: 502,
-      headers: { "Content-Type": "application/json", ...corsHeaders },
-    });
+    usingWebSearch = false;
+    try {
+      rawText = await callClaude({}, {});
+    } catch (err2) {
+      return new Response(JSON.stringify({ error: "Failed to reach Claude API", detail: String(err2) }), {
+        status: 502,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
   }
-
-  if (!claudeResponse.ok) {
-    const errText = await claudeResponse.text();
-    return new Response(JSON.stringify({ error: `Claude API error: ${claudeResponse.status}`, detail: errText }), {
-      status: 502,
-      headers: { "Content-Type": "application/json", ...corsHeaders },
-    });
-  }
-
-  const claudeData = await claudeResponse.json();
-
-  // With web search, content may have multiple blocks (tool_use, tool_result, text).
-  // Extract all text blocks and join them to find the JSON output.
-  const rawText = (claudeData.content || [])
-    .filter(block => block.type === "text")
-    .map(block => block.text)
-    .join("");
 
   let parsed;
   try {
