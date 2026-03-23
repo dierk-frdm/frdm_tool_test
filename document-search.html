@@ -84,6 +84,12 @@ nav a.back:hover{text-decoration:underline;}
 .db-chip.err{background:#f8d7da;border-color:#f5c6cb;color:#721c24;}
 .db-chip.loading{background:#e8f0fe;border-color:#c5d8ff;color:#1558b0;}
 
+/* ── URL status badges ── */
+.url-verified{display:inline-block;padding:.1rem .45rem;border-radius:4px;font-size:.7rem;font-weight:600;white-space:nowrap;}
+.url-verified.ok{background:#d4edda;color:#155724;}
+.url-verified.fail{background:#f8d7da;color:#721c24;}
+.url-verified.unknown{background:#f1f3f7;color:#888;}
+
 /* ── Stats ── */
 .stats-row{display:flex;gap:1rem;margin:.75rem 0;flex-wrap:wrap;}
 .stat-box{background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:.6rem 1rem;text-align:center;min-width:110px;}
@@ -205,6 +211,7 @@ nav a.back:hover{text-decoration:underline;}
                 <th>Document Type</th>
                 <th>Document Name</th>
                 <th>URL</th>
+                <th>URL Status</th>
               </tr>
             </thead>
             <tbody id="results-body"></tbody>
@@ -472,6 +479,12 @@ async function processSupplier(sup) {
   addResults(sup.supplier_name, sup.business_entity_id, data.documents || []);
 }
 
+function urlStatusHtml(verified) {
+  if (verified === true)  return '<span class="url-verified ok">✅ Verified</span>';
+  if (verified === false) return '<span class="url-verified fail">❌ Not found</span>';
+  return '<span class="url-verified unknown">❓ Unverified</span>';
+}
+
 function addResults(supplierName, entityId, docs) {
   const tbody = qs('results-body');
   for (const doc of docs) {
@@ -481,6 +494,7 @@ function addResults(supplierName, entityId, docs) {
       document_type: doc.document_type || 'No Type Match',
       document_name: doc.document_name || '',
       document_url: doc.document_url || '',
+      url_verified: doc.url_verified,   // true | false | null
     };
     S.results.push(row);
 
@@ -491,10 +505,9 @@ function addResults(supplierName, entityId, docs) {
       : '<span style="color:#bbb">—</span>';
 
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${escHtml(supplierName)}</td><td>${escHtml(entityId)}</td><td>${typeHtml}</td><td>${escHtml(row.document_name)}</td><td>${urlHtml}</td>`;
+    tr.innerHTML = `<td>${escHtml(supplierName)}</td><td>${escHtml(entityId)}</td><td>${typeHtml}</td><td>${escHtml(row.document_name)}</td><td>${urlHtml}</td><td>${urlStatusHtml(row.url_verified)}</td>`;
     tbody.appendChild(tr);
   }
-  // Auto-scroll results table
   const wrap = tbody.closest('.results-wrap');
   if (wrap) wrap.scrollTop = wrap.scrollHeight;
 }
@@ -516,10 +529,14 @@ function updateStats() {
 // ── Export ─────────────────────────────────────────────────────────────────
 function exportCSV() {
   if (!S.results.length) return;
-  const cols = ['supplier_name', 'business_entity_id', 'document_type', 'document_name', 'document_url'];
+  const cols = ['supplier_name', 'business_entity_id', 'document_type', 'document_name', 'document_url', 'url_verified'];
   const lines = [cols.join(',')];
   for (const r of S.results) {
-    lines.push(cols.map(c => csvCell(r[c] || '')).join(','));
+    const row = {
+      ...r,
+      url_verified: r.url_verified === true ? 'verified' : r.url_verified === false ? 'not_found' : 'unverified',
+    };
+    lines.push(cols.map(c => csvCell(row[c] || '')).join(','));
   }
   const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
