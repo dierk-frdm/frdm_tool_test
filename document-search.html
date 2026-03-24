@@ -264,9 +264,6 @@ nav a.back:hover{text-decoration:underline;}
             <div class="gh-field"><label>File Path</label><input id="doc-gh-path" type="text" placeholder="data/document_url_log.json"/></div>
             <div class="gh-field"><label>Branch</label><input id="doc-gh-branch" type="text" placeholder="main"/></div>
           </div>
-          <div class="gh-field-row">
-            <div class="gh-field" style="flex:1"><label>GitHub PAT <span style="font-weight:400;opacity:.7">(optional if server secret set)</span></label><input id="doc-gh-token" type="password" placeholder="ghp_…"/></div>
-          </div>
           <div class="btn-row" style="margin-top:.5rem;">
             <button class="btn btn-secondary" onclick="saveDocGhConfig()">Save Settings</button>
             <button class="btn btn-primary" onclick="loadDocUrlLog()">Load URL Log Now</button>
@@ -634,7 +631,6 @@ function saveDocGhConfig() {
     repo:   qs('doc-gh-repo').value.trim(),
     path:   qs('doc-gh-path').value.trim(),
     branch: qs('doc-gh-branch').value.trim() || 'main',
-    token:  qs('doc-gh-token').value.trim(),
   };
   localStorage.setItem('frdm_doc_gh_config', JSON.stringify(cfg));
   qs('doc-gh-status').textContent = '✓ Settings saved.';
@@ -647,7 +643,6 @@ function loadDocGhConfig() {
     if (cfg.repo)   qs('doc-gh-repo').value   = cfg.repo;
     if (cfg.path)   qs('doc-gh-path').value   = cfg.path;
     if (cfg.branch) qs('doc-gh-branch').value = cfg.branch;
-    if (cfg.token)  qs('doc-gh-token').value  = cfg.token;
   } catch {}
 }
 
@@ -719,13 +714,12 @@ async function saveToUrlLog() {
         repo:       cfg.repo,
         path:       cfg.path,
         branch:     cfg.branch || 'main',
-        token:      cfg.token || undefined,
         content:    grouped,
         merge_mode: 'doc_log',
       }),
     });
     const data = await resp.json();
-    if (!resp.ok || data.error) throw new Error(data.error || 'API error ' + resp.status);
+    if (!resp.ok || data.error) throw new Error((data.error || 'API error ' + resp.status) + (data.detail ? ' — ' + data.detail : ''));
     Object.assign(S.docUrlLog, grouped);
     saveBtn.innerHTML = '✓ Saved to URL Log';
     saveBtn.style.background = 'var(--green)';
