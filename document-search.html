@@ -109,6 +109,25 @@ nav a.back:hover{text-decoration:underline;}
 .type-badge.no-match{background:#f1f3f7;color:#888;}
 
 @media(max-width:640px){.col-grid{grid-template-columns:1fr;}.stats-row{gap:.5rem;}.stat-box{min-width:80px;}}
+
+/* ── URL Log ── */
+.btn-secondary{background:#fff;color:var(--accent);border:1.5px solid var(--accent);}
+.btn-secondary:not(:disabled):hover{background:#f0f5ff;}
+.log-info-banner{background:#e8f0fe;border:1px solid #c5d8ff;border-radius:7px;padding:.65rem 1rem;font-size:.83rem;color:#1558b0;margin-top:.75rem;}
+.cached-row td{background:#f0fff4;}
+.cached-badge{display:inline-block;padding:.1rem .45rem;border-radius:4px;font-size:.7rem;font-weight:600;background:#d4edda;color:#155724;}
+.collapse-hdr{display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:.75rem 0;user-select:none;font-size:.9rem;font-weight:600;color:var(--muted);border-top:1px solid var(--border);}
+.collapse-hdr .chev{font-size:.75rem;color:var(--muted);transition:transform .2s;}
+.collapse-hdr.open .chev{transform:rotate(180deg);}
+.collapse-body{display:none;padding-bottom:.75rem;}
+.collapse-body.open{display:block;}
+.gh-field-row{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.75rem;}
+.gh-field{display:flex;flex-direction:column;gap:.3rem;}
+.gh-field label{font-size:.75rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;}
+.gh-field input{padding:.45rem .7rem;border:1.5px solid var(--border);border-radius:7px;font-size:.85rem;color:var(--text);background:#fff;outline:none;}
+.gh-field input:focus{border-color:var(--accent);}
+@keyframes spin{to{transform:rotate(360deg);}}
+.spinner{display:inline-block;width:12px;height:12px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:.3rem;}
 </style>
 </head>
 <body>
@@ -190,9 +209,12 @@ nav a.back:hover{text-decoration:underline;}
       <p id="search-summary" style="font-size:.875rem;color:var(--muted);margin-bottom:.5rem;"></p>
       <div class="progress-track"><div class="progress-fill" id="search-progress"></div></div>
       <div id="search-status" class="alert alert-info">Waiting for supplier file and document types…</div>
+      <div id="log-info-banner" class="log-info-banner" style="display:none;"></div>
+
       <div class="btn-row">
         <button class="btn btn-primary" id="run-btn" onclick="runSearch()" disabled>🔍 Run Document Search</button>
         <button class="btn btn-success" id="export-btn" onclick="exportCSV()" disabled>⬇️ Export CSV</button>
+        <button class="btn btn-secondary" id="save-log-btn" onclick="saveToUrlLog()" disabled>📚 Save to URL Log</button>
       </div>
 
       <div id="results-section" style="display:none;margin-top:1.5rem;">
@@ -219,7 +241,35 @@ nav a.back:hover{text-decoration:underline;}
         </div>
         <p style="font-size:.75rem;color:var(--muted);margin-top:.5rem;">
           🔍 URLs are found via live web search. Links should point directly to the document PDF or its hosting page — verify any that don't load as expected.
+          Rows highlighted in <span style="background:#f0fff4;padding:0 3px;border-radius:2px;">green</span> are cached from a previous search run.
         </p>
+      </div>
+
+      <!-- GitHub config for document URL log -->
+      <div style="margin-top:1.5rem;">
+        <div class="collapse-hdr" onclick="toggleCollapse(this)">
+          <span>☁️ GitHub Config — Document URL Log</span>
+          <span class="chev">▼</span>
+        </div>
+        <div class="collapse-body">
+          <p style="font-size:.83rem;color:var(--muted);margin-bottom:.75rem;">
+            Configure a GitHub repo and path to persist found document URLs. The <strong>GITHUB_API_KEY</strong> server secret is used — no token needed here.
+            On load, previously found URLs are surfaced in results. After searching, use <em>Save to URL Log</em> to persist new findings.
+          </p>
+          <div class="gh-field-row">
+            <div class="gh-field"><label>Owner</label><input id="doc-gh-owner" type="text" placeholder="dierk-frdm"/></div>
+            <div class="gh-field"><label>Repo</label><input id="doc-gh-repo" type="text" placeholder="frdm_tool_test"/></div>
+          </div>
+          <div class="gh-field-row">
+            <div class="gh-field"><label>File Path</label><input id="doc-gh-path" type="text" placeholder="data/document_url_log.json"/></div>
+            <div class="gh-field"><label>Branch</label><input id="doc-gh-branch" type="text" placeholder="main"/></div>
+          </div>
+          <div class="btn-row" style="margin-top:.5rem;">
+            <button class="btn btn-secondary" onclick="saveDocGhConfig()">Save Settings</button>
+            <button class="btn btn-primary" onclick="loadDocUrlLog()">Load URL Log Now</button>
+          </div>
+          <div id="doc-gh-status" style="margin-top:.5rem;font-size:.8rem;color:var(--muted);"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -239,6 +289,7 @@ const S = {
   done: false,
   results: [],
   processed: 0,
+  docUrlLog: {},   // { key: { supplier_name, documents: [...] } }
 };
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -455,6 +506,7 @@ async function runSearch() {
   qs('search-status').textContent =
     `✅ Done! Found ${S.results.length} document${S.results.length !== 1 ? 's' : ''} across ${total} supplier${total !== 1 ? 's' : ''}.`;
   qs('export-btn').disabled = false;
+  qs('save-log-btn').disabled = false;
   setStepNum('s3num', 'done');
 }
 
@@ -463,20 +515,29 @@ async function processSupplier(sup) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      supplier_name: sup.supplier_name,
+      supplier_name:      sup.supplier_name,
       business_entity_id: sup.business_entity_id,
-      document_types: S.docTypes,
+      document_types:     S.docTypes,
     }),
   });
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: 'Unknown error' }));
     console.warn('API error for', sup.supplier_name, err);
-    return;
-  }
+  } else {
+    const data = await res.json();
+    const freshDocs = data.documents || [];
+    addResults(sup.supplier_name, sup.business_entity_id, freshDocs);
 
-  const data = await res.json();
-  addResults(sup.supplier_name, sup.business_entity_id, data.documents || []);
+    // Append cached URLs not already in fresh results
+    const key = getDocKey(sup);
+    const prior = S.docUrlLog[key];
+    if (prior && prior.documents && prior.documents.length) {
+      const freshUrls = new Set(freshDocs.map(d => d.document_url).filter(Boolean));
+      const newCached = prior.documents.filter(d => d.document_url && !freshUrls.has(d.document_url));
+      if (newCached.length) addResults(sup.supplier_name, sup.business_entity_id, newCached, true);
+    }
+  }
 }
 
 function urlStatusHtml(verified) {
@@ -485,26 +546,29 @@ function urlStatusHtml(verified) {
   return '<span class="url-verified unknown">❓ Unverified</span>';
 }
 
-function addResults(supplierName, entityId, docs) {
+function addResults(supplierName, entityId, docs, cached = false) {
   const tbody = qs('results-body');
   for (const doc of docs) {
     const row = {
-      supplier_name: supplierName,
+      supplier_name:      supplierName,
       business_entity_id: entityId,
-      document_type: doc.document_type || 'No Type Match',
-      document_name: doc.document_name || '',
-      document_url: doc.document_url || '',
-      url_verified: doc.url_verified,   // true | false | null
+      document_type:      doc.document_type || 'No Type Match',
+      document_name:      doc.document_name || '',
+      document_url:       doc.document_url || '',
+      url_verified:       doc.url_verified,
+      cached,
     };
     S.results.push(row);
 
     const isNoMatch = row.document_type === 'No Type Match';
-    const typeHtml = `<span class="type-badge${isNoMatch ? ' no-match' : ''}" title="${escAttr(row.document_type)}">${escHtml(row.document_type)}</span>`;
+    const cachedBadge = cached ? ' <span class="cached-badge">📚 cached</span>' : '';
+    const typeHtml = `<span class="type-badge${isNoMatch ? ' no-match' : ''}" title="${escAttr(row.document_type)}">${escHtml(row.document_type)}</span>${cachedBadge}`;
     const urlHtml = row.document_url
       ? `<a href="${escAttr(row.document_url)}" target="_blank" rel="noopener noreferrer">View ↗</a>`
       : '<span style="color:#bbb">—</span>';
 
     const tr = document.createElement('tr');
+    if (cached) tr.className = 'cached-row';
     tr.innerHTML = `<td>${escHtml(supplierName)}</td><td>${escHtml(entityId)}</td><td>${typeHtml}</td><td>${escHtml(row.document_name)}</td><td>${urlHtml}</td><td>${urlStatusHtml(row.url_verified)}</td>`;
     tbody.appendChild(tr);
   }
@@ -547,10 +611,138 @@ function exportCSV() {
   URL.revokeObjectURL(url);
 }
 
+// ── Document URL Log ───────────────────────────────────────────────────────
+function slugName(name) {
+  return String(name).toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+}
+
+function getDocKey(sup) {
+  const id = String(sup.business_entity_id || '').trim();
+  return id || slugName(sup.supplier_name);
+}
+
+function getDocGhConfig() {
+  try { return JSON.parse(localStorage.getItem('frdm_doc_gh_config')) || {}; } catch { return {}; }
+}
+
+function saveDocGhConfig() {
+  const cfg = {
+    owner:  qs('doc-gh-owner').value.trim(),
+    repo:   qs('doc-gh-repo').value.trim(),
+    path:   qs('doc-gh-path').value.trim(),
+    branch: qs('doc-gh-branch').value.trim() || 'main',
+  };
+  localStorage.setItem('frdm_doc_gh_config', JSON.stringify(cfg));
+  qs('doc-gh-status').textContent = '✓ Settings saved.';
+}
+
+function loadDocGhConfig() {
+  try {
+    const cfg = JSON.parse(localStorage.getItem('frdm_doc_gh_config')) || {};
+    if (cfg.owner)  qs('doc-gh-owner').value  = cfg.owner;
+    if (cfg.repo)   qs('doc-gh-repo').value   = cfg.repo;
+    if (cfg.path)   qs('doc-gh-path').value   = cfg.path;
+    if (cfg.branch) qs('doc-gh-branch').value = cfg.branch;
+  } catch {}
+}
+
+async function loadDocUrlLog() {
+  const cfg = getDocGhConfig();
+  if (!cfg.owner || !cfg.repo || !cfg.path) return;
+  const statusEl = qs('doc-gh-status');
+  statusEl.innerHTML = '<span class="spinner"></span> Loading URL log…';
+  try {
+    const resp = await fetch('/api/config-read', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ owner: cfg.owner, repo: cfg.repo, path: cfg.path }),
+    });
+    const data = await resp.json();
+    if (!resp.ok || data.error) throw new Error(data.error || 'API error ' + resp.status);
+    S.docUrlLog = data.content || {};
+    const count = Object.keys(S.docUrlLog).length;
+    statusEl.textContent = `✓ Loaded ${count} supplier${count !== 1 ? 's' : ''} from URL log.`;
+    const banner = qs('log-info-banner');
+    if (count > 0) {
+      banner.style.display = 'block';
+      banner.textContent = `📚 URL log loaded — ${count} supplier${count !== 1 ? 's' : ''} with cached documents. Previously found URLs will appear alongside fresh results (highlighted in green).`;
+    } else {
+      banner.style.display = 'none';
+    }
+  } catch (err) {
+    statusEl.innerHTML = `<span style="color:var(--red)">✗ Failed to load URL log: ${escHtml(err.message)}</span>`;
+  }
+}
+
+async function saveToUrlLog() {
+  const saveBtn = qs('save-log-btn');
+  const cfg = getDocGhConfig();
+  if (!cfg.owner || !cfg.repo || !cfg.path) {
+    alert('Configure the GitHub settings (at the bottom of this page) to save the URL log.');
+    return;
+  }
+  saveBtn.disabled = true;
+  saveBtn.innerHTML = '<span class="spinner"></span> Saving…';
+
+  const today = new Date().toISOString().slice(0, 10);
+  const grouped = {};
+  for (const r of S.results.filter(r => !r.cached && r.document_url)) {
+    const key = getDocKey({ supplier_name: r.supplier_name, business_entity_id: r.business_entity_id });
+    if (!grouped[key]) grouped[key] = { supplier_name: r.supplier_name, documents: [] };
+    grouped[key].documents.push({
+      document_type: r.document_type,
+      document_name: r.document_name,
+      document_url:  r.document_url,
+      url_verified:  r.url_verified,
+      date_found:    today,
+    });
+  }
+
+  if (!Object.keys(grouped).length) {
+    saveBtn.innerHTML = '📚 Save to URL Log';
+    saveBtn.disabled = false;
+    alert('No fresh (non-cached) results with URLs to save.');
+    return;
+  }
+
+  try {
+    const resp = await fetch('/api/config-write', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        owner:      cfg.owner,
+        repo:       cfg.repo,
+        path:       cfg.path,
+        branch:     cfg.branch || 'main',
+        content:    grouped,
+        merge_mode: 'doc_log',
+      }),
+    });
+    const data = await resp.json();
+    if (!resp.ok || data.error) throw new Error(data.error || 'API error ' + resp.status);
+    Object.assign(S.docUrlLog, grouped);
+    saveBtn.innerHTML = '✓ Saved to URL Log';
+    saveBtn.style.background = 'var(--green)';
+    saveBtn.style.color = '#fff';
+    saveBtn.style.borderColor = 'var(--green)';
+  } catch (err) {
+    saveBtn.innerHTML = '📚 Save to URL Log';
+    saveBtn.disabled = false;
+    alert('Failed to save URL log: ' + err.message);
+  }
+}
+
+function toggleCollapse(hdr) {
+  hdr.classList.toggle('open');
+  hdr.nextElementSibling.classList.toggle('open');
+}
+
 // ── Init ───────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   setupUpload();
   loadDocTypes();
+  loadDocGhConfig();
+  loadDocUrlLog();  // auto-load if config is set
 });
 </script>
 </body>

@@ -261,11 +261,84 @@ footer{text-align:center;color:#aaa;font-size:.8rem;padding:2.5rem 1rem;border-t
       </div>
 
       <div class="form-group">
-        <label class="form-label" for="reg-notes">Notes <span>(optional — stored in log only)</span></label>
+        <label class="form-label">Risk Types <span>(one or more — used for slug generation and JSON config)</span></label>
+        <div class="radio-group" id="reg-risks-group">
+          <label class="radio-label"><input type="checkbox" value="human_rights" onchange="updateRiskStyles()"/> Human Rights</label>
+          <label class="radio-label"><input type="checkbox" value="environmental" onchange="updateRiskStyles()"/> Environmental</label>
+          <label class="radio-label"><input type="checkbox" value="health" onchange="updateRiskStyles()"/> Health</label>
+          <label class="radio-label"><input type="checkbox" value="planet" onchange="updateRiskStyles()"/> Planet</label>
+          <label class="radio-label"><input type="checkbox" value="water" onchange="updateRiskStyles()"/> Water</label>
+          <label class="radio-label"><input type="checkbox" value="cyber" onchange="updateRiskStyles()"/> Cyber</label>
+          <label class="radio-label"><input type="checkbox" value="geopolitical" onchange="updateRiskStyles()"/> Geopolitical</label>
+          <label class="radio-label"><input type="checkbox" value="tariff" onchange="updateRiskStyles()"/> Tariff</label>
+          <label class="radio-label"><input type="checkbox" value="governance" onchange="updateRiskStyles()"/> Governance</label>
+          <label class="radio-label"><input type="checkbox" value="operations" onchange="updateRiskStyles()"/> Operations</label>
+          <label class="radio-label"><input type="checkbox" value="people" onchange="updateRiskStyles()"/> People</label>
+          <label class="radio-label"><input type="checkbox" value="cbp" onchange="updateRiskStyles()"/> CBP</label>
+          <label class="radio-label"><input type="checkbox" value="trade" onchange="updateRiskStyles()"/> Trade</label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="reg-description">Description <span>(optional — stored in JSON config)</span></label>
+        <textarea id="reg-description" class="form-input" rows="3" placeholder="What industries/activities does this regulation cover and why does it matter for supply chains?"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="reg-link">Source Link <span>(optional — official URL for the regulation)</span></label>
+        <input id="reg-link" class="form-input" type="url" placeholder="https://"/>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="reg-update-freq">Update Frequency <span>(optional)</span></label>
+        <input id="reg-update-freq" class="form-input" type="text" list="freq-options" placeholder="Yearly"/>
+        <datalist id="freq-options">
+          <option value="Yearly"/>
+          <option value="UNKNOWN"/>
+          <option value="Quarterly"/>
+          <option value="Monthly"/>
+        </datalist>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="reg-notes">Notes <span>(optional — stored in log and JSON config)</span></label>
         <input id="reg-notes" class="form-input" type="text" placeholder="e.g. Applies to all manufacturing sub-sectors"/>
       </div>
 
       <button class="btn btn-secondary btn-full" onclick="addToBatch()">+ Add to Batch</button>
+    </div>
+
+    <!-- GitHub config for regulation_configurations.json -->
+    <div class="card">
+      <div class="collapsible-header" onclick="toggleCollapsible(this)">
+        <span>☁️ GitHub Config — regulation_configurations.json</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="collapsible-body">
+        <div class="alert alert-info show" style="margin-bottom:1rem;">
+          After exporting, the regulation config will be written to this GitHub path using the server-stored <strong>GITHUB_API_KEY</strong> secret. Leave blank to skip the GitHub write.
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;">
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label" for="reg-gh-owner">Owner</label>
+            <input id="reg-gh-owner" class="form-input" type="text" placeholder="dierk-frdm"/>
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label" for="reg-gh-repo">Repo</label>
+            <input id="reg-gh-repo" class="form-input" type="text" placeholder="frdm_tool_test"/>
+          </div>
+        </div>
+        <div class="form-group" style="margin-top:.75rem;">
+          <label class="form-label" for="reg-gh-path">File Path</label>
+          <input id="reg-gh-path" class="form-input" type="text" placeholder="data/regulation_configurations.json"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="reg-gh-branch">Branch</label>
+          <input id="reg-gh-branch" class="form-input" type="text" placeholder="main"/>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="saveRegGhConfig()">Save Settings</button>
+        <div id="reg-gh-status" style="margin-top:.5rem;font-size:.8rem;color:var(--muted);"></div>
+      </div>
     </div>
 
     <!-- Batch queue -->
@@ -273,9 +346,10 @@ footer{text-align:center;color:#aaa;font-size:.8rem;padding:2.5rem 1rem;border-t
       <div class="card-title">Batch Queue</div>
       <div id="batch-container"></div>
       <div class="action-row" style="margin-top:1rem;">
-        <button id="btn-export-batch" class="btn btn-primary" onclick="exportBatch()" disabled>Export Batch as CSV</button>
+        <button id="btn-export-batch" class="btn btn-primary" onclick="exportBatch()" disabled>Export CSVs &amp; Save to GitHub</button>
         <button class="btn btn-secondary btn-sm" onclick="clearBatch()">Clear Batch</button>
       </div>
+      <div id="batch-gh-status" style="margin-top:.6rem;font-size:.82rem;color:var(--muted);"></div>
     </div>
 
   </div><!-- /tab-regulations -->
@@ -330,11 +404,12 @@ footer{text-align:center;color:#aaa;font-size:.8rem;padding:2.5rem 1rem;border-t
 // ─────────────────────────────────────────────────
 // GLOBALS
 // ─────────────────────────────────────────────────
-const LOG_KEY   = 'frdm_reg_warn_log';
-const GIST_KEY  = 'frdm_gist_settings';
+const LOG_KEY    = 'frdm_reg_warn_log';
+const GIST_KEY   = 'frdm_gist_settings';
+const REG_GH_KEY = 'frdm_reg_gh_config';
 let naicsData   = null;  // Array of {code, standard_name}
 let naicsLoaded = false;
-let batch       = [];    // [{name, matchedCodes: Set<string>, notes}]
+let batch       = [];    // [{name, matchedCodes, naics_codes, naics_prefixes, risks, description, link, update_frequency, notes}]
 
 // ─────────────────────────────────────────────────
 // TAB SWITCHING
@@ -350,12 +425,62 @@ function switchTab(name, btn) {
 }
 
 // ─────────────────────────────────────────────────
-// RADIO STYLE SYNC
+// RADIO / CHECKBOX STYLE SYNC
 // ─────────────────────────────────────────────────
 function updateRadioStyles() {
   document.querySelectorAll('#warn-type-group .radio-label').forEach(lbl => {
     lbl.classList.toggle('checked', lbl.querySelector('input').checked);
   });
+}
+
+function updateRiskStyles() {
+  document.querySelectorAll('#reg-risks-group .radio-label').forEach(lbl => {
+    lbl.classList.toggle('checked', lbl.querySelector('input').checked);
+  });
+}
+
+function getSelectedRisks() {
+  return Array.from(document.querySelectorAll('#reg-risks-group input:checked')).map(el => el.value);
+}
+
+function setSelectedRisks(risks) {
+  document.querySelectorAll('#reg-risks-group input').forEach(el => {
+    el.checked = risks.includes(el.value);
+  });
+  updateRiskStyles();
+}
+
+function clearRisks() {
+  document.querySelectorAll('#reg-risks-group input').forEach(el => { el.checked = false; });
+  updateRiskStyles();
+}
+
+// ─────────────────────────────────────────────────
+// GITHUB CONFIG FOR REGULATION_CONFIGURATIONS.JSON
+// ─────────────────────────────────────────────────
+function saveRegGhConfig() {
+  const cfg = {
+    owner:  document.getElementById('reg-gh-owner').value.trim(),
+    repo:   document.getElementById('reg-gh-repo').value.trim(),
+    path:   document.getElementById('reg-gh-path').value.trim(),
+    branch: document.getElementById('reg-gh-branch').value.trim() || 'main',
+  };
+  localStorage.setItem(REG_GH_KEY, JSON.stringify(cfg));
+  document.getElementById('reg-gh-status').textContent = '✓ Settings saved.';
+}
+
+function loadRegGhConfig() {
+  try {
+    const cfg = JSON.parse(localStorage.getItem(REG_GH_KEY)) || {};
+    if (cfg.owner)  document.getElementById('reg-gh-owner').value  = cfg.owner;
+    if (cfg.repo)   document.getElementById('reg-gh-repo').value   = cfg.repo;
+    if (cfg.path)   document.getElementById('reg-gh-path').value   = cfg.path;
+    if (cfg.branch) document.getElementById('reg-gh-branch').value = cfg.branch;
+  } catch {}
+}
+
+function getRegGhConfig() {
+  try { return JSON.parse(localStorage.getItem(REG_GH_KEY)) || {}; } catch { return {}; }
 }
 
 // ─────────────────────────────────────────────────
@@ -494,15 +619,13 @@ async function analyzeDocument(filename, contentType, data) {
 
 function applyDocResults() {
   if (!lastDocResult) return;
-  if (lastDocResult.regulation_name) {
-    document.getElementById('reg-name').value = lastDocResult.regulation_name;
-  }
+  if (lastDocResult.regulation_name) document.getElementById('reg-name').value = lastDocResult.regulation_name;
   const codes = (lastDocResult.naics_suggestions || []).join('\n');
-  if (codes) {
-    document.getElementById('reg-codes').value = codes;
-    updatePreview();
-  }
-  // Scroll to form
+  if (codes) { document.getElementById('reg-codes').value = codes; updatePreview(); }
+  if (lastDocResult.risk_suggestions) setSelectedRisks(lastDocResult.risk_suggestions);
+  if (lastDocResult.description) document.getElementById('reg-description').value = lastDocResult.description;
+  if (lastDocResult.link) document.getElementById('reg-link').value = lastDocResult.link;
+  if (lastDocResult.update_frequency) document.getElementById('reg-update-freq').value = lastDocResult.update_frequency;
   document.getElementById('reg-name').scrollIntoView({ behavior: 'smooth', block: 'center' });
   document.getElementById('reg-name').focus();
 }
@@ -612,28 +735,40 @@ function addToBatch() {
 
   if (!naicsLoaded) return showAlert(alertEl, 'error', 'NAICS data is still loading. Please wait.');
 
-  const name  = document.getElementById('reg-name').value.trim();
-  const raw   = document.getElementById('reg-codes').value;
-  const notes = document.getElementById('reg-notes').value.trim();
+  const name            = document.getElementById('reg-name').value.trim();
+  const raw             = document.getElementById('reg-codes').value;
+  const description     = document.getElementById('reg-description').value.trim();
+  const link            = document.getElementById('reg-link').value.trim();
+  const update_frequency = document.getElementById('reg-update-freq').value.trim();
+  const notes           = document.getElementById('reg-notes').value.trim();
+  const risks           = getSelectedRisks();
 
   if (!name) return showAlert(alertEl, 'error', 'Please enter a Regulation Name.');
 
   const matchedCodes = expandPrefixes(raw);
   if (matchedCodes.size === 0) return showAlert(alertEl, 'error', 'No NAICS codes matched. Check your prefixes or codes.');
 
-  // Check for duplicate name
   if (batch.some(b => b.name.toLowerCase() === name.toLowerCase())) {
     return showAlert(alertEl, 'error', `A regulation named "${name}" is already in the batch.`);
   }
 
-  batch.push({ name, matchedCodes, notes });
+  // Separate exact 6-digit codes from shorter prefixes as entered by user
+  const lines = raw.split('\n').map(l => l.trim()).filter(l => /^\d{2,6}$/.test(l));
+  const naics_codes    = lines.filter(l => l.length === 6);
+  const naics_prefixes = lines.filter(l => l.length < 6);
+
+  batch.push({ name, matchedCodes, naics_codes, naics_prefixes, risks, description, link, update_frequency, notes });
   renderBatch();
 
   // Clear form
-  document.getElementById('reg-name').value  = '';
-  document.getElementById('reg-codes').value = '';
-  document.getElementById('reg-notes').value = '';
+  document.getElementById('reg-name').value        = '';
+  document.getElementById('reg-codes').value       = '';
+  document.getElementById('reg-description').value = '';
+  document.getElementById('reg-link').value        = '';
+  document.getElementById('reg-update-freq').value = '';
+  document.getElementById('reg-notes').value       = '';
   document.getElementById('reg-preview').innerHTML = '';
+  clearRisks();
   showAlert(alertEl, 'success', `✓ Added <strong>${name}</strong> (${matchedCodes.size.toLocaleString()} codes) to batch.`);
 }
 
@@ -651,12 +786,16 @@ function renderBatch() {
   }
 
   exportBtn.disabled = false;
-  let html = '<div class="table-wrap"><table><thead><tr><th>#</th><th>Regulation Name</th><th>NAICS Codes Matched</th><th>Notes</th><th></th></tr></thead><tbody>';
+  let html = '<div class="table-wrap"><table><thead><tr><th>#</th><th>Regulation Name</th><th>NAICS Matched</th><th>Risk Types</th><th>Notes</th><th></th></tr></thead><tbody>';
   batch.forEach((item, i) => {
+    const riskBadges = item.risks && item.risks.length
+      ? item.risks.map(r => `<span class="risk-code-chip">${escHtml(r)}</span>`).join(' ')
+      : '<span style="color:var(--muted)">—</span>';
     html += `<tr>
       <td style="color:var(--muted)">${i + 1}</td>
       <td><strong>${escHtml(item.name)}</strong></td>
       <td>${item.matchedCodes.size.toLocaleString()}</td>
+      <td>${riskBadges}</td>
       <td style="color:var(--muted)">${escHtml(item.notes || '—')}</td>
       <td><button class="btn btn-danger btn-sm" onclick="removeFromBatch(${i})">Remove</button></td>
     </tr>`;
@@ -678,44 +817,99 @@ function clearBatch() {
 }
 
 // ─────────────────────────────────────────────────
-// BATCH: EXPORT CSV
+// BATCH: EXPORT CSVs + GITHUB WRITE
 // ─────────────────────────────────────────────────
-function exportBatch() {
+async function exportBatch() {
   if (batch.length === 0) return;
 
-  // Build rows: all NAICS codes as base, x-mark columns per regulation
-  const regNames = batch.map(b => b.name);
-  const rows = naicsData.map(row => {
-    const entry = {
-      standard_name: row.standard_name,
-      code:          row.code,
-      code_type:     'naics',
-      naics:         row.code
-    };
-    regNames.forEach((name, i) => {
-      entry[name] = batch[i].matchedCodes.has(row.code) ? 'x' : '';
+  const exportBtn  = document.getElementById('btn-export-batch');
+  const ghStatusEl = document.getElementById('batch-gh-status');
+  const alertEl    = document.getElementById('reg-alert');
+  exportBtn.disabled = true;
+  ghStatusEl.innerHTML = '<span class="spinner"></span> Exporting…';
+
+  try {
+    const dateFmt  = today();
+    const regNames = batch.map(b => b.name);
+
+    // ── CSV 1: Industry Regulations (only rows where ≥1 regulation matches) ──
+    const allRows = naicsData.map(row => {
+      const entry = { standard_name: row.standard_name, code: row.code, code_type: 'naics', naics: row.code };
+      regNames.forEach((name, i) => { entry[name] = batch[i].matchedCodes.has(row.code) ? 'x' : ''; });
+      return entry;
     });
-    return entry;
-  });
+    const matchingRows = allRows.filter(row => regNames.some(n => row[n] === 'x'));
+    downloadBlob(Papa.unparse(matchingRows), `industry_regulations_${dateFmt}.csv`, 'text/csv');
 
-  const csv      = Papa.unparse(rows);
-  const dateFmt  = today();
-  const filename = `industry_regulations_${dateFmt}.csv`;
-  downloadBlob(csv, filename, 'text/csv');
+    // ── CSV 2: Slug Reference (one row per regulation × risk type) ──
+    const slugRows = [];
+    for (const item of batch) {
+      const risks = item.risks && item.risks.length ? item.risks : ['unknown'];
+      for (const risk of risks) {
+        slugRows.push({
+          regulation_slug: `${risk}_${slugify(item.name)}`,
+          regulation_name: item.name,
+          risk_name:       risk,
+        });
+      }
+    }
+    downloadBlob(Papa.unparse(slugRows), `regulation_slugs_${dateFmt}.csv`, 'text/csv');
 
-  // Log
-  appendLog({
-    type:    'regulations',
-    name:    regNames.join(', '),
-    details: `${regNames.length} regulation${regNames.length !== 1 ? 's' : ''} · ${naicsData.length.toLocaleString()} NAICS rows`,
-    notes:   batch.map(b => b.notes).filter(Boolean).join('; ')
-  });
+    // ── Log ──
+    appendLog({
+      type:    'regulations',
+      name:    regNames.join(', '),
+      details: `${regNames.length} regulation${regNames.length !== 1 ? 's' : ''} · ${matchingRows.length.toLocaleString()} matching NAICS rows`,
+      notes:   batch.map(b => b.notes).filter(Boolean).join('; ')
+    });
 
-  showAlert(document.getElementById('reg-alert'), 'success',
-    `✓ Downloaded <strong>${filename}</strong> — ${regNames.length} regulation${regNames.length !== 1 ? 's' : ''}, ${naicsData.length.toLocaleString()} NAICS rows.`);
+    showAlert(alertEl, 'success',
+      `✓ Downloaded <strong>industry_regulations_${dateFmt}.csv</strong> (${matchingRows.length.toLocaleString()} rows) and <strong>regulation_slugs_${dateFmt}.csv</strong> (${slugRows.length} slugs).`);
 
-  batch = [];
-  renderBatch();
+    // ── GitHub write — regulation_configurations.json ──
+    const ghCfg = getRegGhConfig();
+    if (ghCfg.owner && ghCfg.repo && ghCfg.path) {
+      ghStatusEl.innerHTML = '<span class="spinner"></span> Saving to GitHub…';
+      const configEntries = {};
+      for (const item of batch) {
+        configEntries[item.name] = {
+          risks:            item.risks || [],
+          naics_codes:      item.naics_codes || [],
+          naics_prefixes:   item.naics_prefixes || [],
+          description:      item.description || null,
+          link:             item.link || null,
+          update_frequency: item.update_frequency || 'UNKNOWN',
+          notes:            item.notes || null,
+        };
+      }
+      try {
+        const ghResp = await fetch('/api/config-write', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            owner:       ghCfg.owner,
+            repo:        ghCfg.repo,
+            path:        ghCfg.path,
+            branch:      ghCfg.branch || 'main',
+            content:     configEntries,
+            merge_mode:  'regulation',
+          }),
+        });
+        const ghData = await ghResp.json();
+        if (!ghResp.ok || ghData.error) throw new Error(ghData.error || 'API error ' + ghResp.status);
+        ghStatusEl.textContent = `✓ Saved to GitHub (${ghCfg.path}) — commit ${(ghData.commit_sha || '').slice(0, 7)}`;
+      } catch (err) {
+        ghStatusEl.innerHTML = `<span style="color:var(--critical)">✗ GitHub write failed: ${escHtml(err.message)}</span>`;
+      }
+    } else {
+      ghStatusEl.textContent = 'GitHub config not set — skipped. Configure it in the ☁️ section above.';
+    }
+
+    batch = [];
+    renderBatch();
+  } finally {
+    exportBtn.disabled = false;
+  }
 }
 
 // ─────────────────────────────────────────────────
@@ -882,6 +1076,7 @@ function escHtml(str) {
 (function init() {
   renderBatch();
   initDocUpload();
+  loadRegGhConfig();
 
   // Restore Gist settings if saved
   try {
