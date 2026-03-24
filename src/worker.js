@@ -26,6 +26,14 @@ export default {
       return handleGithubWrite(request, env);
     }
 
+    if (url.pathname === "/api/config-read" && (request.method === "POST" || request.method === "OPTIONS")) {
+      return handleConfigRead(request, env);
+    }
+
+    if (url.pathname === "/api/config-write" && (request.method === "POST" || request.method === "OPTIONS")) {
+      return handleConfigWrite(request, env);
+    }
+
     return env.ASSETS.fetch(request);
   },
 };
@@ -680,4 +688,171 @@ async function handleGithubWrite(request, env) {
     commit_sha: ghData.commit?.sha,
     file_sha: ghData.content?.sha,
   }), { headers: { "Content-Type": "application/json", ...corsHeaders } });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// INTERNAL: read a GitHub file, returns { content, sha, exists } or throws
+// ─────────────────────────────────────────────────────────────────────────────
+async function githubReadFile(token, owner, repo, path, ref = "main") {
+  const ghUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=${encodeURIComponent(ref)}`;
+  const ghResp = await fetch(ghUrl, {
+    headers: {
+      "Authorization": `Bearer ${token}`,
+      "Accept": "application/vnd.github+json",
+      "X-GitHub-Api-Version": "2022-11-28",
+      "User-Agent": "FRDM-Tools/1.0",
+    },
+  });
+  if (ghResp.status === 404) return { content: {}, sha: null, exists: false };
+  if (!ghResp.ok) {
+    const errText = await ghResp.text();
+    throw new Error(`GitHub API error ${ghResp.status}: ${errText.slice(0, 200)}`);
+  }
+  const ghData = await ghResp.json();
+  const rawBase64 = (ghData.content || "").replace(/\n/g, "");
+  let decoded;
+  try { decoded = atob(rawBase64); } catch { throw new Error("Failed to decode file content"); }
+  let text;
+  try {
+    const bytes = Uint8Array.from(decoded, c => c.charCodeAt(0));
+    text = new TextDecoder("utf-8").decode(bytes);
+  } catch { text = decoded; }
+  let parsed;
+  try { parsed = JSON.parse(text); } catch { parsed = {}; }
+  return { content: parsed, sha: ghData.sha, exists: true };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CONFIG READ — read a repo JSON file using server-stored GITHUB_API_KEY
+// POST body: { owner, repo, path, ref? }
+// ─────────────────────────────────────────────────────────────────────────────
+async function handleConfigRead(request, env) {
+  const corsHeaders = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+  };
+  if (request.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+
+  const token = env.GITHUB_API_KEY;
+  if (!token) return new Response(JSON.stringify({ error: "GITHUB_API_KEY secret not configured" }), { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } });
+
+  let body;
+  try { body = await request.json(); }
+  catch { return new Response(JSON.stringify({ error: "Invalid JSON" }), { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }); }
+
+  const { owner, repo, path, ref = "main" } = body;
+  if (!owner || !repo || !path) {
+    return new Response(JSON.stringify({ error: "owner, repo, and path are required" }), { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } });
+  }
+
+  try {
+    const result = await githubReadFile(token, owner, repo, path, ref);
+    return new Response(JSON.stringify(result), { headers: { "Content-Type": "application/json", ...corsHeaders } });
+  } catch (err) {
+    return new Response(JSON.stringify({ error: String(err.message) }), { status: 502, headers: { "Content-Type": "application/json", ...corsHeaders } });
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CONFIG WRITE — merge-write a repo JSON file using server-stored GITHUB_API_KEY
+// POST body: { owner, repo, path, content, branch?, message?, merge_mode? }
+//   merge_mode: "regulation" — preserves date_added, updates last_updated
+//   merge_mode: "doc_log"    — union-merges documents array by document_url
+//   (default)                — shallow merge (incoming keys override existing)
+// ─────────────────────────────────────────────────────────────────────────────
+async function handleConfigWrite(request, env) {
+  const corsHeaders = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+  };
+  if (request.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+
+  const token = env.GITHUB_API_KEY;
+  if (!token) return new Response(JSON.stringify({ error: "GITHUB_API_KEY secret not configured" }), { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } });
+
+  let body;
+  try { body = await request.json(); }
+  catch { return new Response(JSON.stringify({ error: "Invalid JSON" }), { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }); }
+
+  const { owner, repo, path, branch = "main", content, message, merge_mode } = body;
+  if (!owner || !repo || !path || content === undefined) {
+    return new Response(JSON.stringify({ error: "owner, repo, path, and content are required" }), { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } });
+  }
+
+  // Read current file to get sha + existing content for merging
+  let existingData = {};
+  let existingSha = null;
+  try {
+    const existing = await githubReadFile(token, owner, repo, path, branch);
+    existingData = existing.content || {};
+    existingSha = existing.sha;
+  } catch { /* file may not exist yet — start fresh */ }
+
+  const todayStr = new Date().toISOString().slice(0, 10);
+  let merged = { ...existingData };
+
+  if (merge_mode === "regulation") {
+    for (const [key, val] of Object.entries(content)) {
+      if (merged[key] && typeof merged[key] === "object") {
+        merged[key] = { ...merged[key], ...val, date_added: merged[key].date_added || todayStr, last_updated: todayStr };
+      } else {
+        merged[key] = { ...val, date_added: todayStr, last_updated: todayStr };
+      }
+    }
+  } else if (merge_mode === "doc_log") {
+    for (const [key, val] of Object.entries(content)) {
+      if (merged[key] && typeof merged[key] === "object") {
+        const byUrl = {};
+        for (const d of (merged[key].documents || [])) { if (d.document_url) byUrl[d.document_url] = d; }
+        for (const d of (val.documents || [])) { if (d.document_url && !byUrl[d.document_url]) byUrl[d.document_url] = d; }
+        merged[key] = { ...merged[key], ...val, documents: Object.values(byUrl), last_searched: todayStr };
+      } else {
+        merged[key] = { ...val, last_searched: todayStr };
+      }
+    }
+  } else {
+    merged = { ...merged, ...content };
+  }
+
+  const commitMessage = message || (merge_mode === "regulation"
+    ? "Update regulation_configurations.json"
+    : merge_mode === "doc_log"
+      ? "Update document_url_log.json"
+      : "Update config file");
+
+  const jsonStr = JSON.stringify(merged, null, 2);
+  const encoder = new TextEncoder();
+  const bytes = encoder.encode(jsonStr);
+  const base64 = btoa(String.fromCharCode(...bytes));
+
+  const putBody = { message: commitMessage, content: base64, branch };
+  if (existingSha) putBody.sha = existingSha;
+
+  const ghUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+  let ghResp;
+  try {
+    ghResp = await fetch(ghUrl, {
+      method: "PUT",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+        "User-Agent": "FRDM-Tools/1.0",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(putBody),
+    });
+  } catch (err) {
+    return new Response(JSON.stringify({ error: "Failed to reach GitHub API", detail: String(err) }), { status: 502, headers: { "Content-Type": "application/json", ...corsHeaders } });
+  }
+
+  if (!ghResp.ok) {
+    const errText = await ghResp.text();
+    return new Response(JSON.stringify({ error: `GitHub API error: ${ghResp.status}`, detail: errText.slice(0, 300) }), { status: ghResp.status, headers: { "Content-Type": "application/json", ...corsHeaders } });
+  }
+
+  const ghData = await ghResp.json();
+  return new Response(JSON.stringify({ success: true, commit_sha: ghData.commit?.sha, file_sha: ghData.content?.sha }), { headers: { "Content-Type": "application/json", ...corsHeaders } });
 }
