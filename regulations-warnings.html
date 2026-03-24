@@ -6,6 +6,7 @@
 <title>Regulations &amp; Warnings Builder | FRDM Internal Tools</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 <style>
 :root {
   --bg:#f8f9fa;--panel:#fff;--panel2:#f8f9fa;
@@ -121,6 +122,26 @@ tr:hover td{background:#fafbff;}
 .action-row{display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;margin-top:.5rem;}
 
 footer{text-align:center;color:#aaa;font-size:.8rem;padding:2.5rem 1rem;border-top:1px solid #e8eaf0;margin-top:2rem;}
+
+/* Document upload zone */
+.upload-zone{border:2px dashed var(--border);border-radius:8px;padding:1.75rem 1rem;text-align:center;cursor:pointer;transition:border-color .15s,background .15s;background:#fafbff;}
+.upload-zone:hover,.upload-zone.dragover{border-color:var(--accent);background:#f0f6ff;}
+.upload-zone .upload-icon{font-size:1.75rem;margin-bottom:.4rem;}
+.upload-zone .upload-title{font-size:.875rem;font-weight:600;color:var(--text);margin-bottom:.2rem;}
+.upload-zone .upload-sub{font-size:.75rem;color:var(--muted);}
+
+/* AI result panel */
+.ai-result-panel{background:#f8faff;border:1px solid #c5d8fc;border-radius:8px;padding:1.1rem 1.25rem;margin-top:1rem;}
+.ai-result-panel .result-row{display:flex;gap:.5rem;margin-bottom:.6rem;font-size:.85rem;}
+.ai-result-panel .result-label{font-weight:600;color:var(--muted);min-width:110px;flex-shrink:0;}
+.ai-result-panel .result-value{color:var(--text);line-height:1.5;}
+.naics-chip-list{display:flex;flex-wrap:wrap;gap:.35rem;}
+.naics-code-chip{display:inline-block;font-size:.75rem;font-weight:600;padding:2px 9px;border-radius:20px;background:#e8f0fe;color:#1a4da0;font-family:monospace;}
+.risk-code-chip{display:inline-block;font-size:.75rem;font-weight:600;padding:2px 9px;border-radius:20px;background:#fff3cd;color:#856404;}
+
+/* Spinner */
+@keyframes spin{to{transform:rotate(360deg);}}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:.4rem;}
 </style>
 </head>
 <body>
@@ -198,6 +219,30 @@ footer{text-align:center;color:#aaa;font-size:.8rem;padding:2.5rem 1rem;border-t
 
     <!-- NAICS load status -->
     <div id="naics-chip" class="naics-chip loading">⏳ Loading NAICS database…</div>
+
+    <!-- AI Document Analysis card -->
+    <div class="card">
+      <div class="card-title">AI Document Analysis</div>
+      <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;line-height:1.5;">Upload a regulation document and let AI suggest the regulation name and NAICS codes automatically. Supported formats: <strong>PDF, TXT, DOCX, XLSX, CSV</strong>.</p>
+
+      <div id="doc-upload-zone" class="upload-zone" onclick="document.getElementById('doc-file-input').click()">
+        <input type="file" id="doc-file-input" accept=".pdf,.txt,.docx,.xlsx,.csv" style="display:none" onchange="handleDocFile(this.files[0])"/>
+        <div class="upload-icon">📄</div>
+        <div class="upload-title">Drop document here or click to browse</div>
+        <div class="upload-sub">PDF · TXT · DOCX · XLSX · CSV</div>
+      </div>
+
+      <div id="doc-status" style="font-size:.83rem;color:var(--muted);margin-top:.65rem;min-height:1.2rem;"></div>
+
+      <div id="doc-result-panel" class="ai-result-panel" style="display:none">
+        <div class="result-row"><span class="result-label">Regulation</span><span class="result-value" id="res-name"></span></div>
+        <div class="result-row"><span class="result-label">Description</span><span class="result-value" id="res-desc"></span></div>
+        <div class="result-row"><span class="result-label">NAICS Codes</span><span class="result-value" id="res-naics"></span></div>
+        <div class="result-row"><span class="result-label">Risk Types</span><span class="result-value" id="res-risks"></span></div>
+        <div class="result-row"><span class="result-label">Reasoning</span><span class="result-value" id="res-reason" style="font-style:italic;color:var(--muted);"></span></div>
+        <button class="btn btn-primary btn-sm" style="margin-top:.5rem" onclick="applyDocResults()">Apply to Form Below ↓</button>
+      </div>
+    </div>
 
     <div class="card">
       <div class="card-title">Add a Regulation to the Batch</div>
@@ -311,6 +356,155 @@ function updateRadioStyles() {
   document.querySelectorAll('#warn-type-group .radio-label').forEach(lbl => {
     lbl.classList.toggle('checked', lbl.querySelector('input').checked);
   });
+}
+
+// ─────────────────────────────────────────────────
+// DOCUMENT UPLOAD & AI ANALYSIS
+// ─────────────────────────────────────────────────
+let lastDocResult = null;
+
+function initDocUpload() {
+  const zone = document.getElementById('doc-upload-zone');
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if (file) handleDocFile(file);
+  });
+}
+
+async function handleDocFile(file) {
+  if (!file) return;
+  const statusEl = document.getElementById('doc-status');
+  const resultEl = document.getElementById('doc-result-panel');
+  resultEl.style.display = 'none';
+  lastDocResult = null;
+
+  const ext = file.name.split('.').pop().toLowerCase();
+  const allowed = ['pdf', 'txt', 'docx', 'xlsx', 'csv'];
+  if (!allowed.includes(ext)) {
+    statusEl.innerHTML = `<span style="color:var(--critical)">✗ Unsupported file type ".${escHtml(ext)}". Please upload PDF, TXT, DOCX, XLSX, or CSV.</span>`;
+    return;
+  }
+
+  statusEl.innerHTML = `<span class="spinner"></span> Reading <strong>${escHtml(file.name)}</strong>…`;
+
+  try {
+    let contentType, data;
+
+    if (ext === 'pdf') {
+      const buf = await readAsArrayBuffer(file);
+      const bytes = new Uint8Array(buf);
+      let binary = '';
+      for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+      data = btoa(binary);
+      contentType = 'application/pdf';
+
+    } else if (ext === 'docx') {
+      if (typeof mammoth === 'undefined') throw new Error('mammoth.js not loaded — cannot parse DOCX');
+      const buf = await readAsArrayBuffer(file);
+      const result = await mammoth.extractRawText({ arrayBuffer: buf });
+      data = result.value;
+      contentType = 'text/plain';
+
+    } else if (ext === 'xlsx') {
+      const buf = await readAsArrayBuffer(file);
+      const wb = XLSX.read(buf, { type: 'array' });
+      const parts = wb.SheetNames.map(name => {
+        const csv = XLSX.utils.sheet_to_csv(wb.Sheets[name]);
+        return `=== Sheet: ${name} ===\n${csv}`;
+      });
+      data = parts.join('\n\n');
+      contentType = 'text/plain';
+
+    } else {
+      // txt or csv — read as text
+      data = await readAsText(file);
+      contentType = 'text/plain';
+    }
+
+    statusEl.innerHTML = `<span class="spinner"></span> Analyzing with AI…`;
+    await analyzeDocument(file.name, contentType, data);
+
+  } catch (err) {
+    statusEl.innerHTML = `<span style="color:var(--critical)">✗ ${escHtml(err.message)}</span>`;
+  }
+}
+
+function readAsArrayBuffer(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = e => resolve(e.target.result);
+    r.onerror = () => reject(new Error('Failed to read file'));
+    r.readAsArrayBuffer(file);
+  });
+}
+
+function readAsText(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = e => resolve(e.target.result);
+    r.onerror = () => reject(new Error('Failed to read file'));
+    r.readAsText(file);
+  });
+}
+
+async function analyzeDocument(filename, contentType, data) {
+  const statusEl = document.getElementById('doc-status');
+  const resultEl = document.getElementById('doc-result-panel');
+
+  let resp;
+  try {
+    resp = await fetch('/api/analyze-regulation-doc', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ filename, content_type: contentType, data })
+    });
+  } catch (err) {
+    throw new Error('Network error reaching API: ' + err.message);
+  }
+
+  const json = await resp.json();
+  if (!resp.ok || json.error) {
+    throw new Error(json.error || ('API error ' + resp.status));
+  }
+
+  lastDocResult = json;
+  statusEl.innerHTML = `✓ Analysis complete for <strong>${escHtml(filename)}</strong>`;
+
+  // Populate result panel
+  document.getElementById('res-name').textContent = json.regulation_name || '—';
+  document.getElementById('res-desc').textContent = json.description || '—';
+
+  const naicsList = (json.naics_suggestions || []);
+  document.getElementById('res-naics').innerHTML = naicsList.length
+    ? `<span class="naics-chip-list">${naicsList.map(c => `<span class="naics-code-chip">${escHtml(c)}</span>`).join('')}</span>`
+    : '—';
+
+  const riskList = (json.risk_suggestions || []);
+  document.getElementById('res-risks').innerHTML = riskList.length
+    ? riskList.map(r => `<span class="risk-code-chip">${escHtml(r)}</span>`).join(' ')
+    : '—';
+
+  document.getElementById('res-reason').textContent = json.reasoning || '';
+  resultEl.style.display = 'block';
+}
+
+function applyDocResults() {
+  if (!lastDocResult) return;
+  if (lastDocResult.regulation_name) {
+    document.getElementById('reg-name').value = lastDocResult.regulation_name;
+  }
+  const codes = (lastDocResult.naics_suggestions || []).join('\n');
+  if (codes) {
+    document.getElementById('reg-codes').value = codes;
+    updatePreview();
+  }
+  // Scroll to form
+  document.getElementById('reg-name').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  document.getElementById('reg-name').focus();
 }
 
 // ─────────────────────────────────────────────────
@@ -687,6 +881,7 @@ function escHtml(str) {
 // ─────────────────────────────────────────────────
 (function init() {
   renderBatch();
+  initDocUpload();
 
   // Restore Gist settings if saved
   try {
