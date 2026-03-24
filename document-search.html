@@ -655,7 +655,7 @@ async function loadDocUrlLog() {
     const resp = await fetch('/api/config-read', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ owner: cfg.owner, repo: cfg.repo, path: cfg.path }),
+      body: JSON.stringify({ owner: cfg.owner, repo: cfg.repo, path: cfg.path, token: cfg.token || undefined }),
     });
     const data = await resp.json();
     if (!resp.ok || data.error) throw new Error(data.error || 'API error ' + resp.status);
@@ -719,7 +719,7 @@ async function saveToUrlLog() {
       }),
     });
     const data = await resp.json();
-    if (!resp.ok || data.error) throw new Error(data.error || 'API error ' + resp.status);
+    if (!resp.ok || data.error) throw new Error((data.error || 'API error ' + resp.status) + (data.detail ? ' — ' + data.detail : ''));
     Object.assign(S.docUrlLog, grouped);
     saveBtn.innerHTML = '✓ Saved to URL Log';
     saveBtn.style.background = 'var(--green)';
