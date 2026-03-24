@@ -734,12 +734,12 @@ async function handleConfigRead(request, env) {
   };
   if (request.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
-  const token = env.GITHUB_API_KEY;
-  if (!token) return new Response(JSON.stringify({ error: "GITHUB_API_KEY secret not configured" }), { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } });
-
   let body;
   try { body = await request.json(); }
   catch { return new Response(JSON.stringify({ error: "Invalid JSON" }), { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }); }
+
+  const token = body.token || env.GITHUB_API_KEY;
+  if (!token) return new Response(JSON.stringify({ error: "No GitHub token provided and GITHUB_API_KEY secret not configured" }), { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } });
 
   const { owner, repo, path, ref = "main" } = body;
   if (!owner || !repo || !path) {
@@ -769,12 +769,12 @@ async function handleConfigWrite(request, env) {
   };
   if (request.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
-  const token = env.GITHUB_API_KEY;
-  if (!token) return new Response(JSON.stringify({ error: "GITHUB_API_KEY secret not configured" }), { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } });
-
   let body;
   try { body = await request.json(); }
   catch { return new Response(JSON.stringify({ error: "Invalid JSON" }), { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }); }
+
+  const token = body.token || env.GITHUB_API_KEY;
+  if (!token) return new Response(JSON.stringify({ error: "No GitHub token provided and GITHUB_API_KEY secret not configured" }), { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } });
 
   const { owner, repo, path, branch = "main", content, message, merge_mode } = body;
   if (!owner || !repo || !path || content === undefined) {

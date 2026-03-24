@@ -336,6 +336,10 @@ footer{text-align:center;color:#aaa;font-size:.8rem;padding:2.5rem 1rem;border-t
           <label class="form-label" for="reg-gh-branch">Branch</label>
           <input id="reg-gh-branch" class="form-input" type="text" placeholder="main"/>
         </div>
+        <div class="form-group">
+          <label class="form-label" for="reg-gh-token">GitHub PAT <span style="font-weight:400;color:var(--muted)">(optional if server secret is set)</span></label>
+          <input id="reg-gh-token" class="form-input" type="password" placeholder="ghp_…"/>
+        </div>
         <button class="btn btn-secondary btn-sm" onclick="saveRegGhConfig()">Save Settings</button>
         <div id="reg-gh-status" style="margin-top:.5rem;font-size:.8rem;color:var(--muted);"></div>
       </div>
@@ -464,6 +468,7 @@ function saveRegGhConfig() {
     repo:   document.getElementById('reg-gh-repo').value.trim(),
     path:   document.getElementById('reg-gh-path').value.trim(),
     branch: document.getElementById('reg-gh-branch').value.trim() || 'main',
+    token:  document.getElementById('reg-gh-token').value.trim(),
   };
   localStorage.setItem(REG_GH_KEY, JSON.stringify(cfg));
   document.getElementById('reg-gh-status').textContent = '✓ Settings saved.';
@@ -476,6 +481,7 @@ function loadRegGhConfig() {
     if (cfg.repo)   document.getElementById('reg-gh-repo').value   = cfg.repo;
     if (cfg.path)   document.getElementById('reg-gh-path').value   = cfg.path;
     if (cfg.branch) document.getElementById('reg-gh-branch').value = cfg.branch;
+    if (cfg.token)  document.getElementById('reg-gh-token').value  = cfg.token;
   } catch {}
 }
 
@@ -891,6 +897,7 @@ async function exportBatch() {
             repo:        ghCfg.repo,
             path:        ghCfg.path,
             branch:      ghCfg.branch || 'main',
+            token:       ghCfg.token || undefined,
             content:     configEntries,
             merge_mode:  'regulation',
           }),
