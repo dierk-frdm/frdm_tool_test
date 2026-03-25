@@ -4,75 +4,110 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>QBR Generator · FRDM Tools</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
   <style>
+    :root {
+      --yellow:         #DBE451;
+      --yellow-dark:    #C7D14B;
+      --blue-black:     #072637;
+      --putty:          #B6A9A9;
+      --off-white:      #F1EEE8;
+      --blue-black-alt: #1A3658;
+      --klein-blue:     #0085F2;
+      --border:         rgba(255,255,255,0.1);
+      --font-sans:      'DM Sans', 'Inter', system-ui, sans-serif;
+      --font-serif:     'Playfair Display', 'Georgia', serif;
+      --radius:         12px;
+    }
+
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: #f8f9fa;
-      color: #1a1a2e;
+      font-family: var(--font-sans);
+      background: var(--blue-black);
+      color: var(--off-white);
       min-height: 100vh;
     }
 
     /* ── Nav ── */
     nav {
-      background: #fff;
-      border-bottom: 1px solid #e0e4ef;
+      background: var(--blue-black);
+      border-bottom: 1px solid var(--border);
       padding: 0 2rem;
       height: 56px;
       display: flex;
       align-items: center;
       gap: 0.6rem;
     }
-    nav a.logo { font-size: 1.25rem; font-weight: 700; color: #1a1a2e; text-decoration: none; }
-    nav .sep  { color: #ccc; }
-    nav .page { font-size: 0.95rem; color: #555; }
+    nav a.logo {
+      font-size: 1.1rem; font-weight: 800; color: var(--off-white);
+      text-decoration: none; letter-spacing: 0.02em;
+    }
+    nav a.logo span { color: var(--yellow); }
+    nav .sep  { color: rgba(255,255,255,0.2); }
+    nav .page { font-size: 0.85rem; color: var(--putty); letter-spacing: 0.06em; text-transform: uppercase; }
 
     /* ── Setup UI ── */
     .setup { max-width: 700px; margin: 3rem auto; padding: 0 2rem; }
-    .setup h1 { font-size: 1.75rem; font-weight: 700; margin-bottom: 0.3rem; }
-    .setup p  { color: #666; font-size: 0.95rem; margin-bottom: 2rem; }
+    .setup h1 { font-size: 1.75rem; font-weight: 800; margin-bottom: 0.3rem; color: var(--off-white); }
+    .setup p  { color: var(--putty); font-size: 0.95rem; margin-bottom: 2rem; }
 
     .upload-zone {
-      border: 2px dashed #c8d0e0;
-      border-radius: 12px;
+      border: 2px dashed rgba(255,255,255,0.2);
+      border-radius: var(--radius);
+      background: var(--blue-black-alt);
       padding: 2.5rem;
       text-align: center;
       cursor: pointer;
       transition: border-color 0.2s, background 0.2s;
       margin-bottom: 1.5rem;
     }
-    .upload-zone:hover, .upload-zone.drag { border-color: #1a73e8; background: #f0f5ff; }
-    .upload-zone.loaded { border-color: #28a745; background: #f0fff4; }
+    .upload-zone:hover, .upload-zone.drag {
+      border-color: var(--yellow);
+      background: rgba(219,228,81,0.06);
+    }
+    .upload-zone.loaded { border-color: #4caf72; background: rgba(76,175,114,0.08); }
     .upload-zone .icon { font-size: 2.5rem; margin-bottom: 0.5rem; }
-    .upload-zone p { color: #666; font-size: 0.9rem; margin: 0; }
-    .upload-zone p strong { color: #1a1a2e; }
+    .upload-zone p { color: var(--putty); font-size: 0.9rem; margin: 0; }
+    .upload-zone p strong { color: var(--off-white); }
     #file-input { display: none; }
 
     .options { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
-    .field label { display: block; font-size: 0.82rem; font-weight: 600; color: #555; margin-bottom: 0.35rem; }
+    .field label {
+      display: block; font-size: 0.78rem; font-weight: 600;
+      color: var(--putty); margin-bottom: 0.35rem;
+      text-transform: uppercase; letter-spacing: 0.06em;
+    }
     .field input {
-      width: 100%; padding: 0.6rem 0.8rem;
-      border: 1.5px solid #d1d5e0; border-radius: 8px;
-      font-size: 0.95rem; color: #1a1a2e;
+      width: 100%; padding: 0.65rem 0.9rem;
+      border: 1.5px solid rgba(255,255,255,0.15);
+      border-radius: 8px;
+      font-size: 0.95rem; font-family: var(--font-sans);
+      color: var(--off-white); background: var(--blue-black-alt);
       outline: none; transition: border-color 0.15s;
     }
-    .field input:focus { border-color: #1a73e8; }
+    .field input:focus { border-color: var(--yellow); }
+    .field input::placeholder { color: rgba(182,169,169,0.5); }
 
     .btn {
       display: inline-flex; align-items: center; gap: 0.5rem;
       padding: 0.7rem 1.5rem; border-radius: 8px; border: none;
-      font-size: 0.95rem; font-weight: 600; cursor: pointer;
-      transition: opacity 0.15s;
+      font-size: 0.9rem; font-weight: 700; font-family: var(--font-sans);
+      cursor: pointer; transition: all 0.15s;
     }
-    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
-    .btn-primary { background: #1a73e8; color: #fff; }
-    .btn-primary:not(:disabled):hover { background: #1558b0; }
-    .btn-outline { background: #fff; color: #1a73e8; border: 1.5px solid #1a73e8; }
-    .btn-outline:hover { background: #f0f5ff; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-primary { background: var(--yellow); color: var(--blue-black); }
+    .btn-primary:not(:disabled):hover { background: var(--yellow-dark); }
+    .btn-outline {
+      background: transparent; color: var(--off-white);
+      border: 1.5px solid rgba(255,255,255,0.2);
+    }
+    .btn-outline:hover { border-color: var(--yellow); color: var(--yellow); }
 
     .btn-row { display: flex; gap: 0.75rem; align-items: center; }
+    #file-status { font-size: 0.85rem; color: var(--putty); }
 
     /* ── Report ── */
     #report { display: none; }
@@ -83,82 +118,103 @@
     }
 
     /* ── Slides ── */
-    .slides { max-width: 900px; margin: 1rem auto 3rem; padding: 0 2rem; display: flex; flex-direction: column; gap: 1.5rem; }
+    .slides {
+      max-width: 900px; margin: 1rem auto 3rem; padding: 0 2rem;
+      display: flex; flex-direction: column; gap: 1.5rem;
+    }
 
     .slide {
-      border-radius: 12px; overflow: hidden;
-      box-shadow: 0 2px 16px rgba(0,0,0,0.1);
+      border-radius: var(--radius); overflow: hidden;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.35);
       background: #fff;
       page-break-inside: avoid;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
     }
 
     /* Cover slide */
     .slide-cover {
-      background: #1a1a2e;
+      background: var(--blue-black);
+      border: 1px solid rgba(219,228,81,0.2);
       padding: 3.5rem 3rem;
       min-height: 220px;
       display: flex; flex-direction: column; justify-content: center;
     }
-    .slide-cover .tag { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; color: #6b80d6; text-transform: uppercase; margin-bottom: 0.75rem; }
-    .slide-cover h1 { font-size: 2rem; font-weight: 700; color: #fff; margin-bottom: 0.4rem; }
-    .slide-cover .company { font-size: 1.2rem; color: #b0bcf0; margin-bottom: 0.75rem; }
-    .slide-cover .meta { font-size: 0.85rem; color: #666; }
+    .slide-cover .tag {
+      font-size: 0.68rem; font-weight: 700; letter-spacing: 0.12em;
+      color: var(--yellow); text-transform: uppercase; margin-bottom: 0.75rem;
+    }
+    .slide-cover h1 { font-size: 2rem; font-weight: 800; color: var(--off-white); margin-bottom: 0.4rem; }
+    .slide-cover .company { font-size: 1.2rem; color: var(--yellow); margin-bottom: 0.75rem; font-weight: 600; }
+    .slide-cover .meta { font-size: 0.82rem; color: var(--putty); }
 
     /* Section header bar */
     .slide-header {
-      background: #0f3c96;
+      background: var(--blue-black-alt);
       padding: 0.75rem 1.5rem;
     }
-    .slide-header h2 { font-size: 1.1rem; font-weight: 700; color: #fff; }
+    .slide-header h2 {
+      font-size: 1rem; font-weight: 700; color: var(--off-white);
+      letter-spacing: 0.04em; text-transform: uppercase;
+    }
 
-    .slide-body { padding: 1.5rem; }
+    .slide-body { padding: 1.5rem; background: #fff; }
 
     /* Stat boxes */
     .stat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; margin-bottom: 1.5rem; }
     .stat-box {
-      background: #16213e;
+      background: var(--blue-black-alt);
+      border: 1px solid rgba(255,255,255,0.08);
       border-radius: 8px; padding: 0.9rem 1rem;
       text-align: center;
     }
-    .stat-box .val { font-size: 1.6rem; font-weight: 700; color: #fff; line-height: 1.1; }
-    .stat-box .lbl { font-size: 0.72rem; color: #888ea4; margin-top: 0.3rem; line-height: 1.3; }
-    .stat-box.accent { background: #0f3c96; }
+    .stat-box .val { font-size: 1.5rem; font-weight: 800; color: var(--off-white); line-height: 1.1; }
+    .stat-box .lbl { font-size: 0.7rem; color: var(--putty); margin-top: 0.3rem; line-height: 1.3; }
+    .stat-box.accent { background: var(--blue-black); border-color: rgba(219,228,81,0.3); }
+    .stat-box.accent .val { color: var(--yellow); }
 
     /* Bar charts */
     .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
-    .chart-title { font-size: 0.85rem; font-weight: 700; color: #1a1a2e; margin-bottom: 0.75rem; }
+    .chart-title {
+      font-size: 0.78rem; font-weight: 700; color: var(--blue-black);
+      margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em;
+    }
 
     .bar-row { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.4rem; font-size: 0.78rem; }
-    .bar-label { width: 140px; flex-shrink: 0; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .bar-track { flex: 1; background: #f0f2f8; border-radius: 3px; height: 10px; overflow: hidden; }
+    .bar-label { width: 140px; flex-shrink: 0; color: #2a3a44; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .bar-track { flex: 1; background: #eaedf2; border-radius: 3px; height: 10px; overflow: hidden; }
     .bar-fill  { height: 10px; border-radius: 3px; }
-    .bar-count { width: 30px; text-align: right; color: #888; flex-shrink: 0; }
+    .bar-count { width: 30px; text-align: right; color: var(--putty); flex-shrink: 0; }
 
     /* Supplier rows */
     .supplier-row {
       display: flex; align-items: center; gap: 0.75rem;
-      background: #f4f6fb; border-radius: 6px;
+      background: #f2f4f8; border-radius: 6px;
       padding: 0.5rem 0.75rem; margin-bottom: 0.4rem;
       font-size: 0.82rem;
     }
-    .supplier-name { flex: 1; color: #1a1a2e; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .supplier-name { flex: 1; color: var(--blue-black); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .risk-chip {
-      font-size: 0.7rem; font-weight: 700; color: #fff;
+      font-size: 0.68rem; font-weight: 700; color: #fff;
       padding: 2px 8px; border-radius: 20px; flex-shrink: 0;
     }
-    .sub-text { font-size: 0.75rem; color: #888; flex-shrink: 0; }
+    .sub-text { font-size: 0.75rem; color: #6b7a85; flex-shrink: 0; }
 
     /* Bullets */
     .bullet-list { list-style: none; padding: 0; }
     .bullet-list li {
       padding: 0.35rem 0 0.35rem 1.2rem;
-      position: relative; font-size: 0.88rem; color: #333; border-bottom: 1px solid #f0f2f8;
+      position: relative; font-size: 0.88rem; color: #1a2a35; border-bottom: 1px solid #eaedf2;
     }
-    .bullet-list li::before { content: "•"; position: absolute; left: 0; color: #1a73e8; }
+    .bullet-list li::before { content: "•"; position: absolute; left: 0; color: var(--klein-blue); }
     .bullet-list li:last-child { border-bottom: none; }
 
     /* Footer note */
-    .slide-footer { font-size: 0.75rem; color: #aaa; text-align: center; padding: 0.75rem 1.5rem; border-top: 1px solid #f0f2f8; }
+    .slide-footer {
+      font-size: 0.72rem; color: #8a96a0; text-align: center;
+      padding: 0.75rem 1.5rem; border-top: 1px solid #eaedf2;
+      background: #fff;
+    }
 
     /* Print */
     @media print {
@@ -174,7 +230,7 @@
 <body>
 
 <nav>
-  <a href="index.html" class="logo">🛡️ FRDM Tools</a>
+  <a href="index.html" class="logo"><span>FRDM</span> Tools</a>
   <span class="sep">›</span>
   <span class="page">QBR Generator</span>
 </nav>
@@ -299,8 +355,8 @@ function transLabel(s) {
 }
 
 const RISK_COLORS = {
-  'Low': '#28a745', 'Low Moderate': '#8bc34a',
-  'Moderate': '#ffa500', 'High': '#ff5722', 'Elevated': '#dc3545', 'N/A': '#888ea4'
+  'Low': '#4caf72', 'Low Moderate': '#8bc34a',
+  'Moderate': '#f5a623', 'High': '#e05252', 'Elevated': '#b83232', 'N/A': '#6b7a85'
 };
 const TRANS_LABELS = ['Very Low', 'Low', 'Moderate', 'High', 'Very High'];
 
@@ -423,7 +479,7 @@ function buildExecSummary(stats) {
     const row = h('div', { class: 'stat-row' });
     row.appendChild(statBox('Total Suppliers Monitored', stats.total.toLocaleString(), true));
     row.appendChild(statBox('Avg Risk Score', stats.avgRisk.toFixed(2), false, RISK_COLORS[riskLabel(stats.avgRisk)]));
-    row.appendChild(statBox('Avg Transparency', stats.avgTrans.toFixed(2)));
+    row.appendChild(statBox('Avg Transparency', stats.avgTrans.toFixed(2), false, '#0085F2'));
     row.appendChild(statBox('Suppliers w/ Alerts', stats.alertCount));
     body.appendChild(row);
 
@@ -432,11 +488,11 @@ function buildExecSummary(stats) {
 
     barChart(left, 'Risk Distribution',
       ['Low','Low Moderate','Moderate','High','Elevated'].map(l => [l, stats.riskDist[l] || 0]),
-      stats.total, '#1a73e8');
+      stats.total, '#0085F2');
 
     barChart(right, 'Transparency Distribution',
       TRANS_LABELS.map(l => [l, stats.transDist[l] || 0]),
-      stats.total, '#0f3c96');
+      stats.total, '#1A3658');
 
     cols.appendChild(left); cols.appendChild(right);
     body.appendChild(cols);
@@ -448,7 +504,7 @@ function buildRiskLandscape(stats) {
     const cols = h('div', { class: 'two-col' });
     const left = h('div', {}); const right = h('div', {});
 
-    barChart(left, 'Top Countries by Supplier Exposure', stats.topCountries, stats.total, '#1a73e8');
+    barChart(left, 'Top Countries by Supplier Exposure', stats.topCountries, stats.total, '#0085F2');
 
     const rtitle = h('div', { class: 'chart-title' }, 'Highest Risk Suppliers');
     right.appendChild(rtitle);
@@ -473,14 +529,14 @@ function buildWarnings(stats) {
   return slide('Warnings & Trade Risk Signals', body => {
     const row = h('div', { class: 'stat-row', style: { gridTemplateColumns: 'repeat(2,1fr)', marginBottom: '1.5rem' } });
     const pct = stats.total > 0 ? Math.round(stats.warnCount / stats.total * 100) : 0;
-    row.appendChild(statBox('Suppliers with Warnings', stats.warnCount, false, stats.warnCount > 0 ? '#dc3545' : '#28a745'));
+    row.appendChild(statBox('Suppliers with Warnings', stats.warnCount, false, stats.warnCount > 0 ? '#e05252' : '#4caf72'));
     row.appendChild(statBox('% of Portfolio', pct + '%'));
     body.appendChild(row);
 
     const cols = h('div', { class: 'two-col' });
     const left = h('div', {}); const right = h('div', {});
 
-    barChart(left, 'Most Common Warning Types', stats.topWarnings, stats.warnCount || 1, '#dc3545');
+    barChart(left, 'Most Common Warning Types', stats.topWarnings, stats.warnCount || 1, '#e05252');
 
     const rtitle = h('div', { class: 'chart-title' }, 'Spotlight: High-Risk Warning Suppliers');
     right.appendChild(rtitle);
@@ -502,8 +558,8 @@ function buildRegulations(stats) {
   return slide('Regulatory Exposure', body => {
     const cols = h('div', { class: 'two-col' });
     const left = h('div', {}); const right = h('div', {});
-    barChart(left,  'Industry Regulations', stats.topIndRegs,  stats.total, '#0f3c96');
-    barChart(right, 'Product Regulations',  stats.topProdRegs, stats.total, '#1a73e8');
+    barChart(left,  'Industry Regulations', stats.topIndRegs,  stats.total, '#1A3658');
+    barChart(right, 'Product Regulations',  stats.topProdRegs, stats.total, '#0085F2');
     cols.appendChild(left); cols.appendChild(right);
     body.appendChild(cols);
   }, 'Regulations are tracked across your supply chain by FRDM and updated as legislation changes.');
@@ -514,39 +570,35 @@ function buildDocuments(stats) {
     const row = h('div', { class: 'stat-row' });
     row.appendChild(statBox('Suppliers with Documents', stats.docCount, true));
     row.appendChild(statBox('Without Documents', stats.total - stats.docCount));
-    row.appendChild(statBox('Avg Transparency Score', stats.avgTrans.toFixed(2)));
+    row.appendChild(statBox('Avg Transparency Score', stats.avgTrans.toFixed(2), false, '#0085F2'));
     row.appendChild(statBox('Transparency Level', transLabel(stats.avgTrans)));
     body.appendChild(row);
 
     const cols = h('div', { class: 'two-col' });
     const left = h('div', {}); const right = h('div', {});
-    barChart(left, 'Documents on File', stats.topDocs, stats.docCount || 1, '#28a745');
+    barChart(left, 'Documents on File', stats.topDocs, stats.docCount || 1, '#4caf72');
     barChart(right, 'Transparency Distribution',
       TRANS_LABELS.map(l => [l, stats.transDist[l] || 0]),
-      stats.total, '#28a745');
+      stats.total, '#4caf72');
     cols.appendChild(left); cols.appendChild(right);
     body.appendChild(cols);
   }, 'Transparency scores reflect how much verifiable information exists about a supplier\'s human rights and labor practices.');
 }
 
 function buildFrdmValue(stats, company) {
-  const s = h('div', { class: 'slide', style: { background: '#1a1a2e' } });
-  const hdr = h('div', { class: 'slide-header', style: { background: '#0f3c96' } });
-  hdr.appendChild(h('h2', {}, `What We've Found in Your Supply Chain`));
-  s.appendChild(hdr);
+  const s = h('div', { class: 'slide', style: { background: '#072637' } });
+  s.appendChild(h('div', { class: 'slide-header' }, '<h2>What We\'ve Found in Your Supply Chain</h2>'));
 
-  const body = h('div', { class: 'slide-body' });
+  const body = h('div', { class: 'slide-body', style: { background: '#072637' } });
 
-  // Stat row on dark bg
   const row = h('div', { class: 'stat-row' });
   row.appendChild(statBox('Suppliers Analyzed', stats.total.toLocaleString(), true));
   row.appendChild(statBox('Regulations Tracked', stats.regCount));
   row.appendChild(statBox('Live Risk Alerts Found', stats.alertCount));
-  row.appendChild(statBox('Trade & Compliance Warnings Found', stats.warnCount));
+  row.appendChild(statBox('Warnings Identified', stats.warnCount));
   body.appendChild(row);
 
-  // Subtitle
-  const sub = h('div', { style: { fontSize: '0.9rem', fontWeight: '700', color: '#b0bcf0', margin: '1rem 0 0.5rem' } },
+  const sub = h('div', { style: { fontSize: '0.8rem', fontWeight: '700', color: '#DBE451', margin: '1rem 0 0.5rem', textTransform: 'uppercase', letterSpacing: '0.08em' } },
     `Key Findings for ${company}`);
   body.appendChild(sub);
 
@@ -561,7 +613,7 @@ function buildFrdmValue(stats, company) {
   ];
   const ul = h('ul', { class: 'bullet-list' });
   for (const b of bullets) {
-    const li = h('li', { style: { color: '#dde4ff', borderBottomColor: '#2a2e4e' } }, b);
+    const li = h('li', { style: { color: '#F1EEE8', borderBottomColor: 'rgba(255,255,255,0.08)' } }, b);
     ul.appendChild(li);
   }
   body.appendChild(ul);
@@ -582,21 +634,20 @@ function buildTimeSavings(stats, company) {
   const totalHours    = Math.round(totalMins / 60);
   const totalDays     = (totalHours / 8).toFixed(1);
 
-  const s = h('div', { class: 'slide' });
-  const hdr = h('div', { class: 'slide-header' });
-  hdr.appendChild(h('h2', {}, `Time Saved by FRDM`));
-  s.appendChild(hdr);
+  const s = h('div', { class: 'slide', style: { background: '#072637' } });
+  s.appendChild(h('div', { class: 'slide-header' }, '<h2>Time Saved by FRDM</h2>'));
 
-  const body = h('div', { class: 'slide-body' });
+  const body = h('div', { class: 'slide-body', style: { background: '#072637' } });
 
   const row = h('div', { class: 'stat-row' });
   row.appendChild(statBox('Estimated Hours Saved', totalHours.toLocaleString() + ' hrs', true));
   row.appendChild(statBox('Equivalent Working Days', totalDays + ' days'));
-  row.appendChild(statBox('Suppliers Risk-Profiled', stats.total.toLocaleString(), false, '#1a73e8'));
-  row.appendChild(statBox('Warnings Researched', stats.warnCount.toLocaleString(), false, '#dc3545'));
+  row.appendChild(statBox('Suppliers Risk-Profiled', stats.total.toLocaleString()));
+  row.appendChild(statBox('Warnings Researched', stats.warnCount.toLocaleString()));
   body.appendChild(row);
 
-  const sub = h('div', { style: { fontSize: '0.9rem', fontWeight: '700', color: '#1a1a2e', margin: '1rem 0 0.5rem' } },
+  const sub = h('div', { style: { fontSize: '0.78rem', fontWeight: '700', color: '#DBE451',
+    margin: '1rem 0 0.6rem', textTransform: 'uppercase', letterSpacing: '0.08em' } },
     'What would this take your team to do manually?');
   body.appendChild(sub);
 
@@ -612,15 +663,15 @@ function buildTimeSavings(stats, company) {
   const breakdown = h('div', { style: { marginBottom: '1.25rem' } });
   for (const [label, val] of breakdownItems) {
     const brow = h('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-      padding: '0.45rem 0.75rem', background: '#f4f6fb', borderRadius: '6px',
-      marginBottom: '0.4rem', fontSize: '0.85rem' } });
-    brow.appendChild(h('span', { style: { color: '#333' } }, label));
-    brow.appendChild(h('span', { style: { fontWeight: '700', color: '#0f3c96', flexShrink: '0', marginLeft: '1rem' } }, val));
+      padding: '0.5rem 0.85rem', background: '#1A3658', borderRadius: '8px',
+      marginBottom: '0.4rem', fontSize: '0.85rem', border: '1px solid rgba(255,255,255,0.08)' } });
+    brow.appendChild(h('span', { style: { color: '#F1EEE8' } }, label));
+    brow.appendChild(h('span', { style: { fontWeight: '800', color: '#DBE451', flexShrink: '0', marginLeft: '1rem' } }, val));
     breakdown.appendChild(brow);
   }
   body.appendChild(breakdown);
 
-  const note = h('div', { style: { fontSize: '0.8rem', color: '#888', fontStyle: 'italic' } },
+  const note = h('div', { style: { fontSize: '0.78rem', color: '#B6A9A9', fontStyle: 'italic' } },
     `Estimates assume ${MINS_PER_SUPPLIER_PROFILE} minutes to research a supplier risk profile, ${MINS_PER_WARNING} minutes per warning, and ${MINS_PER_REGULATION} minutes per regulation. FRDM performs this monitoring continuously — not just once.`);
   body.appendChild(note);
 
