@@ -532,32 +532,32 @@ function buildDocuments(stats) {
 function buildFrdmValue(stats, company) {
   const s = h('div', { class: 'slide', style: { background: '#1a1a2e' } });
   const hdr = h('div', { class: 'slide-header', style: { background: '#0f3c96' } });
-  hdr.appendChild(h('h2', {}, `What FRDM Is Doing For You`));
+  hdr.appendChild(h('h2', {}, `What We've Found in Your Supply Chain`));
   s.appendChild(hdr);
 
   const body = h('div', { class: 'slide-body' });
 
   // Stat row on dark bg
   const row = h('div', { class: 'stat-row' });
-  row.appendChild(statBox('Suppliers Continuously Monitored', stats.total.toLocaleString(), true));
+  row.appendChild(statBox('Suppliers Analyzed', stats.total.toLocaleString(), true));
   row.appendChild(statBox('Regulations Tracked', stats.regCount));
-  row.appendChild(statBox('Active Risk Alerts', stats.alertCount));
-  row.appendChild(statBox('Trade & Compliance Warnings', stats.warnCount));
+  row.appendChild(statBox('Live Risk Alerts Found', stats.alertCount));
+  row.appendChild(statBox('Trade & Compliance Warnings Found', stats.warnCount));
   body.appendChild(row);
 
   // Subtitle
   const sub = h('div', { style: { fontSize: '0.9rem', fontWeight: '700', color: '#b0bcf0', margin: '1rem 0 0.5rem' } },
-    `FRDM's Ongoing Work for ${company}`);
+    `Key Findings for ${company}`);
   body.appendChild(sub);
 
   const topCountryNames = stats.topCountries.slice(0, 5).map(([c]) => c).join(', ');
   const bullets = [
-    `Monitoring ${stats.total.toLocaleString()} suppliers across ${stats.topCountries.length} countries including ${topCountryNames}`,
-    `Tracking ${stats.regCount} unique regulatory requirements affecting ${company}'s supply chain`,
-    `Identified ${stats.warnCount} suppliers with active warnings including forced labor, trade restrictions, and tariff risks`,
-    `Flagged ${stats.alertCount} suppliers with live risk alerts requiring review`,
-    `Continuously updating risk scores as geopolitical events, sanctions, and regulations change`,
-    `Providing transparency scoring to drive supplier engagement and disclosure improvements`,
+    `${stats.total.toLocaleString()} suppliers analyzed across ${stats.topCountries.length} countries — including ${topCountryNames}`,
+    `${stats.regCount} unique regulatory requirements found to be relevant to ${company}'s supply chain`,
+    `${stats.warnCount} suppliers identified with active warnings — including forced labor, trade restrictions, and tariff risks`,
+    `${stats.alertCount} suppliers flagged with live risk alerts that warrant further review`,
+    `Risk scores continuously refreshed as geopolitical events, sanctions, and regulations evolve`,
+    `Transparency scores surfaced to highlight which suppliers lack verifiable human rights disclosures`,
   ];
   const ul = h('ul', { class: 'bullet-list' });
   for (const b of bullets) {
@@ -565,6 +565,65 @@ function buildFrdmValue(stats, company) {
     ul.appendChild(li);
   }
   body.appendChild(ul);
+  s.appendChild(body);
+  return s;
+}
+
+function buildTimeSavings(stats, company) {
+  // Assumptions (minutes)
+  const MINS_PER_SUPPLIER_PROFILE = 30;
+  const MINS_PER_WARNING = 10;
+  const MINS_PER_REGULATION = 15;
+
+  const profileMins   = stats.total    * MINS_PER_SUPPLIER_PROFILE;
+  const warningMins   = stats.warnCount * MINS_PER_WARNING;
+  const regulationMins = stats.regCount * MINS_PER_REGULATION;
+  const totalMins     = profileMins + warningMins + regulationMins;
+  const totalHours    = Math.round(totalMins / 60);
+  const totalDays     = (totalHours / 8).toFixed(1);
+
+  const s = h('div', { class: 'slide' });
+  const hdr = h('div', { class: 'slide-header' });
+  hdr.appendChild(h('h2', {}, `Time Saved by FRDM`));
+  s.appendChild(hdr);
+
+  const body = h('div', { class: 'slide-body' });
+
+  const row = h('div', { class: 'stat-row' });
+  row.appendChild(statBox('Estimated Hours Saved', totalHours.toLocaleString() + ' hrs', true));
+  row.appendChild(statBox('Equivalent Working Days', totalDays + ' days'));
+  row.appendChild(statBox('Suppliers Risk-Profiled', stats.total.toLocaleString(), false, '#1a73e8'));
+  row.appendChild(statBox('Warnings Researched', stats.warnCount.toLocaleString(), false, '#dc3545'));
+  body.appendChild(row);
+
+  const sub = h('div', { style: { fontSize: '0.9rem', fontWeight: '700', color: '#1a1a2e', margin: '1rem 0 0.5rem' } },
+    'What would this take your team to do manually?');
+  body.appendChild(sub);
+
+  const breakdownItems = [
+    [`Supplier risk profiling (${stats.total.toLocaleString()} suppliers × ${MINS_PER_SUPPLIER_PROFILE} min each)`,
+      Math.round(profileMins / 60) + ' hrs'],
+    [`Warning research (${stats.warnCount} suppliers × ${MINS_PER_WARNING} min each)`,
+      Math.round(warningMins / 60) + ' hrs'],
+    [`Regulatory mapping (${stats.regCount} regulations × ${MINS_PER_REGULATION} min each)`,
+      Math.round(regulationMins / 60) + ' hrs'],
+  ];
+
+  const breakdown = h('div', { style: { marginBottom: '1.25rem' } });
+  for (const [label, val] of breakdownItems) {
+    const brow = h('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+      padding: '0.45rem 0.75rem', background: '#f4f6fb', borderRadius: '6px',
+      marginBottom: '0.4rem', fontSize: '0.85rem' } });
+    brow.appendChild(h('span', { style: { color: '#333' } }, label));
+    brow.appendChild(h('span', { style: { fontWeight: '700', color: '#0f3c96', flexShrink: '0', marginLeft: '1rem' } }, val));
+    breakdown.appendChild(brow);
+  }
+  body.appendChild(breakdown);
+
+  const note = h('div', { style: { fontSize: '0.8rem', color: '#888', fontStyle: 'italic' } },
+    `Estimates assume ${MINS_PER_SUPPLIER_PROFILE} minutes to research a supplier risk profile, ${MINS_PER_WARNING} minutes per warning, and ${MINS_PER_REGULATION} minutes per regulation. FRDM performs this monitoring continuously — not just once.`);
+  body.appendChild(note);
+
   s.appendChild(body);
   return s;
 }
@@ -582,6 +641,7 @@ function buildReport(rows, company, quarter) {
   container.appendChild(buildRegulations(stats));
   container.appendChild(buildDocuments(stats));
   container.appendChild(buildFrdmValue(stats, company));
+  container.appendChild(buildTimeSavings(stats, company));
 
   document.getElementById('setup').style.display = 'none';
   document.getElementById('report').style.display = 'block';
