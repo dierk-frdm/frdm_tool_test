@@ -8,20 +8,22 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --navy:      #0d1b2e;
-      --navy-mid:  #162540;
-      --navy-card: #1c2e48;
-      --accent:    #2d8cf0;
-      --accent-2:  #00c8a0;
-      --text:      #e8edf5;
-      --text-muted:#8fa3bc;
-      --border:    rgba(255,255,255,0.07);
+      --bg:        #f5f0e8;
+      --surface:   #fdfaf5;
+      --card:      #ffffff;
+      --sidebar-bg:#faf5ec;
+      --accent:    #c9930a;
+      --accent-2:  #e8b000;
+      --accent-light: #fff3cc;
+      --text:      #1e1a10;
+      --text-muted:#7a6e58;
+      --border:    #e2d9c8;
       --sidebar-w: 220px;
     }
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: var(--navy);
+      background: var(--bg);
       color: var(--text);
       min-height: 100vh;
       display: flex;
@@ -30,7 +32,7 @@
 
     /* ── Top bar ── */
     .topbar {
-      background: var(--navy-mid);
+      background: var(--surface);
       border-bottom: 1px solid var(--border);
       height: 56px;
       display: flex;
@@ -50,8 +52,6 @@
     .topbar-logo img {
       height: 20px;
       width: auto;
-      /* invert dark logo to white */
-      filter: brightness(0) invert(1);
     }
     .topbar-divider {
       width: 1px;
@@ -68,9 +68,9 @@
       margin-left: auto;
       font-size: 0.68rem;
       font-weight: 700;
-      color: var(--accent-2);
-      background: rgba(0,200,160,0.12);
-      border: 1px solid rgba(0,200,160,0.25);
+      color: var(--accent);
+      background: var(--accent-light);
+      border: 1px solid #e8c96a;
       border-radius: 20px;
       padding: 2px 10px;
       letter-spacing: 0.04em;
@@ -86,7 +86,7 @@
     /* ── Sidebar ── */
     .sidebar {
       width: var(--sidebar-w);
-      background: var(--navy-mid);
+      background: var(--sidebar-bg);
       border-right: 1px solid var(--border);
       padding: 1.5rem 0;
       display: flex;
@@ -115,12 +115,12 @@
       cursor: pointer;
     }
     .sidebar-item:hover {
-      background: rgba(255,255,255,0.05);
+      background: rgba(0,0,0,0.04);
       color: var(--text);
     }
     .sidebar-item.active {
       color: var(--accent);
-      background: rgba(45,140,240,0.1);
+      background: var(--accent-light);
       border-right: 2px solid var(--accent);
     }
     .sidebar-icon { font-size: 1rem; flex-shrink: 0; }
@@ -134,8 +134,8 @@
 
     /* ── Hero banner ── */
     .hero {
-      background: linear-gradient(135deg, var(--navy-card) 0%, #1a2f50 100%);
-      border: 1px solid var(--border);
+      background: linear-gradient(135deg, #fffbe8 0%, #fef3c0 100%);
+      border: 1px solid #e8d98a;
       border-radius: 16px;
       padding: 2.5rem;
       margin-bottom: 2.5rem;
@@ -153,7 +153,7 @@
       top: -60px;
       width: 280px;
       height: 280px;
-      background: radial-gradient(circle, rgba(45,140,240,0.12) 0%, transparent 70%);
+      background: radial-gradient(circle, rgba(201,147,10,0.1) 0%, transparent 70%);
       pointer-events: none;
     }
     .hero-text {}
@@ -189,7 +189,7 @@
     .stat-num {
       font-size: 2rem;
       font-weight: 700;
-      color: var(--accent-2);
+      color: var(--accent);
       line-height: 1;
       margin-bottom: 0.25rem;
     }
@@ -219,10 +219,10 @@
       font-size: 1rem;
       flex-shrink: 0;
     }
-    .cat-risk     .category-icon { background: rgba(240,80,80,0.15); }
-    .cat-supplier .category-icon { background: rgba(45,140,240,0.15); }
-    .cat-comply   .category-icon { background: rgba(255,180,0,0.15); }
-    .cat-report   .category-icon { background: rgba(0,200,160,0.15); }
+    .cat-risk     .category-icon { background: rgba(220,80,60,0.1); }
+    .cat-supplier .category-icon { background: rgba(201,147,10,0.12); }
+    .cat-comply   .category-icon { background: rgba(180,130,0,0.12); }
+    .cat-report   .category-icon { background: rgba(201,147,10,0.1); }
 
     .category-title {
       font-size: 0.9375rem;
@@ -236,7 +236,7 @@
     }
     .category-divider {
       height: 1px;
-      background: var(--border);
+      background: #e2d9c8;
       margin-left: calc(32px + 0.75rem);
     }
 
@@ -249,7 +249,7 @@
     }
 
     .tool-card {
-      background: var(--navy-card);
+      background: var(--card);
       border: 1px solid var(--border);
       border-radius: 12px;
       padding: 1.5rem;
@@ -263,7 +263,7 @@
     }
     .tool-card:hover {
       border-color: var(--accent);
-      box-shadow: 0 0 0 1px rgba(45,140,240,0.2), 0 8px 24px rgba(0,0,0,0.3);
+      box-shadow: 0 0 0 1px rgba(201,147,10,0.15), 0 6px 20px rgba(0,0,0,0.08);
       transform: translateY(-1px);
     }
 
@@ -284,9 +284,9 @@
       letter-spacing: 0.05em;
       padding: 2px 8px;
       border-radius: 20px;
-      background: rgba(0,200,160,0.12);
-      color: var(--accent-2);
-      border: 1px solid rgba(0,200,160,0.2);
+      background: var(--accent-light);
+      color: var(--accent);
+      border: 1px solid #e8c96a;
     }
 
     .tool-name {
@@ -297,7 +297,7 @@
     }
     .tool-desc {
       font-size: 0.8125rem;
-      color: var(--text-muted);
+      color: #5a5040;
       line-height: 1.6;
       flex: 1;
     }
@@ -324,11 +324,11 @@
       gap: 0.75rem;
       color: var(--text-muted);
       font-size: 0.8rem;
+      background: var(--surface);
     }
     footer img {
       height: 14px;
-      opacity: 0.5;
-      filter: brightness(0) invert(1);
+      opacity: 0.6;
     }
 
     /* ── Responsive ── */
