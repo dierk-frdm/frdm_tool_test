@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FRDM Email Merge Tool</title>
+  <style>
+    :root {
+      --bg: #051e2c;
+      --surface: #072637;
+      --surface2: #0d2035;
+      --card: #1A3658;
+      --border: rgba(255,255,255,0.08);
+      --border-strong: rgba(255,255,255,0.15);
+      --yellow: #DBE451;
+      --blue: #0085F2;
+      --text: #F1EEE8;
+      --muted: #B6A9A9;
+      --danger: #ff6b6b;
+      --green-bg: #0f2318;
+      --green-border: rgba(219,228,81,0.25);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'DM Sans', 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── HEADER ── */
+    .header {
+      background: var(--surface);
+      border-bottom: 2px solid var(--yellow);
+      padding: 16px 28px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-shrink: 0;
+    }
+    .logo { font-size: 22px; font-weight: 800; color: var(--text); letter-spacing: -0.5px; }
+    .logo span { color: var(--yellow); }
+    .tool-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding-left: 16px;
+      border-left: 1px solid var(--border-strong);
+    }
+
+    /* ── LAYOUT ── */
+    .main {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+      height: calc(100vh - 57px);
+    }
+    .sidebar {
+      width: 360px;
+      flex-shrink: 0;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      padding: 24px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+    .preview-area {
+      flex: 1;
+      overflow-y: auto;
+      background: #040f17;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── SIDEBAR SECTIONS ── */
+    .section-label {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--muted);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-label .step-badge {
+      background: var(--yellow);
+      color: #072637;
+      font-size: 10px;
+      font-weight: 800;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .section {
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 24px;
+    }
+    .section:last-child { border-bottom: none; }
+
+    /* ── DROP ZONE ── */
+    .dropzone {
+      border: 2px dashed rgba(255,255,255,0.2);
+      border-radius: 10px;
+      padding: 24px 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      position: relative;
+    }
+    .dropzone:hover, .dropzone.drag-over {
+      border-color: var(--yellow);
+      background: rgba(219,228,81,0.04);
+    }
+    .dropzone input[type=file] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+    .dropzone-icon { font-size: 28px; margin-bottom: 8px; }
+    .dropzone-text { font-size: 13px; color: var(--muted); }
+    .dropzone-text strong { color: var(--text); display: block; margin-bottom: 2px; }
+
+    .csv-info {
+      margin-top: 10px;
+      background: rgba(0,133,242,0.1);
+      border: 1px solid rgba(0,133,242,0.3);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 13px;
+    }
+    .csv-info .csv-filename { font-weight: 600; color: var(--blue); margin-bottom: 2px; }
+    .csv-info .csv-count { color: var(--muted); font-size: 12px; }
+    .hidden { display: none !important; }
+
+    /* ── FORM ── */
+    .form-group { margin-bottom: 12px; }
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 5px;
+      letter-spacing: 0.04em;
+    }
+    .form-group label .hint {
+      font-weight: 400;
+      opacity: 0.7;
+      font-style: italic;
+    }
+    .form-group input,
+    .form-group textarea {
+      width: 100%;
+      background: var(--card);
+      border: 1px solid var(--border-strong);
+      border-radius: 7px;
+      padding: 9px 12px;
+      font-size: 13px;
+      color: var(--text);
+      font-family: inherit;
+      transition: border-color 0.15s;
+      outline: none;
+    }
+    .form-group input:focus,
+    .form-group textarea:focus {
+      border-color: var(--blue);
+    }
+    .form-group textarea { resize: vertical; min-height: 72px; }
+    .form-group input::placeholder,
+    .form-group textarea::placeholder { color: rgba(182,169,169,0.4); }
+
+    /* ── BUTTONS ── */
+    .btn-primary {
+      width: 100%;
+      background: var(--yellow);
+      color: #072637;
+      border: none;
+      border-radius: 8px;
+      padding: 13px 20px;
+      font-size: 14px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+      letter-spacing: 0.02em;
+    }
+    .btn-primary:hover:not(:disabled) { opacity: 0.9; transform: translateY(-1px); }
+    .btn-primary:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+    .btn-secondary {
+      background: transparent;
+      color: var(--blue);
+      border: 1.5px solid var(--blue);
+      border-radius: 7px;
+      padding: 8px 16px;
+      font-size: 12px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background 0.15s;
+      letter-spacing: 0.02em;
+    }
+    .btn-secondary:hover { background: rgba(0,133,242,0.1); }
+    .btn-ghost {
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      border: 1px solid var(--border-strong);
+      border-radius: 7px;
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-ghost:hover:not(:disabled) { background: rgba(255,255,255,0.1); }
+    .btn-ghost:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    /* ── PREVIEW EMPTY STATE ── */
+    .preview-empty {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+      text-align: center;
+      padding: 40px;
+      gap: 12px;
+    }
+    .preview-empty .empty-icon { font-size: 48px; opacity: 0.3; }
+    .preview-empty p { font-size: 14px; opacity: 0.6; max-width: 260px; line-height: 1.5; }
+
+    /* ── PREVIEW PANEL ── */
+    .preview-panel { flex: 1; display: flex; flex-direction: column; }
+
+    .preview-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 24px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      gap: 12px;
+    }
+    .nav-center {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      flex: 1;
+    }
+    .nav-counter {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .nav-recipient {
+      font-size: 11px;
+      color: var(--muted);
+      max-width: 320px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .export-bar {
+      display: flex;
+      gap: 10px;
+      padding: 14px 24px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+      flex-wrap: wrap;
+    }
+
+    .iframe-wrap {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+      display: flex;
+      justify-content: center;
+      background: #040f17;
+    }
+    #previewFrame {
+      width: 100%;
+      max-width: 680px;
+      border: none;
+      border-radius: 12px;
+      height: 1600px;
+      display: block;
+    }
+
+    /* ── RECIPIENT LIST TOGGLE ── */
+    .recipients-toggle {
+      font-size: 11px;
+      color: var(--blue);
+      cursor: pointer;
+      text-decoration: underline;
+      margin-top: 8px;
+      display: inline-block;
+    }
+    .recipients-table {
+      margin-top: 10px;
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+    }
+    .recipients-table td {
+      padding: 5px 6px;
+      border-bottom: 1px solid var(--border);
+      color: var(--muted);
+    }
+    .recipients-table td:first-child { color: var(--text); }
+    .recipients-table tr:last-child td { border-bottom: none; }
+    .recipients-table tr {
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+    .recipients-table tr:hover td { background: rgba(255,255,255,0.04); }
+    .recipients-table tr.active td { background: rgba(0,133,242,0.12); }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="logo">FRD<span>M</span></div>
+    <div class="tool-title">Email Merge Tool</div>
+  </header>
+
+  <!-- Main -->
+  <div class="main">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+
+      <!-- Step 1: CSV -->
+      <div class="section">
+        <div class="section-label"><span class="step-badge">1</span> Upload Recipients CSV</div>
+        <div class="dropzone" id="dropzone">
+          <input type="file" id="csvInput" accept=".csv">
+          <div class="dropzone-icon">📂</div>
+          <div class="dropzone-text">
+            <strong>Drop your CSV here</strong>
+            or click to browse
+          </div>
+        </div>
+        <div id="csvInfo" class="csv-info hidden">
+          <div class="csv-filename" id="csvFilename"></div>
+          <div class="csv-count" id="csvCount"></div>
+          <span class="recipients-toggle" id="recipientsToggle">Show recipients ▾</span>
+          <div id="recipientsList" class="hidden">
+            <table class="recipients-table" id="recipientsTable"></table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Blurb -->
+      <div class="section">
+        <div class="section-label"><span class="step-badge">2</span> News / Feature Blurb</div>
+        <div class="form-group">
+          <label>Heading <span class="hint">e.g. "In the News"</span></label>
+          <input type="text" id="blurbHeading" placeholder="In the News">
+        </div>
+        <div class="form-group">
+          <label>Title</label>
+          <input type="text" id="blurbTitle" placeholder="Bold headline">
+        </div>
+        <div class="form-group">
+          <label>Body</label>
+          <textarea id="blurbBody" placeholder="1–3 sentence description..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>URL</label>
+          <input type="url" id="blurbUrl" placeholder="https://">
+        </div>
+        <div class="form-group">
+          <label>CTA Label <span class="hint">e.g. "Read the Article"</span></label>
+          <input type="text" id="blurbCta" placeholder="Read the Article">
+        </div>
+      </div>
+
+      <!-- Step 3: Generate -->
+      <div class="section">
+        <div class="section-label"><span class="step-badge">3</span> Preview</div>
+        <button class="btn-primary" id="generateBtn" disabled>Generate Email Previews</button>
+      </div>
+
+    </aside>
+
+    <!-- Preview Area -->
+    <div class="preview-area">
+
+      <!-- Empty state -->
+      <div class="preview-empty" id="previewEmpty">
+        <div class="empty-icon">✉️</div>
+        <p>Upload a CSV and click <strong>Generate Email Previews</strong> to get started.</p>
+      </div>
+
+      <!-- Preview panel -->
+      <div class="preview-panel hidden" id="previewPanel">
+
+        <div class="preview-nav">
+          <button class="btn-ghost" id="prevBtn" disabled>◀ Prev</button>
+          <div class="nav-center">
+            <div class="nav-counter" id="navCounter">Email 1 of 1</div>
+            <div class="nav-recipient" id="navRecipient"></div>
+          </div>
+          <button class="btn-ghost" id="nextBtn" disabled>Next ▶</button>
+        </div>
+
+        <div class="iframe-wrap">
+          <iframe id="previewFrame" sandbox="allow-same-origin"></iframe>
+        </div>
+
+        <div class="export-bar">
+          <button class="btn-secondary" id="downloadBtn">⬇ Download This Email</button>
+          <button class="btn-secondary" id="exportJsonBtn">⬇ Export All as JSON (Google Apps Script)</button>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+<script>
+// ── EMBEDDED EMAIL TEMPLATE ─────────────────────────────────────────────────
+const EMAIL_TEMPLATE = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your Monthly Supply Chain Risk Report</title>
+</head>
+<body style="margin:0; padding:0; background-color:#051e2c; font-family:'DM Sans','Inter',system-ui,sans-serif;">
+
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#051e2c;">
+    <tr>
+      <td align="center" style="padding: 40px 16px;">
+
+        <table width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px; width:100%; border-radius:16px; overflow:hidden; border:1px solid rgba(255,255,255,0.08);">
+
+          <!-- HEADER -->
+          <tr>
+            <td style="background-color:#072637; padding: 28px 40px; border-bottom: 2px solid #DBE451;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td>
+                    <span style="font-family:'DM Sans','Inter',sans-serif; font-size:24px; font-weight:800; color:#F1EEE8; letter-spacing:-0.5px;">
+                      FRD<span style="color:#DBE451;">M</span>
+                    </span>
+                  </td>
+                  <td align="right">
+                    <span style="font-family:'DM Sans','Inter',sans-serif; font-size:11px; font-weight:500; color:#B6A9A9; letter-spacing:0.1em; text-transform:uppercase;">
+                      Monthly Risk Digest
+                    </span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- HERO -->
+          <tr>
+            <td style="background: linear-gradient(160deg, #0d3a52 0%, #072637 60%); padding: 40px 40px 36px 40px; border-bottom:1px solid rgba(255,255,255,0.08);">
+              <p style="margin:0 0 10px 0; font-size:11px; font-weight:500; color:#DBE451; letter-spacing:0.1em; text-transform:uppercase;">
+                {{Risk Type}} &middot; {{Company Name}}
+              </p>
+              <h1 style="margin:0 0 16px 0; font-size:30px; font-weight:800; color:#F1EEE8; line-height:1.25;">
+                Hi {{User First Name}}, here&#39;s your<br>
+                <span style="color:#DBE451;">supply chain snapshot.</span>
+              </h1>
+              <p style="margin:0 0 24px 0; font-size:15px; color:#B6A9A9; line-height:1.6;">
+                Here&#39;s a summary of your supply chain risk posture for this month. Log in to FRDM for the full picture.
+              </p>
+              <a href="https://app.frdm.co" style="display:inline-block; background-color:#DBE451; color:#072637; font-family:'DM Sans','Inter',sans-serif; font-size:14px; font-weight:700; padding:12px 24px; border-radius:8px; text-decoration:none;">
+                Log In to FRDM &rarr;
+              </a>
+            </td>
+          </tr>
+
+          <!-- TOP METRICS -->
+          <tr>
+            <td style="background-color:#072637; padding: 32px 40px 28px 40px;">
+              <p style="margin:0 0 16px 0; font-size:11px; font-weight:500; color:#B6A9A9; letter-spacing:0.1em; text-transform:uppercase;">Overview</p>
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td width="32%" style="background-color:#1A3658; border-radius:10px; padding:18px 14px; text-align:center; border-top: 3px solid #0085F2;">
+                    <p style="margin:0 0 4px 0; font-size:10px; font-weight:500; color:#B6A9A9; letter-spacing:0.08em; text-transform:uppercase;">Total Suppliers</p>
+                    <p style="margin:0; font-size:28px; font-weight:800; color:#F1EEE8; line-height:1.1;">{{Total Supplier Count}}</p>
+                  </td>
+                  <td width="4%"></td>
+                  <td width="30%" style="background-color:#1A3658; border-radius:10px; padding:18px 14px; text-align:center; border-top: 3px solid #DBE451;">
+                    <p style="margin:0 0 4px 0; font-size:10px; font-weight:500; color:#B6A9A9; letter-spacing:0.08em; text-transform:uppercase;">Overall Risk</p>
+                    <p style="margin:0; font-size:20px; font-weight:800; color:#DBE451; line-height:1.2;">{{Average Risk Description}}</p>
+                  </td>
+                  <td width="4%"></td>
+                  <td width="30%" style="background-color:#1A3658; border-radius:10px; padding:18px 14px; text-align:center; border-top: 3px solid #ff6b6b;">
+                    <p style="margin:0 0 4px 0; font-size:10px; font-weight:500; color:#B6A9A9; letter-spacing:0.08em; text-transform:uppercase;">High Risk</p>
+                    <p style="margin:0; font-size:28px; font-weight:800; color:#F1EEE8; line-height:1.1;">{{High Risk Suppliers}}</p>
+                    <p style="margin:2px 0 0 0; font-size:11px; color:#B6A9A9;">{{Percent High Risk}}% of total</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- WARNINGS -->
+          <tr>
+            <td style="background-color:#072637; padding: 0 40px 28px 40px;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-radius:10px; overflow:hidden; border:1px solid rgba(219,228,81,0.25);">
+                <tr>
+                  <td style="background-color:#162d1f; padding: 14px 20px; border-bottom: 1px solid rgba(219,228,81,0.2);">
+                    <p style="margin:0; font-size:11px; font-weight:500; color:#DBE451; letter-spacing:0.1em; text-transform:uppercase;">&#9888; New This Month</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="background-color:#0f2318; padding:0;">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td width="50%" style="padding:20px; border-right:1px solid rgba(219,228,81,0.15);">
+                          <p style="margin:0 0 4px 0; font-size:12px; color:#B6A9A9;">Warning Activities</p>
+                          <p style="margin:0; font-size:28px; font-weight:800; color:#F1EEE8;">{{New Warning Activities}}</p>
+                        </td>
+                        <td width="50%" style="padding:20px;">
+                          <p style="margin:0 0 4px 0; font-size:12px; color:#B6A9A9;">Suppliers Affected</p>
+                          <p style="margin:0; font-size:28px; font-weight:800; color:#F1EEE8;">{{Suppliers with New Warnings}}</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- DATA QUALITY -->
+          <tr>
+            <td style="background-color:#072637; padding: 0 40px 36px 40px;">
+              <p style="margin:0 0 14px 0; font-size:11px; font-weight:500; color:#B6A9A9; letter-spacing:0.1em; text-transform:uppercase;">Data Quality</p>
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#1A3658; border-radius:10px; overflow:hidden;">
+                <tr>
+                  <td style="padding:14px 20px; border-bottom:1px solid rgba(255,255,255,0.06);">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td><p style="margin:0; font-size:14px; color:#F1EEE8;">Average Transparency Score</p></td>
+                        <td align="right"><p style="margin:0; font-size:14px; font-weight:700; color:#DBE451;">{{Average Transparency}}</p></td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:14px 20px; border-bottom:1px solid rgba(255,255,255,0.06);">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td><p style="margin:0; font-size:14px; color:#F1EEE8;">Missing Industry Info</p></td>
+                        <td align="right"><p style="margin:0; font-size:14px; font-weight:700; color:#F1EEE8;">{{Percent Suppliers Missing Industry Info}}%</p></td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:14px 20px; border-bottom:1px solid rgba(255,255,255,0.06);">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td><p style="margin:0; font-size:14px; color:#F1EEE8;">Missing Product Info</p></td>
+                        <td align="right"><p style="margin:0; font-size:14px; font-weight:700; color:#F1EEE8;">{{Percent Suppliers Missing Product Info}}%</p></td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:14px 20px; border-bottom:1px solid rgba(255,255,255,0.06);">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td>
+                          <p style="margin:0; font-size:14px; color:#F1EEE8;">Missing Documents</p>
+                          <p style="margin:2px 0 0 0; font-size:11px; color:#B6A9A9;">{{Document Count}} documents on file</p>
+                        </td>
+                        <td align="right"><p style="margin:0; font-size:14px; font-weight:700; color:#F1EEE8;">{{Percent Suppliers Missing Documents}}%</p></td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:14px 20px;">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td>
+                          <p style="margin:0; font-size:14px; color:#F1EEE8;">Linked Suppliers</p>
+                          <p style="margin:2px 0 0 0; font-size:11px; color:#B6A9A9;">{{Linked Supplier Count}} of {{Total Supplier Count}} linked</p>
+                        </td>
+                        <td align="right"><p style="margin:0; font-size:14px; font-weight:700; color:#F1EEE8;">{{Percent Linked Suppliers}}%</p></td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- BLURB -->
+          <tr>
+            <td style="background-color:#0d2035; padding: 32px 40px; border-top:2px solid rgba(0,133,242,0.4);">
+              <p style="margin:0 0 10px 0; font-size:11px; font-weight:500; color:#0085F2; letter-spacing:0.1em; text-transform:uppercase;">
+                {{Blurb Heading}}
+              </p>
+              <p style="margin:0 0 10px 0; font-size:18px; font-weight:700; color:#F1EEE8; line-height:1.4;">
+                {{Blurb Title}}
+              </p>
+              <p style="margin:0 0 18px 0; font-size:14px; color:#B6A9A9; line-height:1.6;">
+                {{Blurb Body}}
+              </p>
+              <a href="{{Blurb URL}}" style="display:inline-block; border:1.5px solid #0085F2; color:#0085F2; font-family:'DM Sans','Inter',sans-serif; font-size:13px; font-weight:600; padding:10px 20px; border-radius:8px; text-decoration:none;">
+                {{Blurb CTA}} &rarr;
+              </a>
+            </td>
+          </tr>
+
+          <!-- FOOTER -->
+          <tr>
+            <td style="background-color:#051e2c; padding:24px 40px; border-top:1px solid rgba(255,255,255,0.06);">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td>
+                    <p style="margin:0 0 2px 0; font-size:13px; font-weight:700; color:#F1EEE8;">FRDM</p>
+                    <p style="margin:0; font-size:11px; color:#B6A9A9;">Supply Chain Risk Intelligence</p>
+                  </td>
+                  <td align="right">
+                    <p style="margin:0; font-size:12px;"><a href="https://app.frdm.co" style="color:#0085F2; text-decoration:none;">app.frdm.co</a></p>
+                    <p style="margin:4px 0 0 0; font-size:11px; color:#B6A9A9;">You&#39;re receiving this because you have alert emails enabled.</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+// ── STATE ────────────────────────────────────────────────────────────────────
+let csvRows = [];
+let generatedEmails = [];
+let currentIndex = 0;
+
+// ── CSV PARSING ──────────────────────────────────────────────────────────────
+function parseCSV(text) {
+  const lines = text.trim().split(/\r?\n/);
+  if (lines.length < 2) return [];
+  const headers = parseCSVLine(lines[0]);
+  return lines.slice(1).filter(l => l.trim()).map(line => {
+    const values = parseCSVLine(line);
+    const obj = {};
+    headers.forEach((h, i) => { obj[h.trim()] = (values[i] || '').trim(); });
+    return obj;
+  });
+}
+
+function parseCSVLine(line) {
+  const result = [];
+  let inQuotes = false;
+  let current = '';
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') {
+      if (inQuotes && line[i + 1] === '"') { current += '"'; i++; }
+      else { inQuotes = !inQuotes; }
+    } else if (ch === ',' && !inQuotes) {
+      result.push(current); current = '';
+    } else {
+      current += ch;
+    }
+  }
+  result.push(current);
+  return result;
+}
+
+// ── TEMPLATE MERGE ───────────────────────────────────────────────────────────
+function mergeTemplate(template, data) {
+  return template.replace(/\{\{([^}]+)\}\}/g, (match, key) => {
+    const val = data[key.trim()];
+    return val !== undefined ? val : match;
+  });
+}
+
+// ── GENERATE ─────────────────────────────────────────────────────────────────
+function generateEmails() {
+  const blurb = {
+    'Blurb Heading': document.getElementById('blurbHeading').value || 'In the News',
+    'Blurb Title':   document.getElementById('blurbTitle').value   || '',
+    'Blurb Body':    document.getElementById('blurbBody').value    || '',
+    'Blurb URL':     document.getElementById('blurbUrl').value     || 'https://app.frdm.co',
+    'Blurb CTA':     document.getElementById('blurbCta').value     || 'Learn More',
+  };
+
+  generatedEmails = csvRows.map(row => ({
+    to:   row['Recipient'] || '',
+    name: ((row['User First Name'] || '') + ' ' + (row['User Last Name'] || '')).trim(),
+    html: mergeTemplate(EMAIL_TEMPLATE, { ...row, ...blurb }),
+  }));
+
+  currentIndex = 0;
+  document.getElementById('previewEmpty').classList.add('hidden');
+  document.getElementById('previewPanel').classList.remove('hidden');
+  updateRecipientTableHighlight();
+  renderPreview();
+}
+
+// ── RENDER PREVIEW ───────────────────────────────────────────────────────────
+function renderPreview() {
+  const email = generatedEmails[currentIndex];
+  const total = generatedEmails.length;
+
+  document.getElementById('navCounter').textContent =
+    `Email ${currentIndex + 1} of ${total}`;
+  document.getElementById('navRecipient').textContent =
+    `${email.name}  <${email.to}>`;
+
+  const frame = document.getElementById('previewFrame');
+  frame.srcdoc = email.html;
+
+  document.getElementById('prevBtn').disabled = currentIndex === 0;
+  document.getElementById('nextBtn').disabled = currentIndex === total - 1;
+
+  updateRecipientTableHighlight();
+}
+
+function updateRecipientTableHighlight() {
+  document.querySelectorAll('#recipientsTable tr').forEach((row, i) => {
+    row.classList.toggle('active', i === currentIndex);
+  });
+}
+
+// ── CSV DROP ZONE ─────────────────────────────────────────────────────────────
+const dropzone = document.getElementById('dropzone');
+const csvInput = document.getElementById('csvInput');
+
+dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag-over'); });
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag-over'));
+dropzone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropzone.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) loadCSVFile(file);
+});
+csvInput.addEventListener('change', e => {
+  if (e.target.files[0]) loadCSVFile(e.target.files[0]);
+});
+
+function loadCSVFile(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    csvRows = parseCSV(e.target.result);
+    document.getElementById('csvFilename').textContent = file.name;
+    document.getElementById('csvCount').textContent = `${csvRows.length} recipient${csvRows.length !== 1 ? 's' : ''} loaded`;
+    document.getElementById('csvInfo').classList.remove('hidden');
+    document.getElementById('generateBtn').disabled = false;
+    buildRecipientTable();
+  };
+  reader.readAsText(file);
+}
+
+function buildRecipientTable() {
+  const tbody = document.getElementById('recipientsTable');
+  tbody.innerHTML = csvRows.map((row, i) => {
+    const name = ((row['User First Name'] || '') + ' ' + (row['User Last Name'] || '')).trim() || '—';
+    const email = row['Recipient'] || '—';
+    return `<tr data-index="${i}"><td>${name}</td><td>${email}</td></tr>`;
+  }).join('');
+  tbody.querySelectorAll('tr').forEach(tr => {
+    tr.addEventListener('click', () => {
+      if (generatedEmails.length) {
+        currentIndex = parseInt(tr.dataset.index);
+        renderPreview();
+      }
+    });
+  });
+}
+
+// Recipients toggle
+document.getElementById('recipientsToggle').addEventListener('click', () => {
+  const list = document.getElementById('recipientsList');
+  const toggle = document.getElementById('recipientsToggle');
+  const hidden = list.classList.toggle('hidden');
+  toggle.textContent = hidden ? 'Show recipients ▾' : 'Hide recipients ▴';
+});
+
+// ── NAVIGATION ───────────────────────────────────────────────────────────────
+document.getElementById('prevBtn').addEventListener('click', () => {
+  if (currentIndex > 0) { currentIndex--; renderPreview(); }
+});
+document.getElementById('nextBtn').addEventListener('click', () => {
+  if (currentIndex < generatedEmails.length - 1) { currentIndex++; renderPreview(); }
+});
+
+// Keyboard navigation
+document.addEventListener('keydown', e => {
+  if (!generatedEmails.length) return;
+  if (e.key === 'ArrowLeft' && currentIndex > 0) { currentIndex--; renderPreview(); }
+  if (e.key === 'ArrowRight' && currentIndex < generatedEmails.length - 1) { currentIndex++; renderPreview(); }
+});
+
+// ── GENERATE BUTTON ───────────────────────────────────────────────────────────
+document.getElementById('generateBtn').addEventListener('click', generateEmails);
+
+// ── EXPORT: DOWNLOAD HTML ────────────────────────────────────────────────────
+document.getElementById('downloadBtn').addEventListener('click', () => {
+  const email = generatedEmails[currentIndex];
+  const blob = new Blob([email.html], { type: 'text/html' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `frdm-email-${(email.name || 'recipient').replace(/\s+/g, '-').toLowerCase()}.html`;
+  a.click();
+});
+
+// ── EXPORT: JSON FOR GOOGLE APPS SCRIPT ──────────────────────────────────────
+document.getElementById('exportJsonBtn').addEventListener('click', () => {
+  const payload = generatedEmails.map(e => ({
+    to:      e.to,
+    name:    e.name,
+    subject: 'Your Monthly Supply Chain Risk Report',
+    html:    e.html,
+  }));
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'frdm-emails-payload.json';
+  a.click();
+});
+</script>
+</body>
+</html>
