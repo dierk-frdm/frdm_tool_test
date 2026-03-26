@@ -1,0 +1,26 @@
+Company Name,User First Name,User Last Name,Recipient,Risk Type,Total Supplier Count,Average Risk Description,High Risk Suppliers,Percent High Risk,New Warning Activities,Suppliers with New Warnings,Average Transparency,Percent Suppliers Missing Industry Info,Percent Suppliers Missing Product Info,Linked Supplier Count,Percent Linked Suppliers,Document Count,Percent Suppliers Missing Documents
+DEMO,https://cobalt.io,https://cobalt.io,mbiswas+1@cobaltcore.io,Human Rights,1886,Moderate,205,11.0,985,58,1.0,42.0,75.0,40,2.0,506,90.0
+DEMO,Foo,Bar,foo+12@barbar.com,Human Rights,1886,Moderate,205,11.0,985,58,1.0,42.0,75.0,40,2.0,506,90.0
+DEMO,Gwen,Groeneveld,gwen@frdm.co,Human Rights,1886,Moderate,205,11.0,985,58,1.0,42.0,75.0,40,2.0,506,90.0
+DEMO,Nicole,Dimartino,nicoleangela.dimartino@gmail.com,Human Rights,1886,Moderate,205,11.0,985,58,1.0,42.0,75.0,40,2.0,506,90.0
+DEMO,Manuela,Chyang,manuelachyang@gmail.com,Human Rights,1886,Moderate,205,11.0,985,58,1.0,42.0,75.0,40,2.0,506,90.0
+DEMO,aaa,bbb,aaa.bbb@cc.com,Human Rights,1886,Moderate,205,11.0,985,58,1.0,42.0,75.0,40,2.0,506,90.0
+DEMO,Cobalt Test,Leo,lbrito+10@gmail.com,Human Rights,1886,Moderate,205,11.0,985,58,1.0,42.0,75.0,40,2.0,506,90.0
+DEMO,ian,homenusbaum,ian.nusbaum@gmail.com,Human Rights,1886,Moderate,205,11.0,985,58,1.0,42.0,75.0,40,2.0,506,90.0
+DEMO,visibility,test2,sdfsdf@dfdfg.com,Human Rights,1886,Moderate,205,11.0,985,58,1.0,42.0,75.0,40,2.0,506,90.0
+DEMO,kevin,Demostack,kevinmtest@demostack.com,Human Rights,1886,Moderate,205,11.0,985,58,1.0,42.0,75.0,40,2.0,506,90.0
+DEMO,Rene,Petri,rene.petri@ibm.com,Human Rights,1886,Moderate,205,11.0,985,58,1.0,42.0,75.0,40,2.0,506,90.0
+DEMO,Leonardo,B,leonardo+3@frdm.com,Human Rights,1886,Moderate,205,11.0,985,58,1.0,42.0,75.0,40,2.0,506,90.0
+DEMO,Joel,Buarte,joel.buatre@gmail.com,Human Rights,1886,Moderate,205,11.0,985,58,1.0,42.0,75.0,40,2.0,506,90.0
+DEMO,Cullen,Murray,collin+12@frdm.co,Human Rights,1886,Moderate,205,11.0,985,58,1.0,42.0,75.0,40,2.0,506,90.0
+DEMO,Collin,Murphy,collin+1@frdm.co,Human Rights,1886,Moderate,205,11.0,985,58,1.0,42.0,75.0,40,2.0,506,90.0
+DEMO,Leonardo,Mendes Primo Brito,leonardo+2@frdm.co,Human Rights,1886,Moderate,205,11.0,985,58,1.0,42.0,75.0,40,2.0,506,90.0
+DEMO,Foo,Bar,foo@bar.com,Human Rights,1886,Moderate,205,11.0,985,58,1.0,42.0,75.0,40,2.0,506,90.0
+DEMO,Cullen,Murray,collin+4134@frdm.co,Human Rights,1886,Moderate,205,11.0,985,58,1.0,42.0,75.0,40,2.0,506,90.0
+DEMO,Pentest,Pentest,mbiswas+2@cobaltcore.io,Human Rights,1886,Moderate,205,11.0,985,58,1.0,42.0,75.0,40,2.0,506,90.0
+DEMO,Collin,Murphy,collin_frdm.co#ext#@collinfrdm.onmicrosoft.com,Human Rights,1886,Moderate,205,11.0,985,58,1.0,42.0,75.0,40,2.0,506,90.0
+DEMO,Carla,Cooper,carla@frdm.co,Human Rights,1886,Moderate,205,11.0,985,58,1.0,42.0,75.0,40,2.0,506,90.0
+DEMO,m,biswas,mbiswas@cobaltcore.io,Human Rights,1886,Moderate,205,11.0,985,58,1.0,42.0,75.0,40,2.0,506,90.0
+DEMO,test,test,mbiswas+3@cobaltcore.io,Human Rights,1886,Moderate,205,11.0,985,58,1.0,42.0,75.0,40,2.0,506,90.0
+DEMO,Test,User,mbiswas+4@cobaltcore.io,Human Rights,1886,Moderate,205,11.0,985,58,1.0,42.0,75.0,40,2.0,506,90.0
+DEMO,Dierk,Demers,dierk@frdm.co,Human Rights,1886,Moderate,205,11.0,985,58,1.0,42.0,75.0,40,2.0,506,90.0

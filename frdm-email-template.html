@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your Monthly Supply Chain Risk Report</title>
+</head>
+<body style="margin:0; padding:0; background-color:#051e2c; font-family:'DM Sans','Inter',system-ui,sans-serif;">
+
+  <!-- Wrapper -->
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#051e2c;">
+    <tr>
+      <td align="center" style="padding: 40px 16px;">
+
+        <!-- Email Container -->
+        <table width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px; width:100%; border-radius:16px; overflow:hidden; border:1px solid rgba(255,255,255,0.08);">
+
+
+          <!-- ── HEADER ── -->
+          <tr>
+            <td style="background-color:#072637; padding: 28px 40px; border-bottom: 2px solid #DBE451;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td>
+                    <span style="font-family:'DM Sans','Inter',sans-serif; font-size:24px; font-weight:800; color:#F1EEE8; letter-spacing:-0.5px;">
+                      FRD<span style="color:#DBE451;">M</span>
+                    </span>
+                  </td>
+                  <td align="right">
+                    <span style="font-family:'DM Sans','Inter',sans-serif; font-size:11px; font-weight:500; color:#B6A9A9; letter-spacing:0.1em; text-transform:uppercase;">
+                      Monthly Risk Digest
+                    </span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+
+          <!-- ── HERO ── -->
+          <tr>
+            <td style="background: linear-gradient(160deg, #0d3a52 0%, #072637 60%); padding: 40px 40px 36px 40px; border-bottom:1px solid rgba(255,255,255,0.08);">
+              <p style="margin:0 0 10px 0; font-size:11px; font-weight:500; color:#DBE451; letter-spacing:0.1em; text-transform:uppercase;">
+                {{Risk Type}} · {{Company Name}}
+              </p>
+              <h1 style="margin:0 0 16px 0; font-size:30px; font-weight:800; color:#F1EEE8; line-height:1.25;">
+                Hi {{User First Name}}, here's your<br>
+                <span style="color:#DBE451;">supply chain snapshot.</span>
+              </h1>
+              <p style="margin:0 0 24px 0; font-size:15px; color:#B6A9A9; line-height:1.6;">
+                Here's a summary of your supply chain risk posture for this month. Log in to FRDM for the full picture.
+              </p>
+              <a href="https://app.frdm.co" style="display:inline-block; background-color:#DBE451; color:#072637; font-family:'DM Sans','Inter',sans-serif; font-size:14px; font-weight:700; padding:12px 24px; border-radius:8px; text-decoration:none;">
+                Log In to FRDM →
+              </a>
+            </td>
+          </tr>
+
+
+          <!-- ── TOP METRICS ROW ── -->
+          <tr>
+            <td style="background-color:#072637; padding: 32px 40px 28px 40px;">
+              <p style="margin:0 0 16px 0; font-size:11px; font-weight:500; color:#B6A9A9; letter-spacing:0.1em; text-transform:uppercase;">Overview</p>
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+
+                  <!-- Total Suppliers -->
+                  <td width="32%" style="background-color:#1A3658; border-radius:10px; padding:18px 14px; text-align:center; border-top: 3px solid #0085F2;">
+                    <p style="margin:0 0 4px 0; font-size:10px; font-weight:500; color:#B6A9A9; letter-spacing:0.08em; text-transform:uppercase;">Total Suppliers</p>
+                    <p style="margin:0; font-size:28px; font-weight:800; color:#F1EEE8; line-height:1.1;">{{Total Supplier Count}}</p>
+                  </td>
+
+                  <td width="4%"></td>
+
+                  <!-- Overall Risk -->
+                  <td width="30%" style="background-color:#1A3658; border-radius:10px; padding:18px 14px; text-align:center; border-top: 3px solid #DBE451;">
+                    <p style="margin:0 0 4px 0; font-size:10px; font-weight:500; color:#B6A9A9; letter-spacing:0.08em; text-transform:uppercase;">Overall Risk</p>
+                    <p style="margin:0; font-size:20px; font-weight:800; color:#DBE451; line-height:1.2;">{{Average Risk Description}}</p>
+                  </td>
+
+                  <td width="4%"></td>
+
+                  <!-- High Risk -->
+                  <td width="30%" style="background-color:#1A3658; border-radius:10px; padding:18px 14px; text-align:center; border-top: 3px solid #ff6b6b;">
+                    <p style="margin:0 0 4px 0; font-size:10px; font-weight:500; color:#B6A9A9; letter-spacing:0.08em; text-transform:uppercase;">High Risk</p>
+                    <p style="margin:0; font-size:28px; font-weight:800; color:#F1EEE8; line-height:1.1;">{{High Risk Suppliers}}</p>
+                    <p style="margin:2px 0 0 0; font-size:11px; color:#B6A9A9;">{{Percent High Risk}}% of total</p>
+                  </td>
+
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+
+          <!-- ── WARNINGS SECTION ── -->
+          <tr>
+            <td style="background-color:#072637; padding: 0 40px 28px 40px;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-radius:10px; overflow:hidden; border:1px solid rgba(219,228,81,0.25);">
+                <tr>
+                  <td style="background-color:#162d1f; padding: 14px 20px; border-bottom: 1px solid rgba(219,228,81,0.2);">
+                    <p style="margin:0; font-size:11px; font-weight:500; color:#DBE451; letter-spacing:0.1em; text-transform:uppercase;">&#9888; New This Month</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="background-color:#0f2318; padding:0;">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td width="50%" style="padding:20px; border-right:1px solid rgba(219,228,81,0.15);">
+                          <p style="margin:0 0 4px 0; font-size:12px; color:#B6A9A9;">Warning Activities</p>
+                          <p style="margin:0; font-size:28px; font-weight:800; color:#F1EEE8;">{{New Warning Activities}}</p>
+                        </td>
+                        <td width="50%" style="padding:20px;">
+                          <p style="margin:0 0 4px 0; font-size:12px; color:#B6A9A9;">Suppliers Affected</p>
+                          <p style="margin:0; font-size:28px; font-weight:800; color:#F1EEE8;">{{Suppliers with New Warnings}}</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+
+          <!-- ── DATA QUALITY SECTION ── -->
+          <tr>
+            <td style="background-color:#072637; padding: 0 40px 36px 40px;">
+              <p style="margin:0 0 14px 0; font-size:11px; font-weight:500; color:#B6A9A9; letter-spacing:0.1em; text-transform:uppercase;">Data Quality</p>
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#1A3658; border-radius:10px; overflow:hidden;">
+
+                <tr>
+                  <td style="padding:14px 20px; border-bottom:1px solid rgba(255,255,255,0.06);">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td><p style="margin:0; font-size:14px; color:#F1EEE8;">Average Transparency Score</p></td>
+                        <td align="right"><p style="margin:0; font-size:14px; font-weight:700; color:#DBE451;">{{Average Transparency}}</p></td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+
+                <tr>
+                  <td style="padding:14px 20px; border-bottom:1px solid rgba(255,255,255,0.06);">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td><p style="margin:0; font-size:14px; color:#F1EEE8;">Missing Industry Info</p></td>
+                        <td align="right"><p style="margin:0; font-size:14px; font-weight:700; color:#F1EEE8;">{{Percent Suppliers Missing Industry Info}}%</p></td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+
+                <tr>
+                  <td style="padding:14px 20px; border-bottom:1px solid rgba(255,255,255,0.06);">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td><p style="margin:0; font-size:14px; color:#F1EEE8;">Missing Product Info</p></td>
+                        <td align="right"><p style="margin:0; font-size:14px; font-weight:700; color:#F1EEE8;">{{Percent Suppliers Missing Product Info}}%</p></td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+
+                <tr>
+                  <td style="padding:14px 20px; border-bottom:1px solid rgba(255,255,255,0.06);">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td>
+                          <p style="margin:0; font-size:14px; color:#F1EEE8;">Missing Documents</p>
+                          <p style="margin:2px 0 0 0; font-size:11px; color:#B6A9A9;">{{Document Count}} documents on file</p>
+                        </td>
+                        <td align="right"><p style="margin:0; font-size:14px; font-weight:700; color:#F1EEE8;">{{Percent Suppliers Missing Documents}}%</p></td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+
+                <tr>
+                  <td style="padding:14px 20px;">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td>
+                          <p style="margin:0; font-size:14px; color:#F1EEE8;">Linked Suppliers</p>
+                          <p style="margin:2px 0 0 0; font-size:11px; color:#B6A9A9;">{{Linked Supplier Count}} of {{Total Supplier Count}} linked</p>
+                        </td>
+                        <td align="right"><p style="margin:0; font-size:14px; font-weight:700; color:#F1EEE8;">{{Percent Linked Suppliers}}%</p></td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+
+              </table>
+            </td>
+          </tr>
+
+
+          <!-- ══════════════════════════════════════════════════
+               BLURB SECTION
+               Tool should expose these fields to the sender:
+                 - {{Blurb Heading}} : short label, e.g. "In the News" or "New Feature"
+                 - {{Blurb Title}}   : bold headline for the item
+                 - {{Blurb Body}}    : 1–3 sentence description
+                 - {{Blurb URL}}     : destination link
+                 - {{Blurb CTA}}     : link label, e.g. "Read the Article" or "Watch the Demo"
+               ══════════════════════════════════════════════════ -->
+          <tr>
+            <td style="background-color:#0d2035; padding: 32px 40px; border-top:2px solid rgba(0,133,242,0.4);">
+              <p style="margin:0 0 10px 0; font-size:11px; font-weight:500; color:#0085F2; letter-spacing:0.1em; text-transform:uppercase;">
+                {{Blurb Heading}}
+              </p>
+              <p style="margin:0 0 10px 0; font-size:18px; font-weight:700; color:#F1EEE8; line-height:1.4;">
+                {{Blurb Title}}
+              </p>
+              <p style="margin:0 0 18px 0; font-size:14px; color:#B6A9A9; line-height:1.6;">
+                {{Blurb Body}}
+              </p>
+              <a href="{{Blurb URL}}" style="display:inline-block; border:1.5px solid #0085F2; color:#0085F2; font-family:'DM Sans','Inter',sans-serif; font-size:13px; font-weight:600; padding:10px 20px; border-radius:8px; text-decoration:none;">
+                {{Blurb CTA}} →
+              </a>
+            </td>
+          </tr>
+
+
+          <!-- ── FOOTER ── -->
+          <tr>
+            <td style="background-color:#051e2c; padding:24px 40px; border-top:1px solid rgba(255,255,255,0.06);">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td>
+                    <p style="margin:0 0 2px 0; font-size:13px; font-weight:700; color:#F1EEE8;">FRDM</p>
+                    <p style="margin:0; font-size:11px; color:#B6A9A9;">Supply Chain Risk Intelligence</p>
+                  </td>
+                  <td align="right">
+                    <p style="margin:0; font-size:12px;">
+                      <a href="https://app.frdm.co" style="color:#0085F2; text-decoration:none;">app.frdm.co</a>
+                    </p>
+                    <p style="margin:4px 0 0 0; font-size:11px; color:#B6A9A9;">You're receiving this because you have alert emails enabled.</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+
+        </table>
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>
