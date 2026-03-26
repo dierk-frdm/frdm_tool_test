@@ -7,235 +7,572 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: #f8f9fa;
-      color: #1a1a2e;
-      min-height: 100vh;
+    :root {
+      --navy:      #0d1b2e;
+      --navy-mid:  #162540;
+      --navy-card: #1c2e48;
+      --accent:    #2d8cf0;
+      --accent-2:  #00c8a0;
+      --text:      #e8edf5;
+      --text-muted:#8fa3bc;
+      --border:    rgba(255,255,255,0.07);
+      --sidebar-w: 220px;
     }
 
-    /* ── Nav ── */
-    nav {
-      background: #fff;
-      border-bottom: 1px solid #e0e4ef;
-      padding: 0 2rem;
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--navy);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Top bar ── */
+    .topbar {
+      background: var(--navy-mid);
+      border-bottom: 1px solid var(--border);
       height: 56px;
       display: flex;
       align-items: center;
-      gap: 0.6rem;
+      padding: 0 1.5rem;
+      gap: 1rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
-    nav .logo { font-size: 1.25rem; font-weight: 700; color: #1a1a2e; }
-    nav .badge {
-      font-size: 0.7rem; font-weight: 600; color: #1a73e8;
-      background: #e8f0fe; border-radius: 20px; padding: 2px 8px;
+    .topbar-logo {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+    }
+    .topbar-logo img {
+      height: 20px;
+      width: auto;
+      /* invert dark logo to white */
+      filter: brightness(0) invert(1);
+    }
+    .topbar-divider {
+      width: 1px;
+      height: 20px;
+      background: var(--border);
+    }
+    .topbar-product {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      letter-spacing: 0.01em;
+    }
+    .topbar-badge {
+      margin-left: auto;
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: var(--accent-2);
+      background: rgba(0,200,160,0.12);
+      border: 1px solid rgba(0,200,160,0.25);
+      border-radius: 20px;
+      padding: 2px 10px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
     }
 
-    /* ── Main ── */
-    main { max-width: 1100px; margin: 0 auto; padding: 3rem 2rem; }
-
-    .hero { margin-bottom: 2.5rem; }
-    .hero h1 { font-size: 1.9rem; font-weight: 700; color: #1a1a2e; margin-bottom: 0.4rem; }
-    .hero p  { color: #555; font-size: 1rem; }
-
-    .section-title {
-      font-size: 1rem; font-weight: 600; color: #888;
-      text-transform: uppercase; letter-spacing: 0.06em;
-      margin-bottom: 1rem;
+    /* ── Layout shell ── */
+    .shell {
+      display: flex;
+      flex: 1;
     }
 
-    /* ── Tool grid ── */
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.25rem; }
-
-    .card {
-      background: #fff;
-      border: 1px solid #e0e4ef;
-      border-radius: 12px;
-      padding: 1.5rem;
-      transition: box-shadow 0.15s, border-color 0.15s;
+    /* ── Sidebar ── */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--navy-mid);
+      border-right: 1px solid var(--border);
+      padding: 1.5rem 0;
       display: flex;
       flex-direction: column;
+      gap: 0.25rem;
+      flex-shrink: 0;
+    }
+    .sidebar-section {
+      padding: 0.75rem 1.25rem 0.25rem;
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .sidebar-item {
+      display: flex;
+      align-items: center;
       gap: 0.6rem;
+      padding: 0.5rem 1.25rem;
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      text-decoration: none;
+      border-radius: 0;
+      transition: background 0.12s, color 0.12s;
+      cursor: pointer;
     }
-    .card.available:hover {
-      box-shadow: 0 4px 18px rgba(0,0,0,0.09);
-      border-color: #1a73e8;
+    .sidebar-item:hover {
+      background: rgba(255,255,255,0.05);
+      color: var(--text);
     }
-    .card.coming-soon { opacity: 0.6; }
-
-    .card-icon { font-size: 2rem; line-height: 1; }
-
-    .card-header { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
-    .card-title  { font-size: 1rem; font-weight: 600; color: #1a1a2e; }
-
-    .status-badge {
-      font-size: 0.68rem; font-weight: 600; border-radius: 20px; padding: 2px 8px;
+    .sidebar-item.active {
+      color: var(--accent);
+      background: rgba(45,140,240,0.1);
+      border-right: 2px solid var(--accent);
     }
-    .status-available    { color: #1e7e34; background: #d4edda; }
-    .status-coming-soon  { color: #6c757d; background: #e9ecef; }
+    .sidebar-icon { font-size: 1rem; flex-shrink: 0; }
 
-    .card-desc { font-size: 0.875rem; color: #555; line-height: 1.55; flex: 1; }
-
-    .card-link {
-      display: inline-block; margin-top: 0.5rem;
-      font-size: 0.875rem; font-weight: 600;
-      color: #1a73e8; text-decoration: none;
+    /* ── Main content ── */
+    .content {
+      flex: 1;
+      overflow: auto;
+      padding: 2.5rem 2.5rem 4rem;
     }
-    .card-link:hover { text-decoration: underline; }
+
+    /* ── Hero banner ── */
+    .hero {
+      background: linear-gradient(135deg, var(--navy-card) 0%, #1a2f50 100%);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2.5rem;
+      margin-bottom: 2.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 2rem;
+      overflow: hidden;
+      position: relative;
+    }
+    .hero::after {
+      content: '';
+      position: absolute;
+      right: -60px;
+      top: -60px;
+      width: 280px;
+      height: 280px;
+      background: radial-gradient(circle, rgba(45,140,240,0.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-text {}
+    .hero-eyebrow {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.6rem;
+    }
+    .hero h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.2;
+      margin-bottom: 0.75rem;
+    }
+    .hero p {
+      font-size: 0.9375rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+      max-width: 520px;
+    }
+    .hero-stats {
+      display: flex;
+      gap: 2rem;
+      flex-shrink: 0;
+    }
+    .stat {
+      text-align: center;
+    }
+    .stat-num {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--accent-2);
+      line-height: 1;
+      margin-bottom: 0.25rem;
+    }
+    .stat-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    /* ── Category sections ── */
+    .category {
+      margin-bottom: 2.5rem;
+    }
+    .category-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+    .category-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+    .cat-risk     .category-icon { background: rgba(240,80,80,0.15); }
+    .cat-supplier .category-icon { background: rgba(45,140,240,0.15); }
+    .cat-comply   .category-icon { background: rgba(255,180,0,0.15); }
+    .cat-report   .category-icon { background: rgba(0,200,160,0.15); }
+
+    .category-title {
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .category-desc {
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      margin-left: auto;
+    }
+    .category-divider {
+      height: 1px;
+      background: var(--border);
+      margin-left: calc(32px + 0.75rem);
+    }
+
+    /* ── Tool cards ── */
+    .tool-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .tool-card {
+      background: var(--navy-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      text-decoration: none;
+      color: inherit;
+      transition: border-color 0.15s, box-shadow 0.15s, transform 0.12s;
+      cursor: pointer;
+    }
+    .tool-card:hover {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(45,140,240,0.2), 0 8px 24px rgba(0,0,0,0.3);
+      transform: translateY(-1px);
+    }
+
+    .tool-card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+    .tool-icon {
+      font-size: 1.5rem;
+      line-height: 1;
+    }
+    .tool-status {
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 2px 8px;
+      border-radius: 20px;
+      background: rgba(0,200,160,0.12);
+      color: var(--accent-2);
+      border: 1px solid rgba(0,200,160,0.2);
+    }
+
+    .tool-name {
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.3;
+    }
+    .tool-desc {
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+      flex: 1;
+    }
+    .tool-cta {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--accent);
+      margin-top: 0.25rem;
+    }
+    .tool-cta-arrow {
+      transition: transform 0.12s;
+    }
+    .tool-card:hover .tool-cta-arrow { transform: translateX(3px); }
 
     /* ── Footer ── */
     footer {
-      text-align: center; color: #aaa; font-size: 0.8rem;
-      padding: 2.5rem 1rem;
-      border-top: 1px solid #e8eaf0;
-      margin-top: 4rem;
+      border-top: 1px solid var(--border);
+      padding: 1.5rem 2.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+    }
+    footer img {
+      height: 14px;
+      opacity: 0.5;
+      filter: brightness(0) invert(1);
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .content { padding: 1.5rem 1rem 3rem; }
+      .hero { flex-direction: column; }
+      .hero-stats { justify-content: flex-start; }
+      .category-desc { display: none; }
     }
   </style>
 </head>
 <body>
 
-<nav>
-  <span class="logo">🛡️ FRDM Tools</span>
-  <span class="badge">Internal</span>
-</nav>
+<!-- Top bar -->
+<header class="topbar">
+  <a class="topbar-logo" href="#">
+    <img src="frdmai logo.png" alt="FRDM AI" />
+  </a>
+  <div class="topbar-divider"></div>
+  <span class="topbar-product">Internal Tools</span>
+  <span class="topbar-badge">Internal</span>
+</header>
 
-<main>
-  <div class="hero">
-    <h1>Internal Tools</h1>
-    <p>QA &amp; testing utilities for the FRDM platform.</p>
-  </div>
+<div class="shell">
 
-  <p class="section-title">Available Tools</p>
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="sidebar-section">Platform</div>
+    <a class="sidebar-item active" href="#">
+      <span class="sidebar-icon">⊞</span> All Tools
+    </a>
 
-  <div class="grid">
+    <div class="sidebar-section" style="margin-top:0.5rem;">Risk</div>
+    <a class="sidebar-item" href="analyzer.html">
+      <span class="sidebar-icon">📊</span> Risk Analyzer
+    </a>
+    <a class="sidebar-item" href="supplier-risk.html">
+      <span class="sidebar-icon">🏭</span> Bulk Screening
+    </a>
 
-    <div class="card available">
-      <div class="card-icon">📊</div>
-      <div class="card-header">
-        <span class="card-title">Risk Score Analyzer</span>
-        <span class="status-badge status-available">Available</span>
+    <div class="sidebar-section" style="margin-top:0.5rem;">Suppliers</div>
+    <a class="sidebar-item" href="company-search.html">
+      <span class="sidebar-icon">🔍</span> Company Search
+    </a>
+    <a class="sidebar-item" href="supplier-enrichment.html">
+      <span class="sidebar-icon">🏢</span> Enrichment
+    </a>
+    <a class="sidebar-item" href="commitments-matcher.html">
+      <span class="sidebar-icon">🤝</span> Commitments
+    </a>
+
+    <div class="sidebar-section" style="margin-top:0.5rem;">Compliance</div>
+    <a class="sidebar-item" href="document-search.html">
+      <span class="sidebar-icon">📄</span> Document Search
+    </a>
+    <a class="sidebar-item" href="regulations-warnings.html">
+      <span class="sidebar-icon">⚠️</span> Regulations
+    </a>
+
+    <div class="sidebar-section" style="margin-top:0.5rem;">Reporting</div>
+    <a class="sidebar-item" href="qbr.html">
+      <span class="sidebar-icon">📋</span> QBR Generator
+    </a>
+    <a class="sidebar-item" href="email-data/email-merge-tool.html">
+      <span class="sidebar-icon">✉️</span> Email Merge
+    </a>
+  </nav>
+
+  <!-- Main content -->
+  <main class="content">
+
+    <!-- Hero -->
+    <section class="hero">
+      <div class="hero-text">
+        <div class="hero-eyebrow">FRDM Platform</div>
+        <h1>Supply Chain Risk<br>Intelligence Tools</h1>
+        <p>AI-powered utilities for risk scoring, supplier intelligence, compliance research, and QA. Built for the FRDM internal team.</p>
       </div>
-      <p class="card-desc">
-        Upload a supplier risk report CSV and automatically detect scoring discrepancies —
-        flagging suppliers where the overall risk level doesn't match their sub-scores.
-        Useful for weekly QA of the scoring algorithm.
-      </p>
-      <a class="card-link" href="analyzer.html">Open tool →</a>
-    </div>
-
-    <div class="card available">
-      <div class="card-icon">🔍</div>
-      <div class="card-header">
-        <span class="card-title">Company Search</span>
-        <span class="status-badge status-available">Available</span>
+      <div class="hero-stats">
+        <div class="stat">
+          <div class="stat-num">9</div>
+          <div class="stat-label">Tools</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num">4</div>
+          <div class="stat-label">Categories</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num">AI</div>
+          <div class="stat-label">Powered</div>
+        </div>
       </div>
-      <p class="card-desc">
-        Type any company name and get an AI-generated profile covering industry, headquarters,
-        products, supply chain context, and ESG risk level — powered by Claude.
-      </p>
-      <a class="card-link" href="company-search.html">Open tool →</a>
-    </div>
+    </section>
 
-    <div class="card available">
-      <div class="card-icon">🏭</div>
-      <div class="card-header">
-        <span class="card-title">Bulk Supplier Risk Screening</span>
-        <span class="status-badge status-available">Available</span>
+    <!-- Risk & Screening -->
+    <section class="category cat-risk">
+      <div class="category-header">
+        <div class="category-icon">🛡️</div>
+        <span class="category-title">Risk &amp; Screening</span>
+        <span class="category-desc">Scoring QA and bulk sanctions/human-rights screening</span>
       </div>
-      <p class="card-desc">
-        Upload a CSV of suppliers for rapid bulk risk scoring. Combines AI analysis,
-        sanctions screening via OpenSanctions, and country-level human rights data
-        from ILO and Walk Free GSI.
-      </p>
-      <a class="card-link" href="supplier-risk.html">Open tool →</a>
-    </div>
+      <div class="category-divider"></div>
+      <div class="tool-grid">
 
-    <div class="card available">
-      <div class="card-icon">📋</div>
-      <div class="card-header">
-        <span class="card-title">QBR Generator</span>
-        <span class="status-badge status-available">Available</span>
+        <a class="tool-card" href="analyzer.html">
+          <div class="tool-card-top">
+            <span class="tool-icon">📊</span>
+            <span class="tool-status">Available</span>
+          </div>
+          <div class="tool-name">Risk Score Analyzer</div>
+          <div class="tool-desc">Upload a supplier risk CSV and automatically detect scoring discrepancies — flagging suppliers where overall risk level doesn't match their sub-scores.</div>
+          <div class="tool-cta">Open tool <span class="tool-cta-arrow">→</span></div>
+        </a>
+
+        <a class="tool-card" href="supplier-risk.html">
+          <div class="tool-card-top">
+            <span class="tool-icon">🏭</span>
+            <span class="tool-status">Available</span>
+          </div>
+          <div class="tool-name">Bulk Supplier Risk Screening</div>
+          <div class="tool-desc">CSV upload for rapid bulk risk scoring. Combines AI analysis, OpenSanctions screening, and country-level human rights data from ILO and Walk Free GSI.</div>
+          <div class="tool-cta">Open tool <span class="tool-cta-arrow">→</span></div>
+        </a>
+
       </div>
-      <p class="card-desc">
-        Upload a FRDM supplier risk CSV and generate a printable Quarterly Business Review report —
-        covering risk scores, warnings, regulations, documents, and FRDM's value to the customer.
-      </p>
-      <a class="card-link" href="qbr.html">Open tool →</a>
-    </div>
+    </section>
 
-    <div class="card available">
-      <div class="card-icon">🤝</div>
-      <div class="card-header">
-        <span class="card-title">Commitments Matcher</span>
-        <span class="status-badge status-available">Available</span>
+    <!-- Supplier Intelligence -->
+    <section class="category cat-supplier">
+      <div class="category-header">
+        <div class="category-icon">🔎</div>
+        <span class="category-title">Supplier Intelligence</span>
+        <span class="category-desc">AI-powered firmographic research and ESG commitment matching</span>
       </div>
-      <p class="card-desc">
-        Upload a supplier list and match companies against RE100, SBTi, and CDP databases.
-        Fuzzy-matches supplier names, lets you review and approve results, and exports
-        commitment data ready for ingestion.
-      </p>
-      <a class="card-link" href="commitments-matcher.html">Open tool →</a>
-    </div>
+      <div class="category-divider"></div>
+      <div class="tool-grid">
 
-    <div class="card available">
-      <div class="card-icon">🏢</div>
-      <div class="card-header">
-        <span class="card-title">Supplier Enrichment</span>
-        <span class="status-badge status-available">Available</span>
+        <a class="tool-card" href="company-search.html">
+          <div class="tool-card-top">
+            <span class="tool-icon">🔍</span>
+            <span class="tool-status">Available</span>
+          </div>
+          <div class="tool-name">Company Search</div>
+          <div class="tool-desc">AI-generated company profile covering industry, HQ, products, supply chain context, and ESG risk level — powered by Claude.</div>
+          <div class="tool-cta">Open tool <span class="tool-cta-arrow">→</span></div>
+        </a>
+
+        <a class="tool-card" href="supplier-enrichment.html">
+          <div class="tool-card-top">
+            <span class="tool-icon">🏢</span>
+            <span class="tool-status">Available</span>
+          </div>
+          <div class="tool-name">Supplier Enrichment</div>
+          <div class="tool-desc">Enrich a company list with AI-sourced firmographic data — HQ address, key officers, parent company, subsidiaries, revenue, and ownership type.</div>
+          <div class="tool-cta">Open tool <span class="tool-cta-arrow">→</span></div>
+        </a>
+
+        <a class="tool-card" href="commitments-matcher.html">
+          <div class="tool-card-top">
+            <span class="tool-icon">🤝</span>
+            <span class="tool-status">Available</span>
+          </div>
+          <div class="tool-name">Commitments Matcher</div>
+          <div class="tool-desc">Match suppliers against RE100, SBTi, and CDP databases using fuzzy matching. Review and approve results, then export data ready for ingestion.</div>
+          <div class="tool-cta">Open tool <span class="tool-cta-arrow">→</span></div>
+        </a>
+
       </div>
-      <p class="card-desc">
-        Upload a list of company names and enrich them with AI-sourced firmographic data —
-        headquarters address, key officers, parent company, subsidiaries, revenue, ownership type,
-        and more. Powered by Claude.
-      </p>
-      <a class="card-link" href="supplier-enrichment.html">Open tool →</a>
-    </div>
+    </section>
 
-    <div class="card available">
-      <div class="card-icon">📄</div>
-      <div class="card-header">
-        <span class="card-title">Document Search</span>
-        <span class="status-badge status-available">Available</span>
+    <!-- Compliance & Documents -->
+    <section class="category cat-comply">
+      <div class="category-header">
+        <div class="category-icon">📁</div>
+        <span class="category-title">Compliance &amp; Documents</span>
+        <span class="category-desc">Document discovery, classification, regulations, and warnings</span>
       </div>
-      <p class="card-desc">
-        Upload a supplier list and use AI to find ESG, sustainability, and compliance documents
-        published by each company. Classifies documents against the FRDM document type registry,
-        and surfaces additional relevant documents with links. Powered by Claude.
-      </p>
-      <a class="card-link" href="document-search.html">Open tool →</a>
-    </div>
+      <div class="category-divider"></div>
+      <div class="tool-grid">
 
-    <div class="card available">
-      <div class="card-icon">⚠️</div>
-      <div class="card-header">
-        <span class="card-title">Regulations &amp; Warnings</span>
-        <span class="status-badge status-available">Available</span>
+        <a class="tool-card" href="document-search.html">
+          <div class="tool-card-top">
+            <span class="tool-icon">📄</span>
+            <span class="tool-status">Available</span>
+          </div>
+          <div class="tool-name">Document Search</div>
+          <div class="tool-desc">Find ESG, sustainability, and compliance documents published by each supplier. Classifies against the FRDM document type registry and surfaces links.</div>
+          <div class="tool-cta">Open tool <span class="tool-cta-arrow">→</span></div>
+        </a>
+
+        <a class="tool-card" href="regulations-warnings.html">
+          <div class="tool-card-top">
+            <span class="tool-icon">⚠️</span>
+            <span class="tool-status">Available</span>
+          </div>
+          <div class="tool-name">Regulations &amp; Warnings</div>
+          <div class="tool-desc">Build NAICS-based industry regulation mappings and country/HS-code warning lists for FRDM ingestion, with a persistent log of generated files.</div>
+          <div class="tool-cta">Open tool <span class="tool-cta-arrow">→</span></div>
+        </a>
+
       </div>
-      <p class="card-desc">
-        Build industry regulation mappings and warning lists for FRDM ingestion.
-        Create NAICS-based regulation files and country/HS-code/company warning
-        files, with a persistent log of all files generated.
-      </p>
-      <a class="card-link" href="regulations-warnings.html">Open tool →</a>
-    </div>
+    </section>
 
-    <div class="card available">
-      <div class="card-icon">✉️</div>
-      <div class="card-header">
-        <span class="card-title">Email Merge Tool</span>
-        <span class="status-badge status-available">Available</span>
+    <!-- Reporting -->
+    <section class="category cat-report">
+      <div class="category-header">
+        <div class="category-icon">📤</div>
+        <span class="category-title">Reporting &amp; Outreach</span>
+        <span class="category-desc">QBR generation and personalized email delivery</span>
       </div>
-      <p class="card-desc">
-        Upload a recipient CSV and merge it with the FRDM monthly risk digest email template.
-        Add a custom news blurb, preview each personalized email, and export a JSON payload
-        ready for Google Apps Script sending.
-      </p>
-      <a class="card-link" href="email-data/email-merge-tool.html">Open tool →</a>
-    </div>
+      <div class="category-divider"></div>
+      <div class="tool-grid">
 
-  </div>
-</main>
+        <a class="tool-card" href="qbr.html">
+          <div class="tool-card-top">
+            <span class="tool-icon">📋</span>
+            <span class="tool-status">Available</span>
+          </div>
+          <div class="tool-name">QBR Generator</div>
+          <div class="tool-desc">Upload a FRDM supplier risk CSV and generate a printable Quarterly Business Review report covering risk scores, warnings, regulations, and documents.</div>
+          <div class="tool-cta">Open tool <span class="tool-cta-arrow">→</span></div>
+        </a>
 
-<footer>FRDM Internal Tools &nbsp;·&nbsp; For internal QA use only</footer>
+        <a class="tool-card" href="email-data/email-merge-tool.html">
+          <div class="tool-card-top">
+            <span class="tool-icon">✉️</span>
+            <span class="tool-status">Available</span>
+          </div>
+          <div class="tool-name">Email Merge Tool</div>
+          <div class="tool-desc">Merge a recipient CSV with the FRDM monthly risk digest template. Add a custom news blurb, preview each personalized email, and export a JSON payload.</div>
+          <div class="tool-cta">Open tool <span class="tool-cta-arrow">→</span></div>
+        </a>
+
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer>
+  <img src="frdmai logo.png" alt="FRDM AI" />
+  <span>Internal use only &nbsp;·&nbsp; FRDM AI Platform</span>
+</footer>
 
 </body>
 </html>
