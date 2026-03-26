@@ -12,9 +12,9 @@
       --surface:   #fdfaf5;
       --card:      #ffffff;
       --sidebar-bg:#faf5ec;
-      --accent:    #c9930a;
-      --accent-2:  #e8b000;
-      --accent-light: #fff3cc;
+      --accent:    #8a9412;
+      --accent-brand: #DCE351;
+      --accent-light: #f3f7b8;
       --text:      #1e1a10;
       --text-muted:#7a6e58;
       --border:    #e2d9c8;
@@ -68,9 +68,9 @@
       margin-left: auto;
       font-size: 0.68rem;
       font-weight: 700;
-      color: var(--accent);
-      background: var(--accent-light);
-      border: 1px solid #e8c96a;
+      color: #5a6200;
+      background: var(--accent-brand);
+      border: 1px solid #c4cc3a;
       border-radius: 20px;
       padding: 2px 10px;
       letter-spacing: 0.04em;
@@ -119,9 +119,10 @@
       color: var(--text);
     }
     .sidebar-item.active {
-      color: var(--accent);
+      color: #4a5200;
       background: var(--accent-light);
-      border-right: 2px solid var(--accent);
+      border-right: 3px solid var(--accent-brand);
+      font-weight: 600;
     }
     .sidebar-icon { font-size: 1rem; flex-shrink: 0; }
 
@@ -134,8 +135,8 @@
 
     /* ── Hero banner ── */
     .hero {
-      background: linear-gradient(135deg, #fffbe8 0%, #fef3c0 100%);
-      border: 1px solid #e8d98a;
+      background: linear-gradient(135deg, #f8fad0 0%, #edf088 60%, #DCE351 100%);
+      border: 1px solid #c4cc3a;
       border-radius: 16px;
       padding: 2.5rem;
       margin-bottom: 2.5rem;
@@ -153,14 +154,14 @@
       top: -60px;
       width: 280px;
       height: 280px;
-      background: radial-gradient(circle, rgba(201,147,10,0.1) 0%, transparent 70%);
+      background: radial-gradient(circle, rgba(220,227,81,0.3) 0%, transparent 70%);
       pointer-events: none;
     }
     .hero-text {}
     .hero-eyebrow {
       font-size: 0.75rem;
       font-weight: 700;
-      color: var(--accent);
+      color: #4a5200;
       text-transform: uppercase;
       letter-spacing: 0.1em;
       margin-bottom: 0.6rem;
@@ -189,7 +190,7 @@
     .stat-num {
       font-size: 2rem;
       font-weight: 700;
-      color: var(--accent);
+      color: #3a4500;
       line-height: 1;
       margin-bottom: 0.25rem;
     }
@@ -219,10 +220,10 @@
       font-size: 1rem;
       flex-shrink: 0;
     }
-    .cat-risk     .category-icon { background: rgba(220,80,60,0.1); }
-    .cat-supplier .category-icon { background: rgba(201,147,10,0.12); }
-    .cat-comply   .category-icon { background: rgba(180,130,0,0.12); }
-    .cat-report   .category-icon { background: rgba(201,147,10,0.1); }
+    .cat-risk     .category-icon { background: rgba(220,80,60,0.08); }
+    .cat-supplier .category-icon { background: rgba(220,227,81,0.3); }
+    .cat-comply   .category-icon { background: rgba(220,227,81,0.25); }
+    .cat-report   .category-icon { background: rgba(220,227,81,0.3); }
 
     .category-title {
       font-size: 0.9375rem;
@@ -262,8 +263,8 @@
       cursor: pointer;
     }
     .tool-card:hover {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 1px rgba(201,147,10,0.15), 0 6px 20px rgba(0,0,0,0.08);
+      border-color: var(--accent-brand);
+      box-shadow: 0 0 0 1px rgba(220,227,81,0.4), 0 6px 20px rgba(0,0,0,0.07);
       transform: translateY(-1px);
     }
 
@@ -284,9 +285,9 @@
       letter-spacing: 0.05em;
       padding: 2px 8px;
       border-radius: 20px;
-      background: var(--accent-light);
-      color: var(--accent);
-      border: 1px solid #e8c96a;
+      background: var(--accent-brand);
+      color: #3a4500;
+      border: 1px solid #c4cc3a;
     }
 
     .tool-name {
@@ -307,7 +308,7 @@
       gap: 0.35rem;
       font-size: 0.8125rem;
       font-weight: 600;
-      color: var(--accent);
+      color: #5a6800;
       margin-top: 0.25rem;
     }
     .tool-cta-arrow {
