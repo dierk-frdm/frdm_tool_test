@@ -107,6 +107,14 @@ tr:hover td{background:#fafbff;}
 .type-warning{background:#fff3cd;color:#856404;}
 .type-regulations{background:#e8f0fe;color:#1a4da0;}
 
+/* Editable log table */
+.log-input{width:100%;border:1px solid transparent;border-radius:4px;padding:2px 4px;font-size:.82rem;font-family:inherit;background:transparent;color:var(--text);}
+.log-input:hover{border-color:var(--border);}
+.log-input:focus{border-color:var(--accent);outline:none;background:#fff;}
+.log-select{border:1px solid transparent;border-radius:4px;padding:2px 4px;font-size:.82rem;font-family:inherit;background:transparent;color:var(--text);cursor:pointer;}
+.log-select:hover{border-color:var(--border);}
+.log-select:focus{border-color:var(--accent);outline:none;}
+
 /* Divider */
 .divider{border:none;border-top:1px solid var(--border);margin:1.5rem 0;}
 
@@ -364,7 +372,6 @@ footer{text-align:center;color:#aaa;font-size:.8rem;padding:2.5rem 1rem;border-t
       <div id="log-container"></div>
       <div class="action-row" style="margin-top:1rem;">
         <button class="btn btn-secondary btn-sm" onclick="downloadLog()">Download Log CSV</button>
-        <button class="btn btn-danger btn-sm" onclick="clearLog()">Clear Log</button>
       </div>
     </div>
 
@@ -905,6 +912,22 @@ function appendLog(entry) {
   localStorage.setItem(LOG_KEY, JSON.stringify(log));
 }
 
+function saveLog(log) {
+  localStorage.setItem(LOG_KEY, JSON.stringify(log));
+}
+
+function updateLogEntry(id, field, value) {
+  const log = getLog();
+  const entry = log.find(e => e.id === id);
+  if (entry) { entry[field] = value; saveLog(log); }
+}
+
+function deleteLogEntry(id) {
+  if (!confirm('Delete this log entry? This cannot be undone.')) return;
+  saveLog(getLog().filter(e => e.id !== id));
+  renderLog();
+}
+
 function renderLog() {
   const container = document.getElementById('log-container');
   const log = getLog();
@@ -914,19 +937,21 @@ function renderLog() {
     return;
   }
 
-  let html = '<div class="table-wrap"><table><thead><tr><th>Date / Time</th><th>Type</th><th>Name</th><th>Details</th><th>Notes</th></tr></thead><tbody>';
+  let html = '<div class="table-wrap"><table><thead><tr><th>Date / Time</th><th>Type</th><th>Name</th><th>Details</th><th>Notes</th><th></th></tr></thead><tbody>';
   log.forEach(entry => {
     const d = new Date(entry.date);
-    const dateStr = d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const badge   = entry.type === 'warning'
-      ? '<span class="type-badge type-warning">Warning</span>'
-      : '<span class="type-badge type-regulations">Regulations</span>';
+    const dateStr = isNaN(d) ? (entry.date || '') : d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const eid = escHtml(entry.id);
     html += `<tr>
-      <td style="white-space:nowrap;color:var(--muted)">${escHtml(dateStr)}</td>
-      <td>${badge}</td>
-      <td><strong>${escHtml(entry.name)}</strong></td>
-      <td style="color:var(--muted)">${escHtml(entry.details)}</td>
-      <td style="color:var(--muted)">${escHtml(entry.notes || '—')}</td>
+      <td style="white-space:nowrap"><input class="log-input" value="${escHtml(dateStr)}" style="min-width:130px" oninput="updateLogEntry('${eid}','date',this.value)"/></td>
+      <td><select class="log-select" onchange="updateLogEntry('${eid}','type',this.value)">
+        <option value="warning"${entry.type==='warning'?' selected':''}>Warning</option>
+        <option value="regulations"${entry.type==='regulations'?' selected':''}>Regulations</option>
+      </select></td>
+      <td><input class="log-input" value="${escHtml(entry.name)}" oninput="updateLogEntry('${eid}','name',this.value)"/></td>
+      <td><input class="log-input" value="${escHtml(entry.details)}" oninput="updateLogEntry('${eid}','details',this.value)"/></td>
+      <td><input class="log-input" value="${escHtml(entry.notes||'')}" placeholder="—" oninput="updateLogEntry('${eid}','notes',this.value)"/></td>
+      <td style="white-space:nowrap"><button class="btn btn-danger btn-sm" onclick="deleteLogEntry('${eid}')">Delete</button></td>
     </tr>`;
   });
   html += '</tbody></table></div>';
@@ -944,12 +969,6 @@ function downloadLog() {
     Notes:   e.notes
   }));
   downloadBlob(Papa.unparse(rows), `frdm_reg_warn_log_${today()}.csv`, 'text/csv');
-}
-
-function clearLog() {
-  if (!confirm('Permanently delete all log entries? This cannot be undone.')) return;
-  localStorage.removeItem(LOG_KEY);
-  renderLog();
 }
 
 // ─────────────────────────────────────────────────
