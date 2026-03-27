@@ -107,6 +107,14 @@ tr:hover td{background:#fafbff;}
 .type-warning{background:#fff3cd;color:#856404;}
 .type-regulations{background:#e8f0fe;color:#1a4da0;}
 
+/* Editable log table */
+.log-input{width:100%;border:1px solid transparent;border-radius:4px;padding:2px 4px;font-size:.82rem;font-family:inherit;background:transparent;color:var(--text);}
+.log-input:hover{border-color:var(--border);}
+.log-input:focus{border-color:var(--accent);outline:none;background:#fff;}
+.log-select{border:1px solid transparent;border-radius:4px;padding:2px 4px;font-size:.82rem;font-family:inherit;background:transparent;color:var(--text);cursor:pointer;}
+.log-select:hover{border-color:var(--border);}
+.log-select:focus{border-color:var(--accent);outline:none;}
+
 /* Divider */
 .divider{border:none;border-top:1px solid var(--border);margin:1.5rem 0;}
 
@@ -364,29 +372,6 @@ footer{text-align:center;color:#aaa;font-size:.8rem;padding:2.5rem 1rem;border-t
       <div id="log-container"></div>
       <div class="action-row" style="margin-top:1rem;">
         <button class="btn btn-secondary btn-sm" onclick="downloadLog()">Download Log CSV</button>
-        <button class="btn btn-danger btn-sm" onclick="clearLog()">Clear Log</button>
-      </div>
-    </div>
-
-    <!-- GitHub Gist sync (placeholder) -->
-    <div class="card">
-      <div class="collapsible-header" onclick="toggleCollapsible(this)">
-        <span>☁️ GitHub Gist Sync</span>
-        <span class="chevron">▼</span>
-      </div>
-      <div class="collapsible-body">
-        <div class="alert alert-info show" style="margin-bottom:1rem;">
-          Sync your log to a GitHub Gist using the server-stored <strong>GITHUB_API_KEY</strong> secret — no token needed here.
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="gist-id">Gist ID <span>(leave blank to create a new Gist on first sync)</span></label>
-          <input id="gist-id" class="form-input" type="text" placeholder="e.g. a1b2c3d4e5f6..."/>
-        </div>
-        <div class="action-row">
-          <button class="btn btn-secondary btn-sm" onclick="saveGistSettings()">Save Settings</button>
-          <button class="btn btn-primary btn-sm" onclick="syncToGist()">Sync Log to Gist</button>
-        </div>
-        <div id="gist-status" style="margin-top:.75rem;font-size:.8rem;color:var(--muted);"></div>
       </div>
     </div>
 
@@ -401,7 +386,6 @@ footer{text-align:center;color:#aaa;font-size:.8rem;padding:2.5rem 1rem;border-t
 // GLOBALS
 // ─────────────────────────────────────────────────
 const LOG_KEY    = 'frdm_reg_warn_log';
-const GIST_KEY   = 'frdm_gist_settings';
 const REG_GH_KEY = 'frdm_reg_gh_config';
 let naicsData   = null;  // Array of {code, standard_name}
 let naicsLoaded = false;
@@ -928,6 +912,22 @@ function appendLog(entry) {
   localStorage.setItem(LOG_KEY, JSON.stringify(log));
 }
 
+function saveLog(log) {
+  localStorage.setItem(LOG_KEY, JSON.stringify(log));
+}
+
+function updateLogEntry(id, field, value) {
+  const log = getLog();
+  const entry = log.find(e => e.id === id);
+  if (entry) { entry[field] = value; saveLog(log); }
+}
+
+function deleteLogEntry(id) {
+  if (!confirm('Delete this log entry? This cannot be undone.')) return;
+  saveLog(getLog().filter(e => e.id !== id));
+  renderLog();
+}
+
 function renderLog() {
   const container = document.getElementById('log-container');
   const log = getLog();
@@ -937,19 +937,21 @@ function renderLog() {
     return;
   }
 
-  let html = '<div class="table-wrap"><table><thead><tr><th>Date / Time</th><th>Type</th><th>Name</th><th>Details</th><th>Notes</th></tr></thead><tbody>';
+  let html = '<div class="table-wrap"><table><thead><tr><th>Date / Time</th><th>Type</th><th>Name</th><th>Details</th><th>Notes</th><th></th></tr></thead><tbody>';
   log.forEach(entry => {
     const d = new Date(entry.date);
-    const dateStr = d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const badge   = entry.type === 'warning'
-      ? '<span class="type-badge type-warning">Warning</span>'
-      : '<span class="type-badge type-regulations">Regulations</span>';
+    const dateStr = isNaN(d) ? (entry.date || '') : d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const eid = escHtml(entry.id);
     html += `<tr>
-      <td style="white-space:nowrap;color:var(--muted)">${escHtml(dateStr)}</td>
-      <td>${badge}</td>
-      <td><strong>${escHtml(entry.name)}</strong></td>
-      <td style="color:var(--muted)">${escHtml(entry.details)}</td>
-      <td style="color:var(--muted)">${escHtml(entry.notes || '—')}</td>
+      <td style="white-space:nowrap"><input class="log-input" value="${escHtml(dateStr)}" style="min-width:130px" oninput="updateLogEntry('${eid}','date',this.value)"/></td>
+      <td><select class="log-select" onchange="updateLogEntry('${eid}','type',this.value)">
+        <option value="warning"${entry.type==='warning'?' selected':''}>Warning</option>
+        <option value="regulations"${entry.type==='regulations'?' selected':''}>Regulations</option>
+      </select></td>
+      <td><input class="log-input" value="${escHtml(entry.name)}" oninput="updateLogEntry('${eid}','name',this.value)"/></td>
+      <td><input class="log-input" value="${escHtml(entry.details)}" oninput="updateLogEntry('${eid}','details',this.value)"/></td>
+      <td><input class="log-input" value="${escHtml(entry.notes||'')}" placeholder="—" oninput="updateLogEntry('${eid}','notes',this.value)"/></td>
+      <td style="white-space:nowrap"><button class="btn btn-danger btn-sm" onclick="deleteLogEntry('${eid}')">Delete</button></td>
     </tr>`;
   });
   html += '</tbody></table></div>';
@@ -967,53 +969,6 @@ function downloadLog() {
     Notes:   e.notes
   }));
   downloadBlob(Papa.unparse(rows), `frdm_reg_warn_log_${today()}.csv`, 'text/csv');
-}
-
-function clearLog() {
-  if (!confirm('Permanently delete all log entries? This cannot be undone.')) return;
-  localStorage.removeItem(LOG_KEY);
-  renderLog();
-}
-
-// ─────────────────────────────────────────────────
-// GITHUB GIST SYNC
-// ─────────────────────────────────────────────────
-function saveGistSettings() {
-  const gistId = document.getElementById('gist-id').value.trim();
-  localStorage.setItem(GIST_KEY, JSON.stringify({ gistId }));
-  document.getElementById('gist-status').textContent = '✓ Settings saved.';
-}
-
-async function syncToGist() {
-  const statusEl = document.getElementById('gist-status');
-  statusEl.textContent = '⏳ Syncing…';
-
-  let settings = {};
-  try { settings = JSON.parse(localStorage.getItem(GIST_KEY)) || {}; } catch {}
-  let gistId = settings.gistId || document.getElementById('gist-id').value.trim();
-
-  const log = getLog();
-  const csvContent = Papa.unparse(log.map(e => ({
-    Date: e.date, Type: e.type, Name: e.name, Details: e.details, Notes: e.notes
-  })));
-
-  try {
-    const resp = await fetch('/api/gist-sync', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ gistId: gistId || undefined, content: csvContent }),
-    });
-    const data = await resp.json();
-    if (!resp.ok || data.error) throw new Error((data.error || 'API error ' + resp.status) + (data.detail ? ' — ' + data.detail : ''));
-    if (!gistId) {
-      gistId = data.gistId;
-      localStorage.setItem(GIST_KEY, JSON.stringify({ gistId }));
-      document.getElementById('gist-id').value = gistId;
-    }
-    statusEl.innerHTML = `✓ Synced — <a href="${escHtml(data.html_url)}" target="_blank" rel="noopener">${escHtml(data.html_url)}</a>`;
-  } catch (e) {
-    statusEl.textContent = '✗ Sync failed: ' + e.message;
-  }
 }
 
 // ─────────────────────────────────────────────────
@@ -1063,12 +1018,6 @@ function escHtml(str) {
   initDocUpload();
   loadRegGhConfig();
 
-  // Restore Gist settings if saved
-  try {
-    const s = JSON.parse(localStorage.getItem(GIST_KEY)) || {};
-    if (s.token)  document.getElementById('gist-token').value = s.token;
-    if (s.gistId) document.getElementById('gist-id').value    = s.gistId;
-  } catch {}
 })();
 </script>
 </body>

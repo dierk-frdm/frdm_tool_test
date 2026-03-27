@@ -34,10 +34,6 @@ export default {
       return handleConfigWrite(request, env);
     }
 
-    if (url.pathname === "/api/gist-sync" && (request.method === "POST" || request.method === "OPTIONS")) {
-      return handleGistSync(request, env);
-    }
-
     return env.ASSETS.fetch(request);
   },
 };
@@ -854,6 +850,9 @@ async function handleConfigWrite(request, env) {
 
   if (!ghResp.ok) {
     const errText = await ghResp.text();
+    if (ghResp.status === 403 && errText.includes("Resource not accessible")) {
+      return new Response(JSON.stringify({ error: "GITHUB_API_KEY lacks write access to this repo. Update the Cloudflare secret with a token that has Contents: Read and write (fine-grained PAT) or the repo scope (classic PAT)." }), { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } });
+    }
     return new Response(JSON.stringify({ error: `GitHub API error: ${ghResp.status}`, detail: errText.slice(0, 300) }), { status: ghResp.status, headers: { "Content-Type": "application/json", ...corsHeaders } });
   }
 
@@ -861,56 +860,3 @@ async function handleConfigWrite(request, env) {
   return new Response(JSON.stringify({ success: true, commit_sha: ghData.commit?.sha, file_sha: ghData.content?.sha }), { headers: { "Content-Type": "application/json", ...corsHeaders } });
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// GIST SYNC — create or update a GitHub Gist using server-stored GITHUB_API_KEY
-// POST body: { gistId?, filename?, description?, content }
-// ─────────────────────────────────────────────────────────────────────────────
-async function handleGistSync(request, env) {
-  const corsHeaders = {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
-  };
-  if (request.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
-
-  let body;
-  try { body = await request.json(); }
-  catch { return new Response(JSON.stringify({ error: "Invalid JSON" }), { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }); }
-
-  const token = env.GITHUB_API_KEY;
-  if (!token) return new Response(JSON.stringify({ error: "GITHUB_API_KEY secret not configured" }), { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } });
-
-  const { gistId, filename = "frdm_regulations_warnings_log.csv", description = "FRDM Regulations & Warnings Log", content } = body;
-  if (content === undefined) {
-    return new Response(JSON.stringify({ error: "content is required" }), { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } });
-  }
-
-  const url = gistId ? `https://api.github.com/gists/${gistId}` : "https://api.github.com/gists";
-  const method = gistId ? "PATCH" : "POST";
-  const gistBody = { description, public: false, files: { [filename]: { content } } };
-
-  let ghResp;
-  try {
-    ghResp = await fetch(url, {
-      method,
-      headers: {
-        "Authorization": `Bearer ${token}`,
-        "Accept": "application/vnd.github+json",
-        "X-GitHub-Api-Version": "2022-11-28",
-        "User-Agent": "FRDM-Tools/1.0",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(gistBody),
-    });
-  } catch (err) {
-    return new Response(JSON.stringify({ error: "Failed to reach GitHub API", detail: String(err) }), { status: 502, headers: { "Content-Type": "application/json", ...corsHeaders } });
-  }
-
-  if (!ghResp.ok) {
-    const errText = await ghResp.text();
-    return new Response(JSON.stringify({ error: `GitHub API error: ${ghResp.status}`, detail: errText.slice(0, 300) }), { status: ghResp.status, headers: { "Content-Type": "application/json", ...corsHeaders } });
-  }
-
-  const ghData = await ghResp.json();
-  return new Response(JSON.stringify({ gistId: ghData.id, html_url: ghData.html_url }), { headers: { "Content-Type": "application/json", ...corsHeaders } });
-}
