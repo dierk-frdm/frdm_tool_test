@@ -203,11 +203,48 @@
     .type-content p { margin-bottom:0; font-size:.875rem; color:#3a3020; line-height:1.65; }
     footer { border-top:1px solid var(--border); padding:1rem 2.5rem; display:flex; align-items:center; gap:.75rem; color:var(--text-muted); font-size:.8rem; background:var(--surface); flex-shrink:0; }
     footer img { height:14px; opacity:.6; }
+    /* Certificate form */
+    .cert-form { background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%); border-radius:14px; padding:1.5rem; margin:1.75rem 0 0; }
+    .cert-form-header { display:flex; align-items:center; gap:1rem; margin-bottom:1.25rem; }
+    .cert-form-icon { font-size:2rem; flex-shrink:0; }
+    .cert-form-title { font-size:.9375rem; font-weight:700; color:#fff; margin-bottom:.2rem; }
+    .cert-form-subtitle { font-size:.8rem; color:rgba(255,255,255,.6); }
+    .cert-form-fields { display:flex; gap:.75rem; flex-wrap:wrap; align-items:center; }
+    .cert-input { flex:1; min-width:160px; padding:.65rem 1rem; border:1px solid rgba(255,255,255,.2); border-radius:8px; background:rgba(255,255,255,.08); color:#fff; font-size:.875rem; outline:none; }
+    .cert-input::placeholder { color:rgba(255,255,255,.4); }
+    .cert-input:focus { border-color:var(--accent-brand); background:rgba(255,255,255,.12); }
+    .cert-form-error { font-size:.8rem; color:#f0a0a0; margin-top:.5rem; }
+    /* Certificate page */
+    #certPage { display:none; }
+    .cert-border-outer { width:100%; height:100%; background:#fff; padding:28px; box-sizing:border-box; }
+    .cert-border-inner { width:100%; height:100%; border:3px solid #DCE351; padding:32px 40px; box-sizing:border-box; display:flex; flex-direction:column; justify-content:space-between; }
+    .cert-header { display:flex; align-items:center; justify-content:space-between; }
+    .cert-logo { height:32px; }
+    .cert-header-right { text-align:right; }
+    .cert-header-brand { font-size:1.1rem; font-weight:800; color:#1a1a2e; letter-spacing:.05em; }
+    .cert-header-sub { font-size:.75rem; color:#7a6e58; }
+    .cert-divider { height:2px; background:linear-gradient(90deg,transparent,#DCE351,transparent); margin:24px 0; }
+    .cert-body { text-align:center; padding:8px 0; }
+    .cert-eyebrow { font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.18em; color:#8a9412; margin-bottom:20px; }
+    .cert-presents { font-size:.9rem; color:#7a6e58; margin-bottom:12px; }
+    .cert-recipient { font-size:2.4rem; font-weight:800; color:#1a1a2e; line-height:1.1; margin-bottom:8px; letter-spacing:-.01em; }
+    .cert-company { font-size:1rem; color:#7a6e58; margin-bottom:20px; min-height:1.4em; }
+    .cert-desc { font-size:.9rem; color:#5a5040; margin-bottom:10px; }
+    .cert-course { font-size:1.4rem; font-weight:700; color:#1a1a2e; margin-bottom:6px; }
+    .cert-course-sub { font-size:.78rem; color:#9a8e78; }
+    .cert-footer-row { display:flex; align-items:center; justify-content:space-between; }
+    .cert-meta-block { min-width:140px; }
+    .cert-meta-label { font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.1em; color:#9a8e78; margin-bottom:4px; }
+    .cert-meta-value { font-size:.975rem; font-weight:700; color:#1a1a2e; }
+    .cert-seal { position:relative; width:90px; height:90px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .cert-seal-logo { height:40px; position:relative; z-index:1; }
+    .cert-seal-ring { position:absolute; inset:0; border-radius:50%; border:3px solid #DCE351; }
     /* PDF / Print */
     .pdf-btn { margin-left:auto; display:inline-flex; align-items:center; gap:.4rem; padding:.4rem 1rem; background:var(--accent-brand); border:1px solid #c4cc3a; border-radius:6px; font-size:.78rem; font-weight:700; color:#3a4500; cursor:pointer; text-decoration:none; }
     .pdf-btn:hover { background:#cdd63d; }
     @media print {
-      .topbar, .sidebar, .lesson-nav-row, .quiz-submit-row, .quiz-progress-row, #quizBackRow, .pdf-btn, .warning-overlay { display:none !important; }
+      /* Normal course PDF */
+      .topbar, .sidebar, .lesson-nav-row, .quiz-submit-row, .quiz-progress-row, #quizBackRow, .pdf-btn, .cert-form { display:none !important; }
       body { background:white; }
       .shell { display:block; height:auto; overflow:visible; }
       .content { overflow:visible; }
@@ -219,6 +256,17 @@
       .sign-tile-arrow { display:none; }
       #quizContainer, #quizResults { display:none !important; }
       .quiz-stub-print { display:block !important; }
+      /* Certificate mode — overrides everything above */
+      body.cert-print .topbar, body.cert-print .shell, body.cert-print footer,
+      body.cert-print .quiz-stub-print, body.cert-print .panel { display:none !important; }
+      body.cert-print #certPage {
+        display:flex !important; position:fixed; inset:0; width:100vw; height:100vh;
+        background:#fff; z-index:9999; -webkit-print-color-adjust:exact; print-color-adjust:exact;
+      }
+      body.cert-print .cert-border-outer { display:flex !important; flex-direction:column; }
+      body.cert-print .cert-border-inner { display:flex !important; }
+      body.cert-print .cert-divider { background:linear-gradient(90deg,transparent,#DCE351,transparent) !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+      body.cert-print .cert-seal-ring { border-color:#DCE351 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
     }
     .quiz-stub-print { display:none; font-size:.9rem; color:var(--text-muted); font-style:italic; padding:1rem 0; }
   </style>
@@ -848,8 +896,26 @@
       <div id="quizResults" style="display:none;">
         <div class="quiz-results-hero" id="quizResultsHero"></div>
         <div class="quiz-results-breakdown" id="quizResultsBreakdown"></div>
-        <div class="lesson-nav-row" style="margin-top:2rem;">
-          <button class="btn-secondary" onclick="showPanel('lesson7')">← Back to Lesson 7</button>
+
+        <!-- Certificate form -->
+        <div class="cert-form" id="certForm">
+          <div class="cert-form-header">
+            <span class="cert-form-icon">🎓</span>
+            <div>
+              <div class="cert-form-title">Your Certificate of Completion</div>
+              <div class="cert-form-subtitle">Enter your details to generate a personalised, printable certificate.</div>
+            </div>
+          </div>
+          <div class="cert-form-fields">
+            <input class="cert-input" id="certNameInput" type="text" placeholder="Your full name" autocomplete="name" />
+            <input class="cert-input" id="certCompanyInput" type="text" placeholder="Company / Organisation (optional)" autocomplete="organization" />
+            <button class="btn-primary" onclick="generateCert()" style="white-space:nowrap;">Print Certificate</button>
+          </div>
+          <div class="cert-form-error" id="certError" style="display:none;">Please enter your name to generate the certificate.</div>
+        </div>
+
+        <div class="lesson-nav-row" style="margin-top:1.5rem;">
+          <button class="btn-secondary" onclick="showPanel('lesson7')">← Back to Lesson 5</button>
           <button class="btn-primary" onclick="restartQuiz()">Retake Quiz</button>
         </div>
       </div>
@@ -867,6 +933,52 @@
   <img src="frdmai logo.png" alt="FRDM AI" />
   <span>FRDM Anti-Modern Slavery Training &nbsp;·&nbsp; Internal use only</span>
 </footer>
+
+<!-- CERTIFICATE (only visible when printing) -->
+<div id="certPage">
+  <div class="cert-border-outer">
+    <div class="cert-border-inner">
+
+      <div class="cert-header">
+        <img src="frdmai logo.png" alt="FRDM AI" class="cert-logo" />
+        <div class="cert-header-right">
+          <div class="cert-header-brand">FRDM.AI</div>
+          <div class="cert-header-sub">Supply Chain Intelligence</div>
+        </div>
+      </div>
+
+      <div class="cert-divider"></div>
+
+      <div class="cert-body">
+        <div class="cert-eyebrow">Certificate of Completion</div>
+        <div class="cert-presents">This certifies that</div>
+        <div class="cert-recipient" id="certRecipient">Recipient Name</div>
+        <div class="cert-company" id="certCompany"></div>
+        <div class="cert-desc">has successfully completed</div>
+        <div class="cert-course">Anti-Modern Slavery Training</div>
+        <div class="cert-course-sub">FRDM.AI Training Program &nbsp;·&nbsp; 5 Lessons &nbsp;·&nbsp; 13-Question Assessment</div>
+      </div>
+
+      <div class="cert-divider"></div>
+
+      <div class="cert-footer-row">
+        <div class="cert-meta-block">
+          <div class="cert-meta-label">Score Achieved</div>
+          <div class="cert-meta-value" id="certScoreDisplay">—</div>
+        </div>
+        <div class="cert-seal">
+          <img src="frdmai logo.png" alt="FRDM AI" class="cert-seal-logo" />
+          <div class="cert-seal-ring"></div>
+        </div>
+        <div class="cert-meta-block" style="text-align:right;">
+          <div class="cert-meta-label">Date of Completion</div>
+          <div class="cert-meta-value" id="certDateDisplay">—</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
 
 <script>
   const LESSONS = ['lesson3','lesson4','lesson5','lesson6','lesson7'];
@@ -1088,6 +1200,7 @@
   let quizSelected = [];
   let quizScores = [];
   let quizAnswered = false;
+  let quizFinalScore = '';
 
   function initQuiz() {
     quizCurrent = 0; quizSelected = []; quizScores = []; quizAnswered = false;
@@ -1183,6 +1296,7 @@
     document.getElementById('quizProgressFill').style.width = '100%';
     const score = quizScores.filter(Boolean).length;
     const pct = Math.round(score / QUIZ.length * 100);
+    quizFinalScore = score + ' / ' + QUIZ.length + ' (' + pct + '%)';
     let msg = pct >= 80
       ? "Excellent work! You have a strong understanding of modern slavery and how to combat it."
       : pct >= 60
@@ -1203,6 +1317,26 @@
   }
 
   function restartQuiz() { initQuiz(); }
+
+  /* ── CERTIFICATE ────────────────────────────────────────────── */
+  function generateCert() {
+    const name = document.getElementById('certNameInput').value.trim();
+    const company = document.getElementById('certCompanyInput').value.trim();
+    const errEl = document.getElementById('certError');
+    if (!name) { errEl.style.display = 'block'; document.getElementById('certNameInput').focus(); return; }
+    errEl.style.display = 'none';
+    document.getElementById('certRecipient').textContent = name;
+    document.getElementById('certCompany').textContent = company ? company : '';
+    document.getElementById('certScoreDisplay').textContent = quizFinalScore || '—';
+    const now = new Date();
+    document.getElementById('certDateDisplay').textContent = now.toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' });
+    document.body.classList.add('cert-print');
+    window.print();
+    window.addEventListener('afterprint', function handler() {
+      document.body.classList.remove('cert-print');
+      window.removeEventListener('afterprint', handler);
+    });
+  }
 
   // Hook into showPanel to init quiz when navigated to
   const _origShowPanel = showPanel;
