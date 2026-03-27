@@ -72,6 +72,16 @@
     .outcome-list { list-style:none; padding:0; display:flex; flex-direction:column; gap:.75rem; margin-bottom:1.5rem; }
     .outcome-list li { display:flex; align-items:flex-start; gap:.875rem; font-size:.9375rem; color:#3a3020; line-height:1.6; background:var(--card); border:1px solid var(--border); border-radius:10px; padding:.875rem 1rem; }
     .outcome-list li::before { content:'✓'; color:#4a8a50; font-weight:700; font-size:1rem; flex-shrink:0; margin-top:.05rem; }
+    /* Stat cards */
+    .stat-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:1rem; margin:1.5rem 0; }
+    .stat-card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:1.25rem; text-align:center; }
+    .stat-card .num { font-size:1.75rem; font-weight:700; color:#1a1a2e; line-height:1; margin-bottom:.35rem; }
+    .stat-card .lbl { font-size:.8rem; color:var(--text-muted); line-height:1.4; }
+    /* Video */
+    .video-wrap { background:#111; border-radius:12px; overflow:hidden; margin:1.5rem 0; }
+    .video-wrap video { width:100%; display:block; max-height:420px; }
+    .video-caption { font-size:.8rem; color:var(--text-muted); margin-top:.5rem; font-style:italic; }
+    /* Lesson nav */
     .lesson-nav-row { display:flex; align-items:center; justify-content:space-between; margin-top:3rem; padding-top:1.5rem; border-top:1px solid var(--border); }
     .btn-secondary { display:inline-flex; align-items:center; gap:.4rem; padding:.6rem 1.25rem; border:1px solid var(--border); border-radius:8px; font-size:.875rem; font-weight:500; color:var(--text-muted); background:var(--card); cursor:pointer; }
     .btn-secondary:hover { border-color:#aaa; color:var(--text); }
@@ -111,41 +121,31 @@
     </div>
     <div class="sidebar-nav">
       <div class="nav-item active" data-panel="intro" onclick="showPanel('intro')">
-        <span class="nav-label">Introduction</span>
-        <span class="nav-status">📋</span>
+        <span class="nav-label">Introduction</span><span class="nav-status">📋</span>
       </div>
       <div class="nav-item" data-panel="lesson1" onclick="showPanel('lesson1')">
-        <span class="nav-num">1</span><span class="nav-label">A Message from FRDM</span>
-        <span class="nav-status" id="status-lesson1">○</span>
+        <span class="nav-num">1</span><span class="nav-label">A Message from FRDM</span><span class="nav-status" id="status-lesson1">○</span>
       </div>
       <div class="nav-item" data-panel="lesson2" onclick="showPanel('lesson2')">
-        <span class="nav-num">2</span><span class="nav-label">Learning Outcomes</span>
-        <span class="nav-status" id="status-lesson2">○</span>
+        <span class="nav-num">2</span><span class="nav-label">Learning Outcomes</span><span class="nav-status" id="status-lesson2">○</span>
       </div>
       <div class="nav-item" data-panel="lesson3" onclick="showPanel('lesson3')">
-        <span class="nav-num">3</span><span class="nav-label">What is Modern Slavery?</span>
-        <span class="nav-status" id="status-lesson3">○</span>
+        <span class="nav-num">3</span><span class="nav-label">What is Modern Slavery?</span><span class="nav-status" id="status-lesson3">○</span>
       </div>
       <div class="nav-item" data-panel="lesson4" onclick="showPanel('lesson4')">
-        <span class="nav-num">4</span><span class="nav-label">Types of Modern Slavery</span>
-        <span class="nav-status" id="status-lesson4">○</span>
+        <span class="nav-num">4</span><span class="nav-label">Types of Modern Slavery</span><span class="nav-status" id="status-lesson4">○</span>
       </div>
       <div class="nav-item" data-panel="lesson5" onclick="showPanel('lesson5')">
-        <span class="nav-num">5</span><span class="nav-label">Spot the Signs</span>
-        <span class="nav-status" id="status-lesson5">○</span>
+        <span class="nav-num">5</span><span class="nav-label">Spot the Signs</span><span class="nav-status" id="status-lesson5">○</span>
       </div>
       <div class="nav-item" data-panel="lesson6" onclick="showPanel('lesson6')">
-        <span class="nav-num">6</span><span class="nav-label">Driving Forces</span>
-        <span class="nav-status" id="status-lesson6">○</span>
+        <span class="nav-num">6</span><span class="nav-label">Driving Forces</span><span class="nav-status" id="status-lesson6">○</span>
       </div>
       <div class="nav-item" data-panel="lesson7" onclick="showPanel('lesson7')">
-        <span class="nav-num">7</span><span class="nav-label">Legislation &amp; Guidelines</span>
-        <span class="nav-status" id="status-lesson7">○</span>
+        <span class="nav-num">7</span><span class="nav-label">Legislation &amp; Guidelines</span><span class="nav-status" id="status-lesson7">○</span>
       </div>
       <div class="nav-item locked" data-panel="quiz" id="quizNavItem">
-        <span style="font-size:1rem">🔒</span>
-        <span class="nav-label">Final Quiz</span>
-        <span class="nav-status">13 Qs</span>
+        <span style="font-size:1rem">🔒</span><span class="nav-label">Final Quiz</span><span class="nav-status">13 Qs</span>
       </div>
     </div>
   </nav>
@@ -215,11 +215,58 @@
       </div>
     </div>
 
-    <!-- LESSON 3 STUB -->
+    <!-- LESSON 3 -->
     <div class="panel" id="panel-lesson3">
+      <img class="lesson-hero-img" src="Rebuild%20Training/image-06-urban-workers.png" alt="Urban Workers" />
       <div class="lesson-label">Lesson 3</div>
       <h2 class="lesson-title">What is Modern Slavery?</h2>
-      <div class="stub-banner">🚧 Content coming soon</div>
+      <div class="lesson-body">
+        <h3>Definition</h3>
+        <p>Modern slavery, while having no universal legal definition, is an umbrella term used to describe a range of different exploitative crimes where a person cannot refuse or leave the situation because of threats, violence, coercion, deception, or abuse of power. Simply put, it is the exploitation of another person for personal or commercial gain.</p>
+        <p>Modern slavery sits at the extreme of a continuum of decent work and severe exploitation. Although practices of substandard working conditions or underpayment are illegal, these issues can escalate into situations of modern slavery.</p>
+
+        <h3>A First-Hand Account</h3>
+        <div class="video-wrap">
+          <video controls>
+            <source src="Rebuild%20Training/c66b3go40bhpn3svfoqg.mp4" type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
+        </div>
+        <p class="video-caption">Mitos sharing her story as a modern-day slave — BBC News</p>
+
+        <h3>The Scale of the Problem</h3>
+        <p>Despite the abolition movement of the past and current international treaty obligations, slavery is thriving now more than at any other time in history. In 2023, Walk Free and the International Labour Organization (ILO), together with the International Organization for Migration (IOM), estimated that over 50 million people worldwide were living in modern slavery on any given day.</p>
+
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="num">50M+</div>
+            <div class="lbl">people in modern slavery worldwide</div>
+          </div>
+          <div class="stat-card">
+            <div class="num">27.6M</div>
+            <div class="lbl">people in forced labour globally</div>
+          </div>
+          <div class="stat-card">
+            <div class="num">22M</div>
+            <div class="lbl">people in forced marriage</div>
+          </div>
+          <div class="stat-card">
+            <div class="num">138M</div>
+            <div class="lbl">children engaged in child labour</div>
+          </div>
+          <div class="stat-card">
+            <div class="num">$468B</div>
+            <div class="lbl">in G20 imports at risk of forced labour</div>
+          </div>
+          <div class="stat-card">
+            <div class="num">6 in 1,000</div>
+            <div class="lbl">people in the world affected</div>
+          </div>
+        </div>
+
+        <p>Forced labour occurs across sectors including domestic work, construction, agriculture, fishing, manufacturing, and services. Forced marriage disproportionately affects women and girls. Over 12 million children are living in situations of modern slavery.</p>
+        <p style="font-size:.8rem;color:var(--text-muted);">Sources: Global Slavery Index 2023 (Walk Free Foundation); ILO/IOM/Walk Free (2022) Global Estimates of Modern Slavery; ILO (2025) Child Labour: Global estimates 2024</p>
+      </div>
       <div class="lesson-nav-row">
         <button class="btn-secondary" onclick="showPanel('lesson2')">← Back</button>
         <button class="btn-primary" onclick="completeLesson('lesson3','lesson4')">Mark Complete &amp; Continue →</button>
@@ -292,9 +339,7 @@
   const LESSONS = ['lesson1','lesson2','lesson3','lesson4','lesson5','lesson6','lesson7'];
   const STORAGE_KEY = 'frdm_training_progress';
   let completed = new Set(JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'));
-
   function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify([...completed])); }
-
   function showPanel(id) {
     if (id === 'quiz' && completed.size < LESSONS.length) return;
     document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
@@ -304,11 +349,7 @@
     if (nav) nav.classList.add('active');
     document.querySelector('.content').scrollTo(0, 0);
   }
-
-  function completeLesson(id, next) {
-    completed.add(id); save(); updateProgress(); showPanel(next);
-  }
-
+  function completeLesson(id, next) { completed.add(id); save(); updateProgress(); showPanel(next); }
   function updateProgress() {
     const count = completed.size;
     document.getElementById('progressFill').style.width = Math.round(count/LESSONS.length*100) + '%';
@@ -328,9 +369,7 @@
       q.querySelector('span').textContent = '🎓';
     }
   }
-
   function dismissWarning() { document.getElementById('warningOverlay').classList.add('hidden'); }
-
   updateProgress();
   const hash = window.location.hash.replace('#','');
   if (hash && document.getElementById('panel-' + hash)) showPanel(hash);
