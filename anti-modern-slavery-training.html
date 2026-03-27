@@ -124,6 +124,22 @@
     .qrb-badge { font-size:.75rem; font-weight:700; padding:2px 8px; border-radius:20px; flex-shrink:0; }
     .qrb-badge.right { background:#eafaf0; color:#2a6a3a; }
     .qrb-badge.wrong { background:#fdf0ef; color:#8a2020; }
+    /* Legislation map (Lesson 7) */
+    .leg-map-wrap { border-radius:12px; overflow:hidden; border:1px solid var(--border); margin:0 0 1.5rem; }
+    .leg-map-svg { width:100%; display:block; }
+    .leg-pin-circle { transition:r .15s; }
+    .leg-pin:hover .leg-pin-circle { r:18; }
+    .leg-pin.active .leg-pin-circle { fill:#fff; stroke:var(--accent-brand); }
+    .leg-detail-card { display:flex; align-items:flex-start; gap:1rem; padding:1.1rem 1.25rem; background:var(--card); border-top:1px solid var(--border); position:relative; animation:slideDown .2s ease; }
+    @keyframes slideDown { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+    .leg-dc-flag { font-size:2.2rem; flex-shrink:0; line-height:1; }
+    .leg-dc-body { flex:1; }
+    .leg-dc-country { font-size:.72rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:.07em; margin-bottom:.2rem; }
+    .leg-dc-law { font-size:.9375rem; font-weight:700; color:var(--text); margin-bottom:.4rem; }
+    .leg-dc-year { font-size:.75rem; font-weight:700; color:#3a4500; background:var(--accent-brand); border-radius:4px; padding:1px 7px; margin-left:.4rem; }
+    .leg-dc-req { font-size:.875rem; color:var(--text-muted); line-height:1.55; margin:0; }
+    .leg-dc-close { position:absolute; top:.75rem; right:.75rem; background:none; border:1px solid var(--border); border-radius:6px; width:1.6rem; height:1.6rem; font-size:.85rem; color:var(--text-muted); cursor:pointer; display:flex; align-items:center; justify-content:center; }
+    .leg-dc-close:hover { background:var(--bg); }
     /* Legislation table (Lesson 7) */
     .leg-table-wrap { overflow-x:auto; margin:1rem 0 1.75rem; border-radius:10px; border:1px solid var(--border); }
     .leg-table { width:100%; border-collapse:collapse; font-size:.875rem; }
@@ -306,7 +322,8 @@
         <p class="video-caption">Mitos sharing her story as a modern-day slave — BBC News</p>
 
         <h3>The Scale of the Problem</h3>
-        <p>Despite the abolition movement of the past and current international treaty obligations, slavery is thriving now more than at any other time in history. In 2023, Walk Free and the International Labour Organization (ILO), together with the International Organization for Migration (IOM), estimated that over 50 million people worldwide were living in modern slavery on any given day.</p>
+        <p>Despite the abolition movement of the past and current international treaty obligations, slavery is thriving now more than at any other time in history. <strong>There are more people trapped in slavery today than at any other point in time.</strong></p>
+        <p>In 2023, Walk Free and the International Labour Organization (ILO), together with the International Organization for Migration (IOM), published the Global Estimates of Modern Slavery — the authoritative report that also forms the basis of the 2023 Global Slavery Index. As of 2021, it was estimated that over 50 million people worldwide were living in modern slavery on any given day — an increase of approximately 10 million since 2016.</p>
 
         <div class="stat-grid">
           <div class="stat-card">
@@ -335,7 +352,8 @@
           </div>
         </div>
 
-        <p>Forced labour occurs across sectors including domestic work, construction, agriculture, fishing, manufacturing, and services. Forced marriage disproportionately affects women and girls. Over 12 million children are living in situations of modern slavery.</p>
+        <p>Forced labour occurs across sectors including domestic work, construction, agriculture, fishing, manufacturing, and services. The majority of forced labor occurs in the private economy, rather than being imposed directly by the state. Forced marriage disproportionately affects women and girls.</p>
+        <p>Over 12 million children are living in situations of modern slavery. It is important to note that child labor is a broader category — modern slavery represents the most severe and coercive forms of exploitation within it.</p>
         <p style="font-size:.8rem;color:var(--text-muted);">Sources: Global Slavery Index 2023 (Walk Free Foundation); ILO/IOM/Walk Free (2022) Global Estimates of Modern Slavery; ILO (2025) Child Labour: Global estimates 2024</p>
       </div>
       <div class="lesson-nav-row">
@@ -632,6 +650,82 @@
         </div>
 
         <h3>Key Legislation</h3>
+        <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:.75rem;">Click a marker on the map to explore legislation by country.</p>
+
+        <div class="leg-map-wrap">
+          <svg viewBox="0 0 900 400" class="leg-map-svg" xmlns="http://www.w3.org/2000/svg">
+            <!-- Ocean -->
+            <rect width="900" height="400" fill="#1a3357"/>
+            <!-- Graticule -->
+            <g stroke="#ffffff" stroke-width="0.4" opacity="0.15">
+              <line x1="0" y1="100" x2="900" y2="100"/>
+              <line x1="0" y1="200" x2="900" y2="200"/>
+              <line x1="0" y1="300" x2="900" y2="300"/>
+              <line x1="225" y1="0" x2="225" y2="400"/>
+              <line x1="450" y1="0" x2="450" y2="400"/>
+              <line x1="675" y1="0" x2="675" y2="400"/>
+            </g>
+            <!-- Continents -->
+            <g fill="#2d5a3d" stroke="#3d7a55" stroke-width="0.8">
+              <!-- Greenland -->
+              <path d="M185,18 L228,10 L248,28 L238,52 L210,58 L188,46 Z"/>
+              <!-- North America -->
+              <path d="M88,65 L192,48 L218,68 L238,100 L248,158 L228,188 L195,202 L165,212 L138,205 L112,185 L88,148 L82,105 Z"/>
+              <!-- Central America -->
+              <path d="M195,202 L218,195 L228,218 L215,232 L198,228 Z"/>
+              <!-- South America -->
+              <path d="M162,238 L215,225 L238,248 L242,292 L228,348 L202,368 L172,362 L152,338 L148,295 L152,258 Z"/>
+              <!-- Europe -->
+              <path d="M415,68 L482,58 L502,75 L498,95 L480,115 L448,125 L418,115 L408,95 Z"/>
+              <!-- Scandinavia -->
+              <path d="M445,38 L478,32 L488,52 L470,65 L448,68 Z"/>
+              <!-- Iceland -->
+              <path d="M358,38 L382,32 L390,45 L375,52 L360,48 Z"/>
+              <!-- Africa -->
+              <path d="M418,132 L492,120 L518,142 L520,198 L508,262 L482,312 L448,318 L418,298 L402,252 L405,188 L410,158 Z"/>
+              <!-- Middle East / Arabia -->
+              <path d="M495,128 L538,122 L548,148 L535,178 L508,185 L492,168 Z"/>
+              <!-- Asia main -->
+              <path d="M500,62 L738,50 L785,78 L778,128 L752,168 L712,188 L618,198 L528,192 L500,162 L495,108 Z"/>
+              <!-- Indian subcontinent -->
+              <path d="M565,188 L608,182 L622,218 L612,258 L588,268 L565,248 L558,215 Z"/>
+              <!-- SE Asia -->
+              <path d="M660,188 L712,178 L728,202 L718,228 L692,238 L665,222 Z"/>
+              <!-- Japan -->
+              <path d="M752,98 L768,90 L775,108 L762,122 L750,115 Z"/>
+              <!-- Australia -->
+              <path d="M672,252 L770,242 L795,265 L792,318 L762,342 L712,345 L675,322 L662,292 Z"/>
+              <!-- New Zealand -->
+              <path d="M808,305 L820,295 L828,315 L815,328 Z"/>
+              <!-- UK (highlighted slightly) -->
+              <path d="M428,75 L445,70 L450,85 L440,95 L425,90 Z" fill="#3a5a8a" stroke="#6a9acc"/>
+            </g>
+            <!-- Pin: US -->
+            <g class="leg-pin" data-key="us" onclick="showLegDetail('us')" style="cursor:pointer">
+              <circle cx="158" cy="145" r="15" fill="#DCE351" stroke="#fff" stroke-width="2.5" class="leg-pin-circle"/>
+              <text x="158" y="151" text-anchor="middle" font-size="15" font-family="serif">🇺🇸</text>
+            </g>
+            <!-- Pin: UK -->
+            <g class="leg-pin" data-key="uk" onclick="showLegDetail('uk')" style="cursor:pointer">
+              <circle cx="437" cy="83" r="15" fill="#DCE351" stroke="#fff" stroke-width="2.5" class="leg-pin-circle"/>
+              <text x="437" y="89" text-anchor="middle" font-size="15" font-family="serif">🇬🇧</text>
+            </g>
+            <!-- Pin: EU -->
+            <g class="leg-pin" data-key="eu" onclick="showLegDetail('eu')" style="cursor:pointer">
+              <circle cx="468" cy="108" r="15" fill="#DCE351" stroke="#fff" stroke-width="2.5" class="leg-pin-circle"/>
+              <text x="468" y="114" text-anchor="middle" font-size="15" font-family="serif">🇪🇺</text>
+            </g>
+            <!-- Pin: Australia -->
+            <g class="leg-pin" data-key="au" onclick="showLegDetail('au')" style="cursor:pointer">
+              <circle cx="728" cy="292" r="15" fill="#DCE351" stroke="#fff" stroke-width="2.5" class="leg-pin-circle"/>
+              <text x="728" y="298" text-anchor="middle" font-size="15" font-family="serif">🇦🇺</text>
+            </g>
+            <!-- Map label -->
+            <text x="12" y="392" font-size="9" fill="rgba(255,255,255,0.35)" font-family="sans-serif">Click a marker to explore legislation</text>
+          </svg>
+          <div class="leg-detail-card" id="legDetailCard" style="display:none"></div>
+        </div>
+
         <div class="leg-table-wrap">
           <table class="leg-table">
             <thead>
@@ -764,6 +858,28 @@
     }
   }
   function toggleSign(tile) { tile.classList.toggle('open'); }
+
+  /* ── LEGISLATION MAP ───────────────────────────────────────── */
+  const LEG_DATA = {
+    uk: { flag:'🇬🇧', country:'United Kingdom', law:'Modern Slavery Act', year:'2015', req:'Mandatory transparency reporting for entities with £36M+ annual turnover. Requires large businesses to publish an annual modern slavery statement.' },
+    au: { flag:'🇦🇺', country:'Australia',       law:'Modern Slavery Act', year:'2018', req:'Mandatory reporting for entities with AUD$100M+ annual consolidated revenue. Modelled on the UK Act, with mandatory 7-criteria reporting.' },
+    us: { flag:'🇺🇸', country:'United States',   law:'Uyghur Forced Labor Prevention Act', year:'2022', req:'Establishes a rebuttable presumption that goods mined, produced, or manufactured wholly or in part in Xinjiang involve forced labor and are prohibited from import.' },
+    eu: { flag:'🇪🇺', country:'European Union',  law:'Corporate Sustainability Due Diligence Directive (CSDDD)', year:'2024', req:'Requires large companies to identify, prevent, mitigate, and account for human rights and environmental harms across their operations and supply chains.' }
+  };
+  let activeLegPin = null;
+  function showLegDetail(key) {
+    const d = LEG_DATA[key];
+    const card = document.getElementById('legDetailCard');
+    if (activeLegPin) activeLegPin.classList.remove('active');
+    activeLegPin = document.querySelector('.leg-pin[data-key="' + key + '"]');
+    if (activeLegPin) activeLegPin.classList.add('active');
+    card.innerHTML = '<div class="leg-dc-flag">' + d.flag + '</div><div class="leg-dc-body"><div class="leg-dc-country">' + d.country + '</div><div class="leg-dc-law">' + d.law + '<span class="leg-dc-year">' + d.year + '</span></div><p class="leg-dc-req">' + d.req + '</p></div><button class="leg-dc-close" onclick="closeLegDetail()">✕</button>';
+    card.style.display = 'flex';
+  }
+  function closeLegDetail() {
+    document.getElementById('legDetailCard').style.display = 'none';
+    if (activeLegPin) { activeLegPin.classList.remove('active'); activeLegPin = null; }
+  }
 
   /* ── QUIZ ─────────────────────────────────────────────────── */
   const QUIZ = [
