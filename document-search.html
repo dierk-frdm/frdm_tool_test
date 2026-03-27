@@ -655,7 +655,7 @@ async function loadDocUrlLog() {
     const resp = await fetch('/api/config-read', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ owner: cfg.owner, repo: cfg.repo, path: cfg.path, token: cfg.token || undefined }),
+      body: JSON.stringify({ owner: cfg.owner, repo: cfg.repo, path: cfg.path }),
     });
     const data = await resp.json();
     if (!resp.ok || data.error) throw new Error(data.error || 'API error ' + resp.status);
