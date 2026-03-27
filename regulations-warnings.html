@@ -336,11 +336,17 @@ footer{text-align:center;color:#aaa;font-size:.8rem;padding:2.5rem 1rem;border-t
             <input id="reg-gh-repo" class="form-input" type="text" placeholder="frdm_tool_test"/>
           </div>
         </div>
-        <div class="form-group" style="margin-top:.75rem;">
-          <label class="form-label" for="reg-gh-path">File Path</label>
-          <input id="reg-gh-path" class="form-input" type="text" placeholder="data/regulation_configurations.json"/>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-top:.75rem;">
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label" for="reg-gh-path">Regulations File Path</label>
+            <input id="reg-gh-path" class="form-input" type="text" placeholder="data/regulation_configurations.json"/>
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label" for="reg-gh-log-path">Log File Path</label>
+            <input id="reg-gh-log-path" class="form-input" type="text" placeholder="data/regulation_warn_log.json"/>
+          </div>
         </div>
-        <div class="form-group">
+        <div class="form-group" style="margin-top:.75rem;">
           <label class="form-label" for="reg-gh-branch">Branch</label>
           <input id="reg-gh-branch" class="form-input" type="text" placeholder="main"/>
         </div>
@@ -372,7 +378,9 @@ footer{text-align:center;color:#aaa;font-size:.8rem;padding:2.5rem 1rem;border-t
       <div id="log-container"></div>
       <div class="action-row" style="margin-top:1rem;">
         <button class="btn btn-secondary btn-sm" onclick="downloadLog()">Download Log CSV</button>
+        <button class="btn btn-secondary btn-sm" onclick="loadLogFromGithub()">↺ Reload from GitHub</button>
       </div>
+      <div id="log-gh-status" style="margin-top:.5rem;font-size:.8rem;color:var(--muted);"></div>
     </div>
 
   </div><!-- /tab-log -->
@@ -440,10 +448,11 @@ function clearRisks() {
 // ─────────────────────────────────────────────────
 function saveRegGhConfig() {
   const cfg = {
-    owner:  document.getElementById('reg-gh-owner').value.trim(),
-    repo:   document.getElementById('reg-gh-repo').value.trim(),
-    path:   document.getElementById('reg-gh-path').value.trim(),
-    branch: document.getElementById('reg-gh-branch').value.trim() || 'main',
+    owner:    document.getElementById('reg-gh-owner').value.trim(),
+    repo:     document.getElementById('reg-gh-repo').value.trim(),
+    path:     document.getElementById('reg-gh-path').value.trim(),
+    log_path: document.getElementById('reg-gh-log-path').value.trim(),
+    branch:   document.getElementById('reg-gh-branch').value.trim() || 'main',
   };
   localStorage.setItem(REG_GH_KEY, JSON.stringify(cfg));
   document.getElementById('reg-gh-status').textContent = '✓ Settings saved.';
@@ -452,15 +461,21 @@ function saveRegGhConfig() {
 function loadRegGhConfig() {
   try {
     const cfg = JSON.parse(localStorage.getItem(REG_GH_KEY)) || {};
-    if (cfg.owner)  document.getElementById('reg-gh-owner').value  = cfg.owner;
-    if (cfg.repo)   document.getElementById('reg-gh-repo').value   = cfg.repo;
-    if (cfg.path)   document.getElementById('reg-gh-path').value   = cfg.path;
-    if (cfg.branch) document.getElementById('reg-gh-branch').value = cfg.branch;
+    if (cfg.owner)    document.getElementById('reg-gh-owner').value    = cfg.owner;
+    if (cfg.repo)     document.getElementById('reg-gh-repo').value     = cfg.repo;
+    if (cfg.path)     document.getElementById('reg-gh-path').value     = cfg.path;
+    if (cfg.log_path) document.getElementById('reg-gh-log-path').value = cfg.log_path;
+    if (cfg.branch)   document.getElementById('reg-gh-branch').value   = cfg.branch;
   } catch {}
 }
 
 function getRegGhConfig() {
   try { return JSON.parse(localStorage.getItem(REG_GH_KEY)) || {}; } catch { return {}; }
+}
+
+function getLogGhConfig() {
+  const cfg = getRegGhConfig();
+  return (cfg.owner && cfg.repo && cfg.log_path) ? cfg : {};
 }
 
 // ─────────────────────────────────────────────────
@@ -893,7 +908,7 @@ async function exportBatch() {
 }
 
 // ─────────────────────────────────────────────────
-// LOG
+// LOG — LOCAL
 // ─────────────────────────────────────────────────
 function getLog() {
   try { return JSON.parse(localStorage.getItem(LOG_KEY)) || []; } catch { return []; }
@@ -910,10 +925,63 @@ function appendLog(entry) {
     notes:   entry.notes || ''
   });
   localStorage.setItem(LOG_KEY, JSON.stringify(log));
+  pushLogToGithub(log);
 }
 
+let _pushTimer = null;
 function saveLog(log) {
   localStorage.setItem(LOG_KEY, JSON.stringify(log));
+  clearTimeout(_pushTimer);
+  _pushTimer = setTimeout(() => pushLogToGithub(log), 1500);
+}
+
+// ─────────────────────────────────────────────────
+// LOG — GITHUB SYNC
+// ─────────────────────────────────────────────────
+async function loadLogFromGithub() {
+  const cfg = getLogGhConfig();
+  if (!cfg.owner) return;
+  const statusEl = document.getElementById('log-gh-status');
+  statusEl.innerHTML = '<span class="spinner"></span> Loading log from GitHub…';
+  try {
+    const resp = await fetch('/api/config-read', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ owner: cfg.owner, repo: cfg.repo, path: cfg.log_path, ref: cfg.branch || 'main' }),
+    });
+    const data = await resp.json();
+    if (!resp.ok || data.error) throw new Error(data.error || 'API error ' + resp.status);
+    const ghEntries = (data.content && Array.isArray(data.content.entries)) ? data.content.entries : [];
+    const localEntries = getLog();
+    const byId = {};
+    for (const e of [...ghEntries, ...localEntries]) byId[e.id] = e;
+    const merged = Object.values(byId).sort((a, b) => new Date(b.date) - new Date(a.date));
+    localStorage.setItem(LOG_KEY, JSON.stringify(merged));
+    renderLog();
+    const n = merged.length;
+    statusEl.textContent = `✓ Loaded ${n} entr${n !== 1 ? 'ies' : 'y'} from GitHub.`;
+  } catch (err) {
+    statusEl.innerHTML = `<span style="color:var(--critical)">✗ Failed to load log: ${escHtml(err.message)}</span>`;
+  }
+}
+
+async function pushLogToGithub(log) {
+  const cfg = getLogGhConfig();
+  if (!cfg.owner) return;
+  const statusEl = document.getElementById('log-gh-status');
+  statusEl.innerHTML = '<span class="spinner"></span> Saving log to GitHub…';
+  try {
+    const resp = await fetch('/api/config-write', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ owner: cfg.owner, repo: cfg.repo, path: cfg.log_path, branch: cfg.branch || 'main', content: { entries: log } }),
+    });
+    const data = await resp.json();
+    if (!resp.ok || data.error) throw new Error((data.error || 'API error ' + resp.status) + (data.detail ? ' — ' + data.detail : ''));
+    statusEl.textContent = '✓ Log saved to GitHub.';
+  } catch (err) {
+    statusEl.innerHTML = `<span style="color:var(--critical)">✗ Failed to save log: ${escHtml(err.message)}</span>`;
+  }
 }
 
 function updateLogEntry(id, field, value) {
@@ -924,7 +992,10 @@ function updateLogEntry(id, field, value) {
 
 function deleteLogEntry(id) {
   if (!confirm('Delete this log entry? This cannot be undone.')) return;
-  saveLog(getLog().filter(e => e.id !== id));
+  const log = getLog().filter(e => e.id !== id);
+  localStorage.setItem(LOG_KEY, JSON.stringify(log));
+  clearTimeout(_pushTimer);
+  pushLogToGithub(log);
   renderLog();
 }
 
@@ -1017,6 +1088,7 @@ function escHtml(str) {
   renderBatch();
   initDocUpload();
   loadRegGhConfig();
+  loadLogFromGithub();
 
 })();
 </script>
