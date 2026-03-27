@@ -854,6 +854,9 @@ async function handleConfigWrite(request, env) {
 
   if (!ghResp.ok) {
     const errText = await ghResp.text();
+    if (ghResp.status === 403 && errText.includes("Resource not accessible")) {
+      return new Response(JSON.stringify({ error: "GITHUB_API_KEY lacks write access to this repo. Update the Cloudflare secret with a token that has Contents: Read and write (fine-grained PAT) or the repo scope (classic PAT)." }), { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } });
+    }
     return new Response(JSON.stringify({ error: `GitHub API error: ${ghResp.status}`, detail: errText.slice(0, 300) }), { status: ghResp.status, headers: { "Content-Type": "application/json", ...corsHeaders } });
   }
 
