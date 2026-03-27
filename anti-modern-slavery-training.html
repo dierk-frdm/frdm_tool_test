@@ -125,27 +125,51 @@
     .qrb-badge.right { background:#eafaf0; color:#2a6a3a; }
     .qrb-badge.wrong { background:#fdf0ef; color:#8a2020; }
     /* Legislation map (Lesson 7) */
-    .leg-map-wrap { border-radius:12px; overflow:hidden; border:1px solid var(--border); margin:0 0 1.5rem; }
+    .leg-filters { display:flex; flex-wrap:wrap; gap:.4rem; margin-bottom:.75rem; }
+    .leg-filter { display:inline-flex; align-items:center; gap:.35rem; padding:.35rem .8rem; border:1px solid var(--border); border-radius:20px; font-size:.78rem; font-weight:600; color:var(--text-muted); background:var(--card); cursor:pointer; transition:all .15s; }
+    .leg-filter:hover { border-color:#aaa; color:var(--text); }
+    .leg-filter.active { background:#1a1a2e; color:var(--accent-brand); border-color:#1a1a2e; }
+    .leg-filter-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+    .leg-map-wrap { border-radius:12px; overflow:hidden; border:1px solid var(--border); margin:0 0 .75rem; }
     .leg-map-svg { width:100%; display:block; }
     .leg-pin-circle { transition:r .15s; }
-    .leg-pin:hover .leg-pin-circle { r:18; }
-    .leg-pin.active .leg-pin-circle { fill:#fff; stroke:var(--accent-brand); }
-    .leg-detail-card { display:flex; align-items:flex-start; gap:1rem; padding:1.1rem 1.25rem; background:var(--card); border-top:1px solid var(--border); position:relative; animation:slideDown .2s ease; }
+    .leg-pin:hover .leg-pin-circle { opacity:.85; }
+    .leg-pin.active .leg-pin-circle { stroke:var(--accent-brand); stroke-width:3; }
+    .leg-detail-panel { background:var(--card); border-top:1px solid var(--border); max-height:340px; overflow-y:auto; animation:slideDown .2s ease; }
     @keyframes slideDown { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
-    .leg-dc-flag { font-size:2.2rem; flex-shrink:0; line-height:1; }
-    .leg-dc-body { flex:1; }
-    .leg-dc-country { font-size:.72rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:.07em; margin-bottom:.2rem; }
-    .leg-dc-law { font-size:.9375rem; font-weight:700; color:var(--text); margin-bottom:.4rem; }
-    .leg-dc-year { font-size:.75rem; font-weight:700; color:#3a4500; background:var(--accent-brand); border-radius:4px; padding:1px 7px; margin-left:.4rem; }
-    .leg-dc-req { font-size:.875rem; color:var(--text-muted); line-height:1.55; margin:0; }
-    .leg-dc-close { position:absolute; top:.75rem; right:.75rem; background:none; border:1px solid var(--border); border-radius:6px; width:1.6rem; height:1.6rem; font-size:.85rem; color:var(--text-muted); cursor:pointer; display:flex; align-items:center; justify-content:center; }
-    .leg-dc-close:hover { background:var(--bg); }
+    .leg-dp-header { display:flex; align-items:center; justify-content:space-between; padding:.75rem 1.25rem; border-bottom:1px solid var(--border); position:sticky; top:0; background:var(--card); z-index:1; }
+    .leg-dp-title { display:flex; align-items:baseline; gap:.5rem; }
+    .leg-dp-country-name { font-size:.9375rem; font-weight:700; color:var(--text); }
+    .leg-dp-count { font-size:.78rem; color:var(--text-muted); }
+    .leg-dp-close { background:none; border:1px solid var(--border); border-radius:6px; width:1.6rem; height:1.6rem; font-size:.85rem; color:var(--text-muted); cursor:pointer; flex-shrink:0; }
+    .leg-dp-close:hover { background:var(--bg); }
+    .leg-dp-regs { padding:.75rem 1.25rem; display:flex; flex-direction:column; gap:.75rem; }
+    .leg-reg-item { border:1px solid var(--border); border-radius:8px; padding:.875rem 1rem; }
+    .leg-ri-header { display:flex; align-items:flex-start; gap:.5rem; flex-wrap:wrap; margin-bottom:.5rem; }
+    .leg-ri-flag { font-size:1.2rem; line-height:1.3; flex-shrink:0; }
+    .leg-ri-meta { flex:1; min-width:150px; }
+    .leg-ri-name { font-size:.875rem; font-weight:700; color:var(--text); line-height:1.3; display:block; }
+    .leg-ri-year { font-size:.75rem; color:var(--text-muted); }
+    .leg-ri-cat { font-size:.7rem; font-weight:700; padding:2px 8px; border-radius:12px; color:#fff; white-space:nowrap; display:inline-block; }
+    .cat-modern-slavery { background:#c0392b; } .cat-hrdd { background:#e07820; }
+    .cat-forced-labor { background:#8b1a2b; } .cat-reporting { background:#2a6ab0; }
+    .cat-environmental { background:#2a7a45; } .cat-security { background:#5a5a72; }
+    .cat-reform { background:#c08000; }
+    .leg-ri-status { font-size:.7rem; font-weight:700; padding:2px 8px; border-radius:12px; white-space:nowrap; display:inline-block; }
+    .status-active { background:#eafaf0; color:#2a6a3a; }
+    .status-proposed { background:#fff3cd; color:#7a5000; }
+    .status-nonbinding { background:#e8eeff; color:#2a3a8a; }
+    .leg-ri-desc { font-size:.8375rem; color:var(--text-muted); line-height:1.6; margin:0; }
+    .leg-ri-note { font-size:.78rem; color:#c08000; margin-top:.3rem; display:block; font-style:italic; }
+    .leg-legend { display:flex; flex-wrap:wrap; gap:.4rem .8rem; margin-bottom:1.25rem; }
+    .leg-legend-item { display:flex; align-items:center; gap:.35rem; font-size:.75rem; color:var(--text-muted); }
+    .leg-legend-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
     /* Legislation table (Lesson 7) */
     .leg-table-wrap { overflow-x:auto; margin:1rem 0 1.75rem; border-radius:10px; border:1px solid var(--border); }
     .leg-table { width:100%; border-collapse:collapse; font-size:.875rem; }
     .leg-table thead { background:#1a1a2e; color:var(--accent-brand); }
-    .leg-table th { padding:.75rem 1rem; text-align:left; font-size:.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; white-space:nowrap; }
-    .leg-table td { padding:.75rem 1rem; border-top:1px solid var(--border); color:var(--text); vertical-align:top; line-height:1.5; }
+    .leg-table th { padding:.65rem 1rem; text-align:left; font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; white-space:nowrap; }
+    .leg-table td { padding:.65rem 1rem; border-top:1px solid var(--border); color:var(--text); vertical-align:middle; line-height:1.45; font-size:.85rem; }
     .leg-table tbody tr:hover { background:var(--accent-light); }
     .leg-flag { margin-right:.35rem; }
     .biz-cta { display:flex; gap:1.5rem; align-items:flex-start; background:var(--card); border:1px solid var(--border); border-radius:12px; overflow:hidden; margin-top:1.5rem; }
@@ -650,117 +674,138 @@
         </div>
 
         <h3>Key Legislation</h3>
-        <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:.75rem;">Click a marker on the map to explore legislation by country.</p>
+        <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:.75rem;">Click a country marker to explore its regulations. Filter by category using the buttons below.</p>
+
+        <div class="leg-filters">
+          <button class="leg-filter active" data-filter="all" onclick="filterLeg('all',this)">All</button>
+          <button class="leg-filter" data-filter="modern-slavery" onclick="filterLeg('modern-slavery',this)"><span class="leg-filter-dot" style="background:#c0392b"></span>Modern Slavery</button>
+          <button class="leg-filter" data-filter="hrdd" onclick="filterLeg('hrdd',this)"><span class="leg-filter-dot" style="background:#e07820"></span>Human Rights DD</button>
+          <button class="leg-filter" data-filter="forced-labor" onclick="filterLeg('forced-labor',this)"><span class="leg-filter-dot" style="background:#8b1a2b"></span>Forced Labor / Trade</button>
+          <button class="leg-filter" data-filter="reporting" onclick="filterLeg('reporting',this)"><span class="leg-filter-dot" style="background:#2a6ab0"></span>Sustainability Reporting</button>
+          <button class="leg-filter" data-filter="environmental" onclick="filterLeg('environmental',this)"><span class="leg-filter-dot" style="background:#2a7a45"></span>Environmental</button>
+          <button class="leg-filter" data-filter="security" onclick="filterLeg('security',this)"><span class="leg-filter-dot" style="background:#5a5a72"></span>Supply Chain Security</button>
+          <button class="leg-filter" data-filter="reform" onclick="filterLeg('reform',this)"><span class="leg-filter-dot" style="background:#c08000"></span>Proposed / Reform</button>
+        </div>
 
         <div class="leg-map-wrap">
           <svg viewBox="0 0 900 400" class="leg-map-svg" xmlns="http://www.w3.org/2000/svg">
-            <!-- Ocean -->
             <rect width="900" height="400" fill="#1a3357"/>
-            <!-- Graticule -->
             <g stroke="#ffffff" stroke-width="0.4" opacity="0.15">
-              <line x1="0" y1="100" x2="900" y2="100"/>
-              <line x1="0" y1="200" x2="900" y2="200"/>
-              <line x1="0" y1="300" x2="900" y2="300"/>
-              <line x1="225" y1="0" x2="225" y2="400"/>
-              <line x1="450" y1="0" x2="450" y2="400"/>
-              <line x1="675" y1="0" x2="675" y2="400"/>
+              <line x1="0" y1="100" x2="900" y2="100"/><line x1="0" y1="200" x2="900" y2="200"/>
+              <line x1="0" y1="300" x2="900" y2="300"/><line x1="225" y1="0" x2="225" y2="400"/>
+              <line x1="450" y1="0" x2="450" y2="400"/><line x1="675" y1="0" x2="675" y2="400"/>
             </g>
-            <!-- Continents -->
             <g fill="#2d5a3d" stroke="#3d7a55" stroke-width="0.8">
-              <!-- Greenland -->
               <path d="M185,18 L228,10 L248,28 L238,52 L210,58 L188,46 Z"/>
-              <!-- North America -->
               <path d="M88,65 L192,48 L218,68 L238,100 L248,158 L228,188 L195,202 L165,212 L138,205 L112,185 L88,148 L82,105 Z"/>
-              <!-- Central America -->
               <path d="M195,202 L218,195 L228,218 L215,232 L198,228 Z"/>
-              <!-- South America -->
               <path d="M162,238 L215,225 L238,248 L242,292 L228,348 L202,368 L172,362 L152,338 L148,295 L152,258 Z"/>
-              <!-- Europe -->
               <path d="M415,68 L482,58 L502,75 L498,95 L480,115 L448,125 L418,115 L408,95 Z"/>
-              <!-- Scandinavia -->
               <path d="M445,38 L478,32 L488,52 L470,65 L448,68 Z"/>
-              <!-- Iceland -->
               <path d="M358,38 L382,32 L390,45 L375,52 L360,48 Z"/>
-              <!-- Africa -->
               <path d="M418,132 L492,120 L518,142 L520,198 L508,262 L482,312 L448,318 L418,298 L402,252 L405,188 L410,158 Z"/>
-              <!-- Middle East / Arabia -->
               <path d="M495,128 L538,122 L548,148 L535,178 L508,185 L492,168 Z"/>
-              <!-- Asia main -->
               <path d="M500,62 L738,50 L785,78 L778,128 L752,168 L712,188 L618,198 L528,192 L500,162 L495,108 Z"/>
-              <!-- Indian subcontinent -->
               <path d="M565,188 L608,182 L622,218 L612,258 L588,268 L565,248 L558,215 Z"/>
-              <!-- SE Asia -->
               <path d="M660,188 L712,178 L728,202 L718,228 L692,238 L665,222 Z"/>
-              <!-- Japan -->
               <path d="M752,98 L768,90 L775,108 L762,122 L750,115 Z"/>
-              <!-- Australia -->
               <path d="M672,252 L770,242 L795,265 L792,318 L762,342 L712,345 L675,322 L662,292 Z"/>
-              <!-- New Zealand -->
               <path d="M808,305 L820,295 L828,315 L815,328 Z"/>
-              <!-- UK (highlighted slightly) -->
-              <path d="M428,75 L445,70 L450,85 L440,95 L425,90 Z" fill="#3a5a8a" stroke="#6a9acc"/>
             </g>
-            <!-- Pin: US -->
-            <g class="leg-pin" data-key="us" onclick="showLegDetail('us')" style="cursor:pointer">
-              <circle cx="158" cy="145" r="15" fill="#DCE351" stroke="#fff" stroke-width="2.5" class="leg-pin-circle"/>
-              <text x="158" y="151" text-anchor="middle" font-size="15" font-family="serif">🇺🇸</text>
+            <!-- Canada (2) -->
+            <g class="leg-pin" data-key="ca" data-cats="forced-labor" onclick="showLegDetail('ca')" style="cursor:pointer">
+              <circle cx="142" cy="104" r="10" fill="#8b1a2b" stroke="#fff" stroke-width="2" class="leg-pin-circle"/>
+              <text x="142" y="108" text-anchor="middle" font-size="7.5" font-weight="bold" fill="#fff" font-family="sans-serif">CA</text>
+              <circle cx="150" cy="96" r="6" fill="#fff"/><text x="150" y="100" text-anchor="middle" font-size="6.5" font-weight="bold" fill="#8b1a2b" font-family="sans-serif">2</text>
             </g>
-            <!-- Pin: UK -->
-            <g class="leg-pin" data-key="uk" onclick="showLegDetail('uk')" style="cursor:pointer">
-              <circle cx="437" cy="83" r="15" fill="#DCE351" stroke="#fff" stroke-width="2.5" class="leg-pin-circle"/>
-              <text x="437" y="89" text-anchor="middle" font-size="15" font-family="serif">🇬🇧</text>
+            <!-- US (6) -->
+            <g class="leg-pin" data-key="us" data-cats="forced-labor modern-slavery environmental security" onclick="showLegDetail('us')" style="cursor:pointer">
+              <circle cx="155" cy="158" r="13" fill="#8b1a2b" stroke="#fff" stroke-width="2" class="leg-pin-circle"/>
+              <text x="155" y="162" text-anchor="middle" font-size="8" font-weight="bold" fill="#fff" font-family="sans-serif">US</text>
+              <circle cx="165" cy="148" r="7" fill="#fff"/><text x="165" y="152" text-anchor="middle" font-size="7" font-weight="bold" fill="#8b1a2b" font-family="sans-serif">6</text>
             </g>
-            <!-- Pin: EU -->
-            <g class="leg-pin" data-key="eu" onclick="showLegDetail('eu')" style="cursor:pointer">
-              <circle cx="468" cy="108" r="15" fill="#DCE351" stroke="#fff" stroke-width="2.5" class="leg-pin-circle"/>
-              <text x="468" y="114" text-anchor="middle" font-size="15" font-family="serif">🇪🇺</text>
+            <!-- UK (1) -->
+            <g class="leg-pin" data-key="uk" data-cats="modern-slavery" onclick="showLegDetail('uk')" style="cursor:pointer">
+              <circle cx="428" cy="82" r="9" fill="#c0392b" stroke="#fff" stroke-width="2" class="leg-pin-circle"/>
+              <text x="428" y="86" text-anchor="middle" font-size="7" font-weight="bold" fill="#fff" font-family="sans-serif">GB</text>
             </g>
-            <!-- Pin: Australia -->
-            <g class="leg-pin" data-key="au" onclick="showLegDetail('au')" style="cursor:pointer">
-              <circle cx="728" cy="292" r="15" fill="#DCE351" stroke="#fff" stroke-width="2.5" class="leg-pin-circle"/>
-              <text x="728" y="298" text-anchor="middle" font-size="15" font-family="serif">🇦🇺</text>
+            <!-- Norway (1) -->
+            <g class="leg-pin" data-key="no" data-cats="hrdd" onclick="showLegDetail('no')" style="cursor:pointer">
+              <circle cx="460" cy="55" r="8" fill="#e07820" stroke="#fff" stroke-width="2" class="leg-pin-circle"/>
+              <text x="460" y="59" text-anchor="middle" font-size="7" font-weight="bold" fill="#fff" font-family="sans-serif">NO</text>
             </g>
-            <!-- Map label -->
-            <text x="12" y="392" font-size="9" fill="rgba(255,255,255,0.35)" font-family="sans-serif">Click a marker to explore legislation</text>
+            <!-- EU (3) -->
+            <g class="leg-pin" data-key="eu" data-cats="hrdd reporting reform" onclick="showLegDetail('eu')" style="cursor:pointer">
+              <circle cx="497" cy="78" r="10" fill="#e07820" stroke="#fff" stroke-width="2" class="leg-pin-circle"/>
+              <text x="497" y="82" text-anchor="middle" font-size="7.5" font-weight="bold" fill="#fff" font-family="sans-serif">EU</text>
+              <circle cx="505" cy="70" r="6" fill="#fff"/><text x="505" y="74" text-anchor="middle" font-size="6.5" font-weight="bold" fill="#e07820" font-family="sans-serif">3</text>
+            </g>
+            <!-- Germany (1) -->
+            <g class="leg-pin" data-key="de" data-cats="hrdd" onclick="showLegDetail('de')" style="cursor:pointer">
+              <circle cx="474" cy="96" r="8" fill="#e07820" stroke="#fff" stroke-width="2" class="leg-pin-circle"/>
+              <text x="474" y="100" text-anchor="middle" font-size="7" font-weight="bold" fill="#fff" font-family="sans-serif">DE</text>
+            </g>
+            <!-- France (1) -->
+            <g class="leg-pin" data-key="fr" data-cats="hrdd" onclick="showLegDetail('fr')" style="cursor:pointer">
+              <circle cx="452" cy="108" r="8" fill="#e07820" stroke="#fff" stroke-width="2" class="leg-pin-circle"/>
+              <text x="452" y="112" text-anchor="middle" font-size="7" font-weight="bold" fill="#fff" font-family="sans-serif">FR</text>
+            </g>
+            <!-- Switzerland (1) -->
+            <g class="leg-pin" data-key="ch" data-cats="hrdd" onclick="showLegDetail('ch')" style="cursor:pointer">
+              <circle cx="464" cy="118" r="8" fill="#e07820" stroke="#fff" stroke-width="2" class="leg-pin-circle"/>
+              <text x="464" y="122" text-anchor="middle" font-size="7" font-weight="bold" fill="#fff" font-family="sans-serif">CH</text>
+            </g>
+            <!-- Japan (1) -->
+            <g class="leg-pin" data-key="jp" data-cats="hrdd" onclick="showLegDetail('jp')" style="cursor:pointer">
+              <circle cx="738" cy="108" r="9" fill="#e07820" stroke="#fff" stroke-width="2" class="leg-pin-circle"/>
+              <text x="738" y="112" text-anchor="middle" font-size="7" font-weight="bold" fill="#fff" font-family="sans-serif">JP</text>
+            </g>
+            <!-- Australia (2) -->
+            <g class="leg-pin" data-key="au" data-cats="modern-slavery" onclick="showLegDetail('au')" style="cursor:pointer">
+              <circle cx="724" cy="292" r="10" fill="#c0392b" stroke="#fff" stroke-width="2" class="leg-pin-circle"/>
+              <text x="724" y="296" text-anchor="middle" font-size="7.5" font-weight="bold" fill="#fff" font-family="sans-serif">AU</text>
+              <circle cx="732" cy="284" r="6" fill="#fff"/><text x="732" y="288" text-anchor="middle" font-size="6.5" font-weight="bold" fill="#c0392b" font-family="sans-serif">2</text>
+            </g>
+            <text x="12" y="394" font-size="9" fill="rgba(255,255,255,0.3)" font-family="sans-serif">Click a marker to explore legislation</text>
           </svg>
-          <div class="leg-detail-card" id="legDetailCard" style="display:none"></div>
+          <div class="leg-detail-panel" id="legDetailCard" style="display:none"></div>
+        </div>
+
+        <div class="leg-legend">
+          <span class="leg-legend-item"><span class="leg-legend-dot" style="background:#c0392b"></span>Modern Slavery Reporting</span>
+          <span class="leg-legend-item"><span class="leg-legend-dot" style="background:#e07820"></span>Human Rights Due Diligence</span>
+          <span class="leg-legend-item"><span class="leg-legend-dot" style="background:#8b1a2b"></span>Forced Labor / Trade</span>
+          <span class="leg-legend-item"><span class="leg-legend-dot" style="background:#2a6ab0"></span>Sustainability Reporting</span>
+          <span class="leg-legend-item"><span class="leg-legend-dot" style="background:#2a7a45"></span>Environmental</span>
+          <span class="leg-legend-item"><span class="leg-legend-dot" style="background:#5a5a72"></span>Supply Chain Security</span>
+          <span class="leg-legend-item"><span class="leg-legend-dot" style="background:#c08000"></span>Proposed</span>
         </div>
 
         <div class="leg-table-wrap">
           <table class="leg-table">
             <thead>
-              <tr>
-                <th>Country / Region</th>
-                <th>Legislation</th>
-                <th>Year</th>
-                <th>Key Requirement</th>
-              </tr>
+              <tr><th>Region / Country</th><th>Regulation</th><th>Year</th><th>Category</th><th>Status</th></tr>
             </thead>
             <tbody>
-              <tr>
-                <td><span class="leg-flag">🇬🇧</span> United Kingdom</td>
-                <td>Modern Slavery Act</td>
-                <td>2015</td>
-                <td>Mandatory transparency reporting for entities with £36M+ turnover</td>
-              </tr>
-              <tr>
-                <td><span class="leg-flag">🇦🇺</span> Australia</td>
-                <td>Modern Slavery Act</td>
-                <td>2018</td>
-                <td>Mandatory reporting for entities with AUD$100M+ annual consolidated revenue</td>
-              </tr>
-              <tr>
-                <td><span class="leg-flag">🇺🇸</span> United States</td>
-                <td>Uyghur Forced Labor Prevention Act</td>
-                <td>2022</td>
-                <td>Rebuttable presumption that goods from Xinjiang involve forced labor</td>
-              </tr>
-              <tr>
-                <td><span class="leg-flag">🇪🇺</span> European Union</td>
-                <td>Corporate Sustainability Due Diligence Directive (CSDDD)</td>
-                <td>2024</td>
-                <td>Mandatory human rights and environmental due diligence</td>
-              </tr>
+              <tr data-cat="hrdd"><td>🇪🇺 European Union</td><td>Corporate Sustainability Due Diligence Directive (CSDDD)</td><td>2024</td><td><span class="leg-ri-cat cat-hrdd">Human Rights DD</span></td><td><span class="leg-ri-status status-active">Active</span></td></tr>
+              <tr data-cat="reporting"><td>🇪🇺 European Union</td><td>Corporate Sustainability Reporting Directive (CSRD)</td><td>2024</td><td><span class="leg-ri-cat cat-reporting">Sustainability Reporting</span></td><td><span class="leg-ri-status status-active">Active</span></td></tr>
+              <tr data-cat="reform"><td>🇪🇺 European Union</td><td>Simplification Omnibus Proposal</td><td>2025</td><td><span class="leg-ri-cat cat-reform">Regulatory Reform</span></td><td><span class="leg-ri-status status-proposed">Proposed</span></td></tr>
+              <tr data-cat="modern-slavery"><td>🇺🇸 United States</td><td>California Transparency in Supply Chains Act (CTSCA)</td><td>2010</td><td><span class="leg-ri-cat cat-modern-slavery">Modern Slavery</span></td><td><span class="leg-ri-status status-active">Active</span></td></tr>
+              <tr data-cat="forced-labor"><td>🇺🇸 United States</td><td>Uyghur Forced Labor Prevention Act (UFLPA)</td><td>2021</td><td><span class="leg-ri-cat cat-forced-labor">Forced Labor / Trade</span></td><td><span class="leg-ri-status status-active">Active</span></td></tr>
+              <tr data-cat="forced-labor"><td>🇺🇸🇨🇦🇲🇽 US / Canada / Mexico</td><td>United States–Mexico–Canada Agreement (USMCA)</td><td>2020</td><td><span class="leg-ri-cat cat-forced-labor">Forced Labor / Trade</span></td><td><span class="leg-ri-status status-active">Active</span></td></tr>
+              <tr data-cat="forced-labor"><td>🇺🇸 United States</td><td>Withhold Release Order (WRO)</td><td>Ongoing</td><td><span class="leg-ri-cat cat-forced-labor">Forced Labor / Trade</span></td><td><span class="leg-ri-status status-active">Active</span></td></tr>
+              <tr data-cat="environmental"><td>🇺🇸 United States</td><td>PFAS Regulations</td><td>Ongoing</td><td><span class="leg-ri-cat cat-environmental">Environmental</span></td><td><span class="leg-ri-status status-active">Active</span></td></tr>
+              <tr data-cat="security"><td>🇺🇸 United States</td><td>Customs Trade Partnership Against Terrorism (CTPAT)</td><td>2001</td><td><span class="leg-ri-cat cat-security">Supply Chain Security</span></td><td><span class="leg-ri-status status-active">Active</span></td></tr>
+              <tr data-cat="modern-slavery"><td>🇬🇧 United Kingdom</td><td>Modern Slavery Act</td><td>2015</td><td><span class="leg-ri-cat cat-modern-slavery">Modern Slavery</span></td><td><span class="leg-ri-status status-active">Active</span></td></tr>
+              <tr data-cat="hrdd"><td>🇩🇪 Germany</td><td>Supply Chain Act (Lieferkettengesetz / LkSG)</td><td>2023</td><td><span class="leg-ri-cat cat-hrdd">Human Rights DD</span></td><td><span class="leg-ri-status status-active">Active</span></td></tr>
+              <tr data-cat="hrdd"><td>🇫🇷 France</td><td>Duty of Vigilance Law (Loi de Vigilance)</td><td>2017</td><td><span class="leg-ri-cat cat-hrdd">Human Rights DD</span></td><td><span class="leg-ri-status status-active">Active</span></td></tr>
+              <tr data-cat="hrdd"><td>🇳🇴 Norway</td><td>Norwegian Transparency Act</td><td>2022</td><td><span class="leg-ri-cat cat-hrdd">Human Rights DD</span></td><td><span class="leg-ri-status status-active">Active</span></td></tr>
+              <tr data-cat="hrdd"><td>🇨🇭 Switzerland</td><td>Swiss Ordinance on Due Diligence and Transparency (VSoTr)</td><td>2022</td><td><span class="leg-ri-cat cat-hrdd">Human Rights DD</span></td><td><span class="leg-ri-status status-active">Active</span></td></tr>
+              <tr data-cat="hrdd"><td>🇯🇵 Japan</td><td>Human Rights Due Diligence Guidance</td><td>2022</td><td><span class="leg-ri-cat cat-hrdd">Human Rights DD</span></td><td><span class="leg-ri-status status-nonbinding">Non-binding</span></td></tr>
+              <tr data-cat="modern-slavery"><td>🇦🇺 Australia</td><td>Australian Modern Slavery Act</td><td>2018</td><td><span class="leg-ri-cat cat-modern-slavery">Modern Slavery</span></td><td><span class="leg-ri-status status-active">Active</span></td></tr>
+              <tr data-cat="modern-slavery"><td>🇦🇺 Australia (NSW)</td><td>NSW Modern Slavery Act</td><td>2018</td><td><span class="leg-ri-cat cat-modern-slavery">Modern Slavery</span></td><td><span class="leg-ri-status status-active">Active</span></td></tr>
+              <tr data-cat="forced-labor"><td>🇨🇦 Canada</td><td>Fighting Against Forced Labour and Child Labour in Supply Chains Act (Bill S-211)</td><td>2024</td><td><span class="leg-ri-cat cat-forced-labor">Forced Labor / Trade</span></td><td><span class="leg-ri-status status-active">Active</span></td></tr>
+              <tr data-cat="environmental"><td>🌐 Global</td><td>Scope 3 Emissions Reporting</td><td>Ongoing</td><td><span class="leg-ri-cat cat-environmental">Environmental</span></td><td><span class="leg-ri-status status-active">Active</span></td></tr>
             </tbody>
           </table>
         </div>
@@ -860,25 +905,73 @@
   function toggleSign(tile) { tile.classList.toggle('open'); }
 
   /* ── LEGISLATION MAP ───────────────────────────────────────── */
-  const LEG_DATA = {
-    uk: { flag:'🇬🇧', country:'United Kingdom', law:'Modern Slavery Act', year:'2015', req:'Mandatory transparency reporting for entities with £36M+ annual turnover. Requires large businesses to publish an annual modern slavery statement.' },
-    au: { flag:'🇦🇺', country:'Australia',       law:'Modern Slavery Act', year:'2018', req:'Mandatory reporting for entities with AUD$100M+ annual consolidated revenue. Modelled on the UK Act, with mandatory 7-criteria reporting.' },
-    us: { flag:'🇺🇸', country:'United States',   law:'Uyghur Forced Labor Prevention Act', year:'2022', req:'Establishes a rebuttable presumption that goods mined, produced, or manufactured wholly or in part in Xinjiang involve forced labor and are prohibited from import.' },
-    eu: { flag:'🇪🇺', country:'European Union',  law:'Corporate Sustainability Due Diligence Directive (CSDDD)', year:'2024', req:'Requires large companies to identify, prevent, mitigate, and account for human rights and environmental harms across their operations and supply chains.' }
+  const LEG_PINS = {
+    us: { name:'United States', regs:['ctsca','uflpa','wro','pfas','ctpat','usmca'] },
+    ca: { name:'Canada', regs:['bills211','usmca'] },
+    uk: { name:'United Kingdom', regs:['uk-msa'] },
+    no: { name:'Norway', regs:['norway'] },
+    eu: { name:'European Union', regs:['csddd','csrd','omnibus'] },
+    de: { name:'Germany', regs:['lksg'] },
+    fr: { name:'France', regs:['vigilance'] },
+    ch: { name:'Switzerland', regs:['vsotr'] },
+    jp: { name:'Japan', regs:['japan'] },
+    au: { name:'Australia', regs:['au-msa','nsw-msa'] }
+  };
+  const LEG_REGS = {
+    'csddd':    { flag:'🇪🇺', name:'Corporate Sustainability Due Diligence Directive (CSDDD)', year:'2024', status:'Active', catKey:'hrdd', catLabel:'Human Rights DD', desc:'Mandates EU companies to identify and mitigate adverse human rights and environmental impacts across supply chains. Larger companies must comply by 2027; others by 2028.' },
+    'csrd':     { flag:'🇪🇺', name:'Corporate Sustainability Reporting Directive (CSRD)', year:'2024', status:'Active', catKey:'reporting', catLabel:'Sustainability Reporting', desc:'Expands sustainability reporting obligations to ~50,000 companies, requiring detailed ESG disclosures. Effective January 2024.' },
+    'omnibus':  { flag:'🇪🇺', name:'Simplification Omnibus Proposal', year:'2025', status:'Proposed', catKey:'reform', catLabel:'Regulatory Reform', desc:'Proposed February 2025 to ease certain sustainability reporting requirements to enhance global competitiveness. Impact on CSDDD and CSRD obligations is still being determined.', note:'Not yet enacted — proposed legislation only.' },
+    'ctsca':    { flag:'🇺🇸', name:'California Transparency in Supply Chains Act (CTSCA)', year:'2010', status:'Active', catKey:'modern-slavery', catLabel:'Modern Slavery', desc:'Requires large retailers and manufacturers doing business in California to disclose efforts to eradicate slavery and human trafficking from their direct supply chains.' },
+    'uflpa':    { flag:'🇺🇸', name:'Uyghur Forced Labor Prevention Act (UFLPA)', year:'2021', status:'Active', catKey:'forced-labor', catLabel:'Forced Labor / Trade', desc:'Trade ban presuming all goods from Xinjiang, China are made with forced labor. Importers must prove otherwise to avoid U.S. border detention.' },
+    'wro':      { flag:'🇺🇸', name:'Withhold Release Order (WRO)', year:'Ongoing', status:'Active', catKey:'forced-labor', catLabel:'Forced Labor / Trade', desc:'U.S. CBP enforcement action detaining imported goods when there is reasonable suspicion of forced labor. Importers must demonstrate compliance to secure release of detained goods.' },
+    'pfas':     { flag:'🇺🇸', name:'PFAS Regulations', year:'Ongoing', status:'Active', catKey:'environmental', catLabel:'Environmental', desc:'Increasingly stringent regulations on per- and polyfluoroalkyl substances ("forever chemicals") due to their environmental persistence and health risks.', note:'Environmental regulation — not specific to modern slavery.' },
+    'ctpat':    { flag:'🇺🇸', name:'Customs Trade Partnership Against Terrorism (CTPAT)', year:'2001', status:'Active', catKey:'security', catLabel:'Supply Chain Security', desc:'U.S. CBP-led program requiring importers and trade partners to implement robust security practices against terrorism and smuggling, with some overlap with forced labor prevention.' },
+    'usmca':    { flag:'🇺🇸🇨🇦🇲🇽', name:'United States–Mexico–Canada Agreement (USMCA)', year:'2020', status:'Active', catKey:'forced-labor', catLabel:'Forced Labor / Trade', desc:'Obligates the US, Canada, and Mexico to prohibit importation of goods produced with forced or compulsory labor, requiring rigorous supply chain due diligence from businesses operating across all three markets.' },
+    'uk-msa':   { flag:'🇬🇧', name:'UK Modern Slavery Act', year:'2015', status:'Active', catKey:'modern-slavery', catLabel:'Modern Slavery', desc:'Requires commercial organizations operating in the UK with annual turnover of £36M or more to publish annual statements on steps taken to ensure no slavery or human trafficking exists in their supply chains or business operations.' },
+    'lksg':     { flag:'🇩🇪', name:'Supply Chain Act (Lieferkettengesetz / LkSG)', year:'2023', status:'Active', catKey:'hrdd', catLabel:'Human Rights DD', desc:'Obliges companies with significant German operations to conduct due diligence on human rights and environmental standards throughout their supply chains, including both direct suppliers and indirect supply chain tiers.' },
+    'vigilance':{ flag:'🇫🇷', name:'Duty of Vigilance Law (Loi de Vigilance)', year:'2017', status:'Active', catKey:'hrdd', catLabel:'Human Rights DD', desc:'Mandates large French companies (5,000+ employees in France or 10,000+ globally) to develop and publicly disclose a vigilance plan identifying and mitigating human rights and environmental harm across their value chains.' },
+    'norway':   { flag:'🇳🇴', name:'Norwegian Transparency Act', year:'2022', status:'Active', catKey:'hrdd', catLabel:'Human Rights DD', desc:'Effective July 1, 2022. Mandates companies operating in Norway with 50 or more employees to conduct human rights and decent working conditions due diligence across all tiers of their supply chains.' },
+    'vsotr':    { flag:'🇨🇭', name:'Swiss Ordinance on Due Diligence and Transparency (VSoTr)', year:'2022', status:'Active', catKey:'hrdd', catLabel:'Human Rights DD', desc:'Effective January 1, 2022. Mandates companies in Switzerland to conduct risk-based due diligence and report on child labor prevention and responsible sourcing of conflict minerals.' },
+    'japan':    { flag:'🇯🇵', name:'Human Rights Due Diligence Guidance', year:'2022', status:'Active (Non-binding)', catKey:'hrdd', catLabel:'Human Rights DD', desc:'Non-binding but comprehensive expectations for businesses in Japan to identify, prevent, and mitigate human rights risks across supply chains. Aligned with the UN Guiding Principles on Business and Human Rights (UNGPs).', note:'Non-binding framework — voluntary, not legally mandatory.' },
+    'au-msa':   { flag:'🇦🇺', name:'Australian Modern Slavery Act', year:'2018', status:'Active', catKey:'modern-slavery', catLabel:'Modern Slavery', desc:'Requires entities operating in Australia with annual consolidated revenue of AUD$100M or more to submit annual Modern Slavery Statements detailing actions taken to assess and address modern slavery risks in their operations and supply chains.' },
+    'nsw-msa':  { flag:'🇦🇺', name:'NSW Modern Slavery Act', year:'2018', status:'Active', catKey:'modern-slavery', catLabel:'Modern Slavery', desc:'Mandates NSW government agencies and state-owned corporations to implement procurement practices that prevent modern slavery. Heightened obligations apply to contracts valued over AUD$150,000.', note:'State-level regulation within Australia.' },
+    'bills211': { flag:'🇨🇦', name:'Fighting Against Forced Labour and Child Labour in Supply Chains Act (Bill S-211)', year:'2024', status:'Active', catKey:'forced-labor', catLabel:'Forced Labor / Trade', desc:'Enacted January 1, 2024. Mandates Canadian government and qualifying private-sector entities to annually report on measures taken to identify and mitigate the risks of forced and child labour in their operations and supply chains.' }
   };
   let activeLegPin = null;
   function showLegDetail(key) {
-    const d = LEG_DATA[key];
-    const card = document.getElementById('legDetailCard');
+    const pin = LEG_PINS[key];
+    if (!pin) return;
     if (activeLegPin) activeLegPin.classList.remove('active');
     activeLegPin = document.querySelector('.leg-pin[data-key="' + key + '"]');
     if (activeLegPin) activeLegPin.classList.add('active');
-    card.innerHTML = '<div class="leg-dc-flag">' + d.flag + '</div><div class="leg-dc-body"><div class="leg-dc-country">' + d.country + '</div><div class="leg-dc-law">' + d.law + '<span class="leg-dc-year">' + d.year + '</span></div><p class="leg-dc-req">' + d.req + '</p></div><button class="leg-dc-close" onclick="closeLegDetail()">✕</button>';
-    card.style.display = 'flex';
+    const count = pin.regs.length;
+    const regsHtml = pin.regs.map(rk => {
+      const r = LEG_REGS[rk];
+      const sc = r.status === 'Proposed' ? 'status-proposed' : r.status.includes('Non-binding') ? 'status-nonbinding' : 'status-active';
+      const note = r.note ? '<span class="leg-ri-note">⚠ ' + r.note + '</span>' : '';
+      return '<div class="leg-reg-item"><div class="leg-ri-header"><span class="leg-ri-flag">' + r.flag + '</span><div class="leg-ri-meta"><span class="leg-ri-name">' + r.name + '</span><span class="leg-ri-year">' + r.year + '</span></div><span class="leg-ri-cat cat-' + r.catKey + '">' + r.catLabel + '</span><span class="leg-ri-status ' + sc + '">' + r.status + '</span></div><p class="leg-ri-desc">' + r.desc + '</p>' + note + '</div>';
+    }).join('');
+    const card = document.getElementById('legDetailCard');
+    card.innerHTML = '<div class="leg-dp-header"><div class="leg-dp-title"><span class="leg-dp-country-name">' + pin.name + '</span><span class="leg-dp-count">' + count + ' regulation' + (count > 1 ? 's' : '') + '</span></div><button class="leg-dp-close" onclick="closeLegDetail()">✕</button></div><div class="leg-dp-regs">' + regsHtml + '</div>';
+    card.style.display = 'block';
   }
   function closeLegDetail() {
     document.getElementById('legDetailCard').style.display = 'none';
     if (activeLegPin) { activeLegPin.classList.remove('active'); activeLegPin = null; }
+  }
+  function filterLeg(cat, btn) {
+    document.querySelectorAll('.leg-filter').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.leg-pin').forEach(pin => {
+      const cats = pin.getAttribute('data-cats').split(' ');
+      const show = cat === 'all' || cats.includes(cat);
+      pin.style.opacity = show ? '1' : '0.2';
+      pin.style.pointerEvents = show ? 'auto' : 'none';
+    });
+    document.querySelectorAll('.leg-table tbody tr').forEach(row => {
+      const rc = row.getAttribute('data-cat');
+      row.style.display = (cat === 'all' || rc === cat) ? '' : 'none';
+    });
   }
 
   /* ── QUIZ ─────────────────────────────────────────────────── */
