@@ -88,6 +88,20 @@
     .btn-primary { display:inline-flex; align-items:center; gap:.4rem; padding:.65rem 1.5rem; background:var(--accent-brand); border:1px solid #c4cc3a; border-radius:8px; font-size:.875rem; font-weight:700; color:#3a4500; cursor:pointer; }
     .btn-primary:hover { background:#cdd63d; }
     .stub-banner { background:#fff8e1; border:1px dashed #f0b429; border-radius:8px; padding:1rem 1.25rem; font-size:.85rem; color:#7a5c00; margin-bottom:1.5rem; }
+    /* Legislation table (Lesson 7) */
+    .leg-table-wrap { overflow-x:auto; margin:1rem 0 1.75rem; border-radius:10px; border:1px solid var(--border); }
+    .leg-table { width:100%; border-collapse:collapse; font-size:.875rem; }
+    .leg-table thead { background:#1a1a2e; color:var(--accent-brand); }
+    .leg-table th { padding:.75rem 1rem; text-align:left; font-size:.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; white-space:nowrap; }
+    .leg-table td { padding:.75rem 1rem; border-top:1px solid var(--border); color:var(--text); vertical-align:top; line-height:1.5; }
+    .leg-table tbody tr:hover { background:var(--accent-light); }
+    .leg-flag { margin-right:.35rem; }
+    .biz-cta { display:flex; gap:1.5rem; align-items:flex-start; background:var(--card); border:1px solid var(--border); border-radius:12px; overflow:hidden; margin-top:1.5rem; }
+    .biz-cta-img { width:180px; height:160px; object-fit:cover; flex-shrink:0; }
+    .biz-cta-body { padding:1.25rem 1.25rem 1.25rem 0; flex:1; }
+    .biz-cta-title { font-size:1rem; font-weight:700; color:var(--text); margin-bottom:.4rem; }
+    .biz-cta-body p { font-size:.875rem; color:var(--text-muted); line-height:1.6; margin-bottom:0; }
+    @media(max-width:560px){ .biz-cta { flex-direction:column; } .biz-cta-img { width:100%; height:140px; } .biz-cta-body { padding:1rem; } }
     /* Driving forces (Lesson 6) */
     .force-pills { display:flex; flex-wrap:wrap; gap:.5rem; margin:.75rem 0 1rem; }
     .force-pill { background:#1a1a2e; color:var(--accent-brand); border-radius:20px; padding:.35rem .9rem; font-size:.8rem; font-weight:600; }
@@ -570,11 +584,73 @@
       </div>
     </div>
 
-    <!-- LESSON 7 STUB -->
+    <!-- LESSON 7 -->
     <div class="panel" id="panel-lesson7">
+      <img class="lesson-hero-img" src="Rebuild%20Training/image-01-scales-of-justice.png" alt="Scales of Justice" />
       <div class="lesson-label">Lesson 7</div>
       <h2 class="lesson-title">Legislation &amp; Guidelines</h2>
-      <div class="stub-banner">🚧 Content coming soon — interactive map planned</div>
+      <div class="lesson-body">
+
+        <h3>The Role of Governments</h3>
+        <p>Governments play a crucial role in developing and implementing laws, policies, and programs to criminalize all forms of modern slavery. In almost every corner of the globe, governments work in collaboration with the private sector, international organizations, and civil society. As a result, many countries have proposed and introduced domestic legislation to combat modern slavery risks, including mandatory modern slavery reporting and due diligence requirements.</p>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:.875rem 1rem;margin:.75rem 0 1.5rem;font-size:.875rem;color:var(--text-muted);line-height:1.6;">
+          <strong style="color:var(--text);">Note:</strong> Most of these laws have been modelled on the recommendations set out in the <strong>UN Guiding Principles on Business and Human Rights (UNGPs)</strong> and the <strong>OECD Guidelines for Multinational Enterprises</strong>.
+        </div>
+
+        <h3>Key Legislation</h3>
+        <div class="leg-table-wrap">
+          <table class="leg-table">
+            <thead>
+              <tr>
+                <th>Country / Region</th>
+                <th>Legislation</th>
+                <th>Year</th>
+                <th>Key Requirement</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="leg-flag">🇬🇧</span> United Kingdom</td>
+                <td>Modern Slavery Act</td>
+                <td>2015</td>
+                <td>Mandatory transparency reporting for entities with £36M+ turnover</td>
+              </tr>
+              <tr>
+                <td><span class="leg-flag">🇦🇺</span> Australia</td>
+                <td>Modern Slavery Act</td>
+                <td>2018</td>
+                <td>Mandatory reporting for entities with AUD$100M+ annual consolidated revenue</td>
+              </tr>
+              <tr>
+                <td><span class="leg-flag">🇺🇸</span> United States</td>
+                <td>Uyghur Forced Labor Prevention Act</td>
+                <td>2022</td>
+                <td>Rebuttable presumption that goods from Xinjiang involve forced labor</td>
+              </tr>
+              <tr>
+                <td><span class="leg-flag">🇪🇺</span> European Union</td>
+                <td>Corporate Sustainability Due Diligence Directive (CSDDD)</td>
+                <td>2024</td>
+                <td>Mandatory human rights and environmental due diligence</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>For Businesses</h3>
+        <p>While companies may not overtly condone modern slavery, many meet only the bare minimum to comply — often out of necessity to fulfill a regulatory reporting requirement. By simply ticking boxes, companies turn a blind eye to the root causes and perpetuate the problem.</p>
+        <p>However, by increasing supply chain transparency, companies can identify, manage, and mitigate risks of harm hidden deep in their supply chains and turn the tide of exploitation.</p>
+
+        <div class="biz-cta">
+          <img class="biz-cta-img" src="Rebuild%20Training/image-08-puzzle-collaboration.png" alt="Collaborative Solutions" />
+          <div class="biz-cta-body">
+            <div class="biz-cta-title">FRDM's Better Business List</div>
+            <p>A guide with additional tips on navigating global supply chain regulations and building ethical supply chains.</p>
+            <a class="btn-primary" href="#" style="text-decoration:none;display:inline-flex;margin-top:.5rem;">⬇ Download PDF</a>
+          </div>
+        </div>
+
+      </div>
       <div class="lesson-nav-row">
         <button class="btn-secondary" onclick="showPanel('lesson6')">← Back</button>
         <button class="btn-primary" onclick="completeLesson('lesson7','quiz')">Mark Complete &amp; Continue →</button>
