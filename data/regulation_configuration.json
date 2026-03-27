@@ -1,0 +1,35 @@
+{
+  "Modern Slavery Act 2015": {
+    "risks": [
+      "human_rights",
+      "governance",
+      "operations",
+      "people",
+      "cbp",
+      "trade"
+    ],
+    "naics_codes": [],
+    "naics_prefixes": [
+      "11",
+      "21",
+      "23",
+      "31",
+      "32",
+      "33",
+      "42",
+      "44",
+      "45",
+      "48",
+      "49",
+      "56",
+      "72",
+      "92"
+    ],
+    "description": "The Modern Slavery Act 2015 is a UK law covering all industries and commercial organisations operating in the UK with a turnover above £36 million, requiring them to disclose steps taken to prevent slavery and human trafficking in their supply chains and operations. It addresses risks of forced labour, human trafficking, servitude, and labour exploitation across global supply chains. It is critical for supply chain compliance as it mandates transparency reporting (Section 54), establishes criminal offences, and imposes obligations on businesses to audit and disclose their supply chain practices.",
+    "link": "https://www.legislation.gov.uk/ukpga/2015/30/contents",
+    "update_frequency": "UNKNOWN",
+    "notes": null,
+    "date_added": "2026-03-27",
+    "last_updated": "2026-03-27"
+  }
+}
