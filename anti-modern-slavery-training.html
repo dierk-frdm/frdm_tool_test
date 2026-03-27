@@ -39,14 +39,10 @@
     .content { flex:1; overflow-y:auto; background:var(--bg); }
     .panel { display:none; padding:2.5rem 3rem 4rem; max-width:860px; }
     .panel.active { display:block; }
-    .warning-overlay { position:fixed; inset:0; background:rgba(20,16,8,.75); z-index:500; display:flex; align-items:center; justify-content:center; padding:1rem; }
-    .warning-overlay.hidden { display:none; }
-    .warning-box { background:var(--card); border-radius:16px; padding:2.5rem; max-width:520px; width:100%; box-shadow:0 20px 60px rgba(0,0,0,.3); }
-    .warning-icon { font-size:2.5rem; margin-bottom:1rem; }
-    .warning-box h2 { font-size:1.25rem; font-weight:700; margin-bottom:.75rem; }
-    .warning-box p { font-size:.9rem; color:var(--text-muted); line-height:1.7; margin-bottom:1rem; }
-    .warning-btn { display:inline-block; background:var(--accent-brand); color:#3a4500; border:1px solid #c4cc3a; border-radius:8px; padding:.65rem 1.5rem; font-size:.9rem; font-weight:600; cursor:pointer; }
-    .warning-btn:hover { background:#cdd63d; }
+    .warning-card { background:#fff8e8; border:1px solid #e8c84a; border-radius:12px; padding:1.25rem 1.5rem; margin-bottom:1.5rem; display:flex; gap:1rem; align-items:flex-start; }
+    .warning-card-icon { font-size:1.5rem; flex-shrink:0; line-height:1; }
+    .warning-card h3 { font-size:.9rem; font-weight:700; color:#7a5000; margin-bottom:.35rem; }
+    .warning-card p { font-size:.85rem; color:#7a5c20; line-height:1.6; margin:0; }
     .intro-hero { background:linear-gradient(135deg,#1a1a2e 0%,#16213e 60%,#0f3460 100%); border-radius:16px; padding:2.5rem; margin-bottom:2rem; color:white; }
     .intro-eyebrow { font-size:.72rem; font-weight:700; color:var(--accent-brand); text-transform:uppercase; letter-spacing:.1em; margin-bottom:.6rem; }
     .intro-hero h1 { font-size:1.75rem; font-weight:700; line-height:1.2; margin-bottom:.75rem; }
@@ -167,19 +163,27 @@
     .type-content p { margin-bottom:0; font-size:.875rem; color:#3a3020; line-height:1.65; }
     footer { border-top:1px solid var(--border); padding:1rem 2.5rem; display:flex; align-items:center; gap:.75rem; color:var(--text-muted); font-size:.8rem; background:var(--surface); flex-shrink:0; }
     footer img { height:14px; opacity:.6; }
+    /* PDF / Print */
+    .pdf-btn { margin-left:auto; display:inline-flex; align-items:center; gap:.4rem; padding:.4rem 1rem; background:var(--accent-brand); border:1px solid #c4cc3a; border-radius:6px; font-size:.78rem; font-weight:700; color:#3a4500; cursor:pointer; text-decoration:none; }
+    .pdf-btn:hover { background:#cdd63d; }
+    @media print {
+      .topbar, .sidebar, .lesson-nav-row, .quiz-submit-row, .quiz-progress-row, #quizBackRow, .pdf-btn, .warning-overlay { display:none !important; }
+      body { background:white; }
+      .shell { display:block; height:auto; overflow:visible; }
+      .content { overflow:visible; }
+      .panel { display:block !important; padding:1.5rem 2rem; max-width:100%; page-break-after:always; border-top:2px solid #ddd; }
+      .panel.active { border-top:none; }
+      .intro-hero { background:#1a1a2e !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+      .leg-table thead { background:#1a1a2e !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+      .sign-tile-body { display:block !important; }
+      .sign-tile-arrow { display:none; }
+      #quizContainer, #quizResults { display:none !important; }
+      .quiz-stub-print { display:block !important; }
+    }
+    .quiz-stub-print { display:none; font-size:.9rem; color:var(--text-muted); font-style:italic; padding:1rem 0; }
   </style>
 </head>
 <body>
-
-<div class="warning-overlay" id="warningOverlay">
-  <div class="warning-box">
-    <div class="warning-icon">⚠️</div>
-    <h2>Sensitive Content Warning</h2>
-    <p>Content in this course contains real-life stories of victims of modern slavery, including references to physical and mental abuse, which may be triggering to some people.</p>
-    <p>If you feel uncomfortable at any time while completing this course and need to step away, you can exit and continue later.</p>
-    <button class="warning-btn" onclick="dismissWarning()">I understand — continue to course</button>
-  </div>
-</div>
 
 <header class="topbar">
   <a class="topbar-logo" href="index.html"><img src="frdmai logo.png" alt="FRDM AI" /></a>
@@ -187,6 +191,7 @@
   <span class="topbar-product">Anti-Modern Slavery Training</span>
   <span class="topbar-badge">Training</span>
   <a class="topbar-back" href="index.html">← Back to tools</a>
+  <button class="pdf-btn" onclick="window.print()">⬇ Save as PDF</button>
 </header>
 
 <div class="shell">
@@ -194,32 +199,29 @@
     <div class="sidebar-header">
       <div class="sidebar-header-label">Course Progress</div>
       <div class="sidebar-progress-bar"><div class="sidebar-progress-fill" id="progressFill"></div></div>
-      <div class="sidebar-progress-text" id="progressText">0 of 7 lessons complete</div>
+      <div class="sidebar-progress-text" id="progressText">0 of 5 lessons complete</div>
     </div>
     <div class="sidebar-nav">
       <div class="nav-item active" data-panel="intro" onclick="showPanel('intro')">
         <span class="nav-label">Introduction</span><span class="nav-status">📋</span>
       </div>
-      <div class="nav-item" data-panel="lesson1" onclick="showPanel('lesson1')">
-        <span class="nav-num">1</span><span class="nav-label">A Message from FRDM</span><span class="nav-status" id="status-lesson1">○</span>
-      </div>
       <div class="nav-item" data-panel="lesson2" onclick="showPanel('lesson2')">
-        <span class="nav-num">2</span><span class="nav-label">Learning Outcomes</span><span class="nav-status" id="status-lesson2">○</span>
+        <span class="nav-label">Learning Outcomes</span><span class="nav-status">📖</span>
       </div>
       <div class="nav-item" data-panel="lesson3" onclick="showPanel('lesson3')">
-        <span class="nav-num">3</span><span class="nav-label">What is Modern Slavery?</span><span class="nav-status" id="status-lesson3">○</span>
+        <span class="nav-num">1</span><span class="nav-label">What is Modern Slavery?</span><span class="nav-status" id="status-lesson3">○</span>
       </div>
       <div class="nav-item" data-panel="lesson4" onclick="showPanel('lesson4')">
-        <span class="nav-num">4</span><span class="nav-label">Types of Modern Slavery</span><span class="nav-status" id="status-lesson4">○</span>
+        <span class="nav-num">2</span><span class="nav-label">Types of Modern Slavery</span><span class="nav-status" id="status-lesson4">○</span>
       </div>
       <div class="nav-item" data-panel="lesson5" onclick="showPanel('lesson5')">
-        <span class="nav-num">5</span><span class="nav-label">Spot the Signs</span><span class="nav-status" id="status-lesson5">○</span>
+        <span class="nav-num">3</span><span class="nav-label">Spot the Signs</span><span class="nav-status" id="status-lesson5">○</span>
       </div>
       <div class="nav-item" data-panel="lesson6" onclick="showPanel('lesson6')">
-        <span class="nav-num">6</span><span class="nav-label">Driving Forces</span><span class="nav-status" id="status-lesson6">○</span>
+        <span class="nav-num">4</span><span class="nav-label">Driving Forces</span><span class="nav-status" id="status-lesson6">○</span>
       </div>
       <div class="nav-item" data-panel="lesson7" onclick="showPanel('lesson7')">
-        <span class="nav-num">7</span><span class="nav-label">Legislation &amp; Guidelines</span><span class="nav-status" id="status-lesson7">○</span>
+        <span class="nav-num">5</span><span class="nav-label">Legislation &amp; Guidelines</span><span class="nav-status" id="status-lesson7">○</span>
       </div>
       <div class="nav-item locked" data-panel="quiz" id="quizNavItem">
         <span style="font-size:1rem">🔒</span><span class="nav-label">Final Quiz</span><span class="nav-status">13 Qs</span>
@@ -234,12 +236,19 @@
       <div class="intro-hero">
         <div class="intro-eyebrow">FRDM Training</div>
         <h1>Anti-Modern Slavery Training</h1>
-        <p>Learn to recognise, understand, and respond to modern slavery in your work and supply chain.</p>
+        <p>Welcome to FRDM's Anti-Modern Slavery Training. In this training, you will learn about the key aspects of modern slavery and its impact on your work activity and beyond.</p>
         <div class="intro-meta">
           <div class="intro-meta-item">⏱ <strong>~20 minutes</strong></div>
-          <div class="intro-meta-item">📖 <strong>7 lessons</strong></div>
+          <div class="intro-meta-item">📖 <strong>5 lessons</strong></div>
           <div class="intro-meta-item">✅ <strong>13-question quiz</strong></div>
           <div class="intro-meta-item">🎓 <strong>Certificate on completion</strong></div>
+        </div>
+      </div>
+      <div class="warning-card">
+        <div class="warning-card-icon">⚠️</div>
+        <div>
+          <h3>Sensitive Content Warning</h3>
+          <p>This course contains real-life stories of victims of modern slavery, including references to physical and mental abuse, which may be triggering to some people. If you feel uncomfortable at any time and need to step away, you can exit the course and continue later.</p>
         </div>
       </div>
       <div class="instructions-card">
@@ -253,28 +262,13 @@
           <li>The course will take roughly 20 minutes to complete.</li>
         </ul>
       </div>
-      <button class="start-btn" onclick="showPanel('lesson1')">Start Course →</button>
+      <button class="start-btn" onclick="showPanel('lesson2')">Start Course →</button>
     </div>
 
-    <!-- LESSON 1 -->
-    <div class="panel" id="panel-lesson1">
-      <img class="lesson-hero-img" src="Rebuild%20Training/image-07-frdm-heroes.png" alt="FRDM Heroes" />
-      <div class="lesson-label">Lesson 1</div>
-      <h2 class="lesson-title">A Message from FRDM</h2>
-      <div class="lesson-body">
-        <p>Welcome to FRDM's Anti-Modern Slavery Training.</p>
-        <p>In this training, you will learn about the key aspects of modern slavery and its impact on your work activity and beyond.</p>
-      </div>
-      <div class="lesson-nav-row">
-        <button class="btn-secondary" onclick="showPanel('intro')">← Back</button>
-        <button class="btn-primary" onclick="completeLesson('lesson1','lesson2')">Mark Complete &amp; Continue →</button>
-      </div>
-    </div>
-
-    <!-- LESSON 2 -->
+    <!-- LEARNING OUTCOMES (not counted) -->
     <div class="panel" id="panel-lesson2">
       <img class="lesson-hero-img" src="Rebuild%20Training/image-02-team-training.png" alt="Team Training" />
-      <div class="lesson-label">Lesson 2</div>
+      <div class="lesson-label">Course Overview</div>
       <h2 class="lesson-title">Learning Outcomes</h2>
       <div class="lesson-body">
         <p>After completing this course, you will be able to:</p>
@@ -287,15 +281,15 @@
         </ul>
       </div>
       <div class="lesson-nav-row">
-        <button class="btn-secondary" onclick="showPanel('lesson1')">← Back</button>
-        <button class="btn-primary" onclick="completeLesson('lesson2','lesson3')">Mark Complete &amp; Continue →</button>
+        <button class="btn-secondary" onclick="showPanel('intro')">← Back</button>
+        <button class="btn-primary" onclick="showPanel('lesson3')">Continue to Lesson 1 →</button>
       </div>
     </div>
 
     <!-- LESSON 3 -->
     <div class="panel" id="panel-lesson3">
       <img class="lesson-hero-img" src="Rebuild%20Training/image-06-urban-workers.png" alt="Urban Workers" />
-      <div class="lesson-label">Lesson 3</div>
+      <div class="lesson-label">Lesson 1</div>
       <h2 class="lesson-title">What is Modern Slavery?</h2>
       <div class="lesson-body">
         <h3>Definition</h3>
@@ -353,7 +347,7 @@
     <!-- LESSON 4 -->
     <div class="panel" id="panel-lesson4">
       <img class="lesson-hero-img" src="Rebuild%20Training/image-05-supply-chain-globe.png" alt="Supply Chain Globe" />
-      <div class="lesson-label">Lesson 4</div>
+      <div class="lesson-label">Lesson 2</div>
       <h2 class="lesson-title">Types of Modern Slavery</h2>
       <div class="lesson-body">
         <h3>Legal Definitions</h3>
@@ -441,7 +435,7 @@
     <!-- LESSON 5 -->
     <div class="panel" id="panel-lesson5">
       <img class="lesson-hero-img" src="Rebuild%20Training/image-04-can-you-help.png" alt="Can You Help?" />
-      <div class="lesson-label">Lesson 5</div>
+      <div class="lesson-label">Lesson 3</div>
       <h2 class="lesson-title">Spot the Signs</h2>
       <div class="lesson-body">
         <p>The indicators below are the most common potential signs of modern slavery. While the presence of one or more of these markers may not necessarily mean that the person is being exploited, it could suggest that they are a potential victim. Consider each situation individually.</p>
@@ -571,7 +565,7 @@
     <!-- LESSON 6 -->
     <div class="panel" id="panel-lesson6">
       <img class="lesson-hero-img" src="Rebuild%20Training/image-03-globe-workers-industry.png" alt="Globe Workers Industry" />
-      <div class="lesson-label">Lesson 6</div>
+      <div class="lesson-label">Lesson 4</div>
       <h2 class="lesson-title">Driving Forces of Modern Slavery</h2>
       <div class="lesson-body">
 
@@ -627,7 +621,7 @@
     <!-- LESSON 7 -->
     <div class="panel" id="panel-lesson7">
       <img class="lesson-hero-img" src="Rebuild%20Training/image-01-scales-of-justice.png" alt="Scales of Justice" />
-      <div class="lesson-label">Lesson 7</div>
+      <div class="lesson-label">Lesson 5</div>
       <h2 class="lesson-title">Legislation &amp; Guidelines</h2>
       <div class="lesson-body">
 
@@ -721,8 +715,9 @@
         </div>
       </div>
 
+      <p class="quiz-stub-print">The final quiz is an interactive assessment — complete the course online to take the quiz.</p>
       <div class="lesson-nav-row" id="quizBackRow">
-        <button class="btn-secondary" onclick="showPanel('lesson7')">← Back to Lesson 7</button>
+        <button class="btn-secondary" onclick="showPanel('lesson7')">← Back to Lesson 5</button>
       </div>
     </div>
 
@@ -735,7 +730,7 @@
 </footer>
 
 <script>
-  const LESSONS = ['lesson1','lesson2','lesson3','lesson4','lesson5','lesson6','lesson7'];
+  const LESSONS = ['lesson3','lesson4','lesson5','lesson6','lesson7'];
   const STORAGE_KEY = 'frdm_training_progress';
   let completed = new Set(JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'));
   function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify([...completed])); }
@@ -752,7 +747,7 @@
   function updateProgress() {
     const count = completed.size;
     document.getElementById('progressFill').style.width = Math.round(count/LESSONS.length*100) + '%';
-    document.getElementById('progressText').textContent = count + ' of ' + LESSONS.length + ' lessons complete';
+    document.getElementById('progressText').textContent = count + ' of 5 lessons complete';
     LESSONS.forEach(id => {
       if (completed.has(id)) {
         const el = document.getElementById('status-' + id);
@@ -768,7 +763,6 @@
       q.querySelector('span').textContent = '🎓';
     }
   }
-  function dismissWarning() { document.getElementById('warningOverlay').classList.add('hidden'); }
   function toggleSign(tile) { tile.classList.toggle('open'); }
 
   /* ── QUIZ ─────────────────────────────────────────────────── */
