@@ -1,0 +1,182 @@
+{
+  "Water Pollution Direct": {
+    "date_added": "2025-01-24",
+    "last_updated": "2025-01-24",
+    "risks": [
+      "water"
+    ],
+    "naics_codes": [
+      "111110","111150","111160","111190","111219","111330","111331","111335",
+      "111910","111920","111930","111990","111998","112110","112120","112210",
+      "112310","112511","112512","112990","211120","211130","212111","212112",
+      "212190","212210","212221","212222","212290","221111","221112","221113",
+      "311225","311514","311520","311611","311612","311710","312230","316910",
+      "322110","322120","322220","324110","325180","325190","325193","325211",
+      "325212","325311","325312","325320","325411","325412","325620","331110",
+      "331210","331313","331315","331410","331420","331492","332111","333111",
+      "333120","333131","334413","334510","335910","336111","336112","336120",
+      "336214","336330","336390","336411","336412","336413","336510","336611",
+      "336992","336999"
+    ],
+    "naics_prefixes": ["313","314","315","322","325","332","333","712","713"],
+    "description": "Widespread potential for release of pollutants, usually with no/little treatment, and/or significant use of highly hazardous substances. This information is based on the Water-Watch CDP Water Impact Index (July 2023), a resource provided by CDP (formerly the Carbon Disclosure Project), an organization that helps companies and governments measure and manage their environmental impacts.",
+    "link": "https://www.cdp.net/en/disclose/question-bank/water-security/water-watch/",
+    "notes": null
+  },
+  "Water Pollution Supply Chain": {
+    "date_added": "2025-03-13",
+    "last_updated": "2025-03-13",
+    "risks": ["water"],
+    "naics_codes": [
+      "111110","111150","111160","111190","111219","111330","111331","111335",
+      "111910","111920","111930","111998","112110","112120","112210","112310",
+      "112511","112512","112990","211120","211130","212111","212112","212190",
+      "212210","212221","212222","212290","212319","212321","212324","213112",
+      "221111","221112","221113","221114","221115","221117","221119","221210",
+      "221310","221320","237130","237310","237990","311211","311212","311224",
+      "311225","311310","311340","311351","311352","311421","311423","311514",
+      "311520","311611","311612","311812","311821","311920","311999","312111",
+      "312112","312130","312140","312230","323111","323113","324110","325180",
+      "325188","325190","325193","325199","325211","325212","325311","325312",
+      "325320","325411","325412","325611","325620","331110","331210","331313",
+      "331315","331410","331420","331491","331492","332431","332439","332810",
+      "333111","333120","333131","333611","334110","334112","334210","334220",
+      "334412","334413","334417","334418","334510","334519","335210","335220",
+      "335910","336111","336112","336120","336214","336310","336312","336330",
+      "336360","336390","336411","336412","336413","336510","336611","336992",
+      "336999","337110","337121","337122","339112","339113","339910","423110",
+      "423120","423130","423310","423320","423330","423510","423830","423920",
+      "423990","424210","424320","424410","424420","424440","424470","424480",
+      "424490","424520","424690","424720","424910","445110","446110","447110",
+      "448110","448120","454110","454390","481111","481112","481212","482111",
+      "482112","483111","483112","483113","483114","484110","484121","485111",
+      "485112","485310","485320","486210","486910","488510","488991","493110",
+      "511110","511120","511130","518210","531110","531120","532120","532210",
+      "541330","713210","721110","721120","722310","722320","722513"
+    ],
+    "naics_prefixes": ["313","314","315","325","326","332","333","335","621","713"],
+    "description": "Explanation: Supply chain activities have widespread potential for release of untreated pollutants through extraction, agriculture, or manufacturing.",
+    "link": "https://www.cdp.net/en/disclose/question-bank/water-security/water-watch/",
+    "update_frequency": "Yearly",
+    "notes": null
+  },
+  "Water Quantity Direct": {
+    "date_added": "2025-03-13",
+    "last_updated": "2025-03-13",
+    "risks": ["water"],
+    "naics_codes": [
+      "111110","111150","111160","111190","111219","111330","111331","111335",
+      "111910","111920","111930","111998","211120","212111","212112","212230",
+      "212290","221111","312230","316910","316990","322110","322120","324110",
+      "325110","325120","325130","325180","325190","325211","325212","325311",
+      "325312","325320","325411","325412","326111","326113","327310","327320",
+      "327331","331110","331210","331410","331420","331492","334412","334413",
+      "334417","334418","336112","336330","336411","336412","336413","518210",
+      "541513"
+    ],
+    "naics_prefixes": ["313","314","315"],
+    "description": "Typically accounts for a high percentage of basin/country water use. And/or water intensity above 100 l/kg, or particularly high for the sector.",
+    "link": "https://www.cdp.net/en/disclose/question-bank/water-security/water-watch/",
+    "update_frequency": "Yearly",
+    "notes": null
+  },
+  "Water Quantity Supply Chain": {
+    "date_added": "2025-03-13",
+    "last_updated": "2025-03-13",
+    "risks": ["water"],
+    "naics_codes": [
+      "111110","111150","111160","111190","111219","111330","111331","111335",
+      "111910","111920","111930","111998","112110","112120","112210","112310",
+      "112511","112512","112990","211120","211130","212111","212112","212190",
+      "212210","212221","212222","212290","212319","212321","212324","221111",
+      "221112","221113","221114","221115","221117","221119","221210","221310",
+      "221320","236115","236116","236117","236118","236220","237130","237310",
+      "237990","311211","311212","311224","311225","311310","311340","311351",
+      "311352","311421","311423","311514","311520","311611","311612","311812",
+      "311821","311920","311999","312111","312112","312130","312140","312230",
+      "323111","323113","324110","325180","325188","325190","325193","325199",
+      "325211","325212","325311","325312","325320","325411","325412","325611",
+      "325620","326111","326210","326220","331491","332431","332439","332810",
+      "333111","333120","333131","333611","334110","334112","334210","334220",
+      "334412","334413","334417","334418","334519","335210","335220","335910",
+      "336111","336112","336120","336214","336330","336360","336390","336411",
+      "336412","336413","336510","336611","336992","336999","337110","337121",
+      "337122","339112","339113","339910","423310","423320","423330","423920",
+      "423990","424320","424410","424420","424440","424470","424480","424490",
+      "424520","424590","424690","424720","424910","445110","446110","447110",
+      "448110","448120","481111","481112","481212","486210","486910","511110",
+      "511120","511130","511210","512110","515120","519110","519130","519190",
+      "532210","541810","541820","541830","541840","713210","721110","721120",
+      "722310","722320","722513"
+    ],
+    "naics_prefixes": ["313","314","315","325","326","333","335","517","621","713"],
+    "description": "Explanation: Supply chain activities typically account for a high percentage of water use through resource extraction, agriculture, or manufacturing.",
+    "link": "https://www.cdp.net/en/disclose/question-bank/water-security/water-watch/",
+    "update_frequency": "Yearly",
+    "notes": null
+  },
+  "BLS Nonfatal": {
+    "date_added": "2025-03-13",
+    "last_updated": "2025-03-13",
+    "risks": ["health"],
+    "naics_codes": [],
+    "naics_prefixes": ["3133","4445","4849","62","622","6221","72","61","611","6111","92"],
+    "description": "Table used: BLS Nonfatal: TABLE 2. Number of nonfatal occupational injuries and illnesses by industry and case types, 2023 [thousands]",
+    "link": "https://www.bls.gov/iif/fatal-injuries-tables/fatal-occupational-injuries-table-a-1-2023.htm",
+    "update_frequency": "Yearly",
+    "notes": null,
+    "note": "Used multiple clustering algorithms (k-means, Jenks natural breaks,etc) to identify high-risk industries at NAICS code level, with algorithms weighted based on their suitability for each dataset's distribution pattern. This approach was necessary as the original dataset lacked predefined risk rankings or thresholds."
+  },
+  "Energy Star": {
+    "date_added": "2025-03-13",
+    "last_updated": "2025-03-13",
+    "risks": ["planet"],
+    "naics_codes": [],
+    "naics_prefixes": ["325","324","327","331","322","311","331"],
+    "description": "Energy star list of high emitting sectors",
+    "link": "https://www.energystar.gov/industrial_plants/decarbonizing_industry/sources_industrial_greenhouse_emissions",
+    "update_frequency": "UNKNOWN",
+    "notes": null
+  },
+  "BLS Fatal": {
+    "date_added": "2025-03-13",
+    "last_updated": "2025-03-13",
+    "risks": ["health"],
+    "naics_codes": ["236110","238160","238220","722510","922120"],
+    "naics_prefixes": [
+      "1120","23610","2370","23710","23820","23830","23890","4230",
+      "4841210","48420","4880","5620","7220","72250","8110","81110","9220","92210"
+    ],
+    "description": "TABLE A-1. Fatal occupational injuries by industry and event or exposure, all United States, 2023",
+    "link": "https://www.bls.gov/iif/fatal-injuries-tables/fatal-occupational-injuries-table-a-1-2023.htm",
+    "update_frequency": "Yearly",
+    "notes": null,
+    "note": "Used multiple clustering algorithms (k-means, Jenks natural breaks,etc) to identify high-risk industries at NAICS code level, with algorithms weighted based on their suitability for each dataset's distribution pattern. This approach was necessary as the original dataset lacked predefined risk rankings or thresholds."
+  },
+  "CSDDD": {
+    "date_added": "2025-03-13",
+    "last_updated": "2025-03-13",
+    "risks": ["human_rights","environmental"],
+    "naics_codes": [],
+    "naics_prefixes": ["11","21","313","314","315","316","324","327","331","332"],
+    "description": "NAICS based on the legislation's own list of high risk industries",
+    "link": "https://www.stblaw.com/about-us/publications/view/2024/07/16/csddd-eu-delivers-mandatory-sustainability-due-diligence-regime-despite-political-pressure",
+    "notes": "Link to a law firm's interpretation of the law.",
+    "update_frequency": "UNKNOWN"
+  },
+  "CSRD": {
+    "date_added": "2025-03-13",
+    "last_updated": "2025-03-13",
+    "risks": ["environmental","human_rights","governance"],
+    "naics_codes": ["561720","561710","561730","561740"],
+    "naics_prefixes": [
+      "111","112","115","212","2123","213","236","237","238","814",
+      "3111","3112","3113","3131","3132","3141","3161","3211","3221",
+      "3311","3313","3314","3321","3344","3351"
+    ],
+    "description": "Corporate Sustainability Reporting Directive (CSRD)",
+    "link": "https://finance.ec.europa.eu/capital-markets-union-and-financial-markets/company-reporting-and-auditing/company-reporting/corporate-sustainability-reporting_en",
+    "notes": "Used NAICS groupings from previous similar legislation with guidance provided by the ILO.",
+    "update_frequency": "UNKNOWN"
+  }
+}
