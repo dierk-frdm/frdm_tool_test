@@ -767,10 +767,10 @@
               <circle cx="150" cy="96" r="6" fill="#fff"/><text x="150" y="100" text-anchor="middle" font-size="6.5" font-weight="bold" fill="#8b1a2b" font-family="sans-serif">2</text>
             </g>
             <!-- US (6) -->
-            <g class="leg-pin" data-key="us" data-cats="forced-labor modern-slavery environmental security" onclick="showLegDetail('us')" style="cursor:pointer">
+            <g class="leg-pin" data-key="us" data-cats="forced-labor modern-slavery security" onclick="showLegDetail('us')" style="cursor:pointer">
               <circle cx="155" cy="158" r="13" fill="#8b1a2b" stroke="#fff" stroke-width="2" class="leg-pin-circle"/>
               <text x="155" y="162" text-anchor="middle" font-size="8" font-weight="bold" fill="#fff" font-family="sans-serif">US</text>
-              <circle cx="165" cy="148" r="7" fill="#fff"/><text x="165" y="152" text-anchor="middle" font-size="7" font-weight="bold" fill="#8b1a2b" font-family="sans-serif">6</text>
+              <circle cx="165" cy="148" r="7" fill="#fff"/><text x="165" y="152" text-anchor="middle" font-size="7" font-weight="bold" fill="#8b1a2b" font-family="sans-serif">4</text>
             </g>
             <!-- UK (1) -->
             <g class="leg-pin" data-key="uk" data-cats="modern-slavery" onclick="showLegDetail('uk')" style="cursor:pointer">
@@ -841,8 +841,6 @@
               <tr data-cat="modern-slavery"><td>🇺🇸 United States</td><td>California Transparency in Supply Chains Act (CTSCA)</td><td>2010</td><td><span class="leg-ri-cat cat-modern-slavery">Modern Slavery</span></td><td><span class="leg-ri-status status-active">Active</span></td></tr>
               <tr data-cat="forced-labor"><td>🇺🇸 United States</td><td>Uyghur Forced Labor Prevention Act (UFLPA)</td><td>2021</td><td><span class="leg-ri-cat cat-forced-labor">Forced Labor / Trade</span></td><td><span class="leg-ri-status status-active">Active</span></td></tr>
               <tr data-cat="forced-labor"><td>🇺🇸🇨🇦🇲🇽 US / Canada / Mexico</td><td>United States–Mexico–Canada Agreement (USMCA)</td><td>2020</td><td><span class="leg-ri-cat cat-forced-labor">Forced Labor / Trade</span></td><td><span class="leg-ri-status status-active">Active</span></td></tr>
-              <tr data-cat="forced-labor"><td>🇺🇸 United States</td><td>Withhold Release Order (WRO)</td><td>Ongoing</td><td><span class="leg-ri-cat cat-forced-labor">Forced Labor / Trade</span></td><td><span class="leg-ri-status status-active">Active</span></td></tr>
-              <tr data-cat="environmental"><td>🇺🇸 United States</td><td>PFAS Regulations</td><td>Ongoing</td><td><span class="leg-ri-cat cat-environmental">Environmental</span></td><td><span class="leg-ri-status status-active">Active</span></td></tr>
               <tr data-cat="security"><td>🇺🇸 United States</td><td>Customs Trade Partnership Against Terrorism (CTPAT)</td><td>2001</td><td><span class="leg-ri-cat cat-security">Supply Chain Security</span></td><td><span class="leg-ri-status status-active">Active</span></td></tr>
               <tr data-cat="modern-slavery"><td>🇬🇧 United Kingdom</td><td>Modern Slavery Act</td><td>2015</td><td><span class="leg-ri-cat cat-modern-slavery">Modern Slavery</span></td><td><span class="leg-ri-status status-active">Active</span></td></tr>
               <tr data-cat="hrdd"><td>🇩🇪 Germany</td><td>Supply Chain Act (Lieferkettengesetz / LkSG)</td><td>2023</td><td><span class="leg-ri-cat cat-hrdd">Human Rights DD</span></td><td><span class="leg-ri-status status-active">Active</span></td></tr>
@@ -853,7 +851,6 @@
               <tr data-cat="modern-slavery"><td>🇦🇺 Australia</td><td>Australian Modern Slavery Act</td><td>2018</td><td><span class="leg-ri-cat cat-modern-slavery">Modern Slavery</span></td><td><span class="leg-ri-status status-active">Active</span></td></tr>
               <tr data-cat="modern-slavery"><td>🇦🇺 Australia (NSW)</td><td>NSW Modern Slavery Act</td><td>2018</td><td><span class="leg-ri-cat cat-modern-slavery">Modern Slavery</span></td><td><span class="leg-ri-status status-active">Active</span></td></tr>
               <tr data-cat="forced-labor"><td>🇨🇦 Canada</td><td>Fighting Against Forced Labour and Child Labour in Supply Chains Act (Bill S-211)</td><td>2024</td><td><span class="leg-ri-cat cat-forced-labor">Forced Labor / Trade</span></td><td><span class="leg-ri-status status-active">Active</span></td></tr>
-              <tr data-cat="environmental"><td>🌐 Global</td><td>Scope 3 Emissions Reporting</td><td>Ongoing</td><td><span class="leg-ri-cat cat-environmental">Environmental</span></td><td><span class="leg-ri-status status-active">Active</span></td></tr>
             </tbody>
           </table>
         </div>
@@ -1018,7 +1015,7 @@
 
   /* ── LEGISLATION MAP ───────────────────────────────────────── */
   const LEG_PINS = {
-    us: { name:'United States', regs:['ctsca','uflpa','wro','pfas','ctpat','usmca'] },
+    us: { name:'United States', regs:['ctsca','uflpa','ctpat','usmca'] },
     ca: { name:'Canada', regs:['bills211','usmca'] },
     uk: { name:'United Kingdom', regs:['uk-msa'] },
     no: { name:'Norway', regs:['norway'] },
@@ -1035,8 +1032,6 @@
     'omnibus':  { flag:'🇪🇺', name:'Simplification Omnibus Proposal', year:'2025', status:'Proposed', catKey:'reform', catLabel:'Regulatory Reform', desc:'Proposed February 2025 to ease certain sustainability reporting requirements to enhance global competitiveness. Impact on CSDDD and CSRD obligations is still being determined.', note:'Not yet enacted — proposed legislation only.' },
     'ctsca':    { flag:'🇺🇸', name:'California Transparency in Supply Chains Act (CTSCA)', year:'2010', status:'Active', catKey:'modern-slavery', catLabel:'Modern Slavery', desc:'Requires large retailers and manufacturers doing business in California to disclose efforts to eradicate slavery and human trafficking from their direct supply chains.' },
     'uflpa':    { flag:'🇺🇸', name:'Uyghur Forced Labor Prevention Act (UFLPA)', year:'2021', status:'Active', catKey:'forced-labor', catLabel:'Forced Labor / Trade', desc:'Trade ban presuming all goods from Xinjiang, China are made with forced labor. Importers must prove otherwise to avoid U.S. border detention.' },
-    'wro':      { flag:'🇺🇸', name:'Withhold Release Order (WRO)', year:'Ongoing', status:'Active', catKey:'forced-labor', catLabel:'Forced Labor / Trade', desc:'U.S. CBP enforcement action detaining imported goods when there is reasonable suspicion of forced labor. Importers must demonstrate compliance to secure release of detained goods.' },
-    'pfas':     { flag:'🇺🇸', name:'PFAS Regulations', year:'Ongoing', status:'Active', catKey:'environmental', catLabel:'Environmental', desc:'Increasingly stringent regulations on per- and polyfluoroalkyl substances ("forever chemicals") due to their environmental persistence and health risks.', note:'Environmental regulation — not specific to modern slavery.' },
     'ctpat':    { flag:'🇺🇸', name:'Customs Trade Partnership Against Terrorism (CTPAT)', year:'2001', status:'Active', catKey:'security', catLabel:'Supply Chain Security', desc:'U.S. CBP-led program requiring importers and trade partners to implement robust security practices against terrorism and smuggling, with some overlap with forced labor prevention.' },
     'usmca':    { flag:'🇺🇸🇨🇦🇲🇽', name:'United States–Mexico–Canada Agreement (USMCA)', year:'2020', status:'Active', catKey:'forced-labor', catLabel:'Forced Labor / Trade', desc:'Obligates the US, Canada, and Mexico to prohibit importation of goods produced with forced or compulsory labor, requiring rigorous supply chain due diligence from businesses operating across all three markets.' },
     'uk-msa':   { flag:'🇬🇧', name:'UK Modern Slavery Act', year:'2015', status:'Active', catKey:'modern-slavery', catLabel:'Modern Slavery', desc:'Requires commercial organizations operating in the UK with annual turnover of £36M or more to publish annual statements on steps taken to ensure no slavery or human trafficking exists in their supply chains or business operations.' },
