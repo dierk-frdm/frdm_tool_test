@@ -368,28 +368,6 @@ footer{text-align:center;color:#aaa;font-size:.8rem;padding:2.5rem 1rem;border-t
       </div>
     </div>
 
-    <!-- GitHub Gist sync (placeholder) -->
-    <div class="card">
-      <div class="collapsible-header" onclick="toggleCollapsible(this)">
-        <span>☁️ GitHub Gist Sync</span>
-        <span class="chevron">▼</span>
-      </div>
-      <div class="collapsible-body">
-        <div class="alert alert-info show" style="margin-bottom:1rem;">
-          Sync your log to a GitHub Gist using the server-stored <strong>GITHUB_API_KEY</strong> secret — no token needed here.
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="gist-id">Gist ID <span>(leave blank to create a new Gist on first sync)</span></label>
-          <input id="gist-id" class="form-input" type="text" placeholder="e.g. a1b2c3d4e5f6..."/>
-        </div>
-        <div class="action-row">
-          <button class="btn btn-secondary btn-sm" onclick="saveGistSettings()">Save Settings</button>
-          <button class="btn btn-primary btn-sm" onclick="syncToGist()">Sync Log to Gist</button>
-        </div>
-        <div id="gist-status" style="margin-top:.75rem;font-size:.8rem;color:var(--muted);"></div>
-      </div>
-    </div>
-
   </div><!-- /tab-log -->
 
 </div><!-- /section -->
@@ -401,7 +379,6 @@ footer{text-align:center;color:#aaa;font-size:.8rem;padding:2.5rem 1rem;border-t
 // GLOBALS
 // ─────────────────────────────────────────────────
 const LOG_KEY    = 'frdm_reg_warn_log';
-const GIST_KEY   = 'frdm_gist_settings';
 const REG_GH_KEY = 'frdm_reg_gh_config';
 let naicsData   = null;  // Array of {code, standard_name}
 let naicsLoaded = false;
@@ -976,47 +953,6 @@ function clearLog() {
 }
 
 // ─────────────────────────────────────────────────
-// GITHUB GIST SYNC
-// ─────────────────────────────────────────────────
-function saveGistSettings() {
-  const gistId = document.getElementById('gist-id').value.trim();
-  localStorage.setItem(GIST_KEY, JSON.stringify({ gistId }));
-  document.getElementById('gist-status').textContent = '✓ Settings saved.';
-}
-
-async function syncToGist() {
-  const statusEl = document.getElementById('gist-status');
-  statusEl.textContent = '⏳ Syncing…';
-
-  let settings = {};
-  try { settings = JSON.parse(localStorage.getItem(GIST_KEY)) || {}; } catch {}
-  let gistId = settings.gistId || document.getElementById('gist-id').value.trim();
-
-  const log = getLog();
-  const csvContent = Papa.unparse(log.map(e => ({
-    Date: e.date, Type: e.type, Name: e.name, Details: e.details, Notes: e.notes
-  })));
-
-  try {
-    const resp = await fetch('/api/gist-sync', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ gistId: gistId || undefined, content: csvContent }),
-    });
-    const data = await resp.json();
-    if (!resp.ok || data.error) throw new Error((data.error || 'API error ' + resp.status) + (data.detail ? ' — ' + data.detail : ''));
-    if (!gistId) {
-      gistId = data.gistId;
-      localStorage.setItem(GIST_KEY, JSON.stringify({ gistId }));
-      document.getElementById('gist-id').value = gistId;
-    }
-    statusEl.innerHTML = `✓ Synced — <a href="${escHtml(data.html_url)}" target="_blank" rel="noopener">${escHtml(data.html_url)}</a>`;
-  } catch (e) {
-    statusEl.textContent = '✗ Sync failed: ' + e.message;
-  }
-}
-
-// ─────────────────────────────────────────────────
 // COLLAPSIBLE
 // ─────────────────────────────────────────────────
 function toggleCollapsible(header) {
@@ -1063,12 +999,6 @@ function escHtml(str) {
   initDocUpload();
   loadRegGhConfig();
 
-  // Restore Gist settings if saved
-  try {
-    const s = JSON.parse(localStorage.getItem(GIST_KEY)) || {};
-    if (s.token)  document.getElementById('gist-token').value = s.token;
-    if (s.gistId) document.getElementById('gist-id').value    = s.gistId;
-  } catch {}
 })();
 </script>
 </body>
