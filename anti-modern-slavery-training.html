@@ -88,6 +88,46 @@
     .btn-primary { display:inline-flex; align-items:center; gap:.4rem; padding:.65rem 1.5rem; background:var(--accent-brand); border:1px solid #c4cc3a; border-radius:8px; font-size:.875rem; font-weight:700; color:#3a4500; cursor:pointer; }
     .btn-primary:hover { background:#cdd63d; }
     .stub-banner { background:#fff8e1; border:1px dashed #f0b429; border-radius:8px; padding:1rem 1.25rem; font-size:.85rem; color:#7a5c00; margin-bottom:1.5rem; }
+    /* Quiz */
+    .quiz-progress-row { display:flex; align-items:center; gap:1rem; margin-bottom:1.75rem; }
+    .quiz-progress-text { font-size:.8rem; font-weight:600; color:var(--text-muted); white-space:nowrap; }
+    .quiz-progress-bar { flex:1; height:6px; background:var(--border); border-radius:4px; overflow:hidden; }
+    .quiz-progress-fill { height:100%; background:var(--accent-brand); border-radius:4px; transition:width .3s ease; }
+    .quiz-q { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:1.75rem; margin-bottom:1.25rem; }
+    .quiz-q-meta { font-size:.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:.07em; margin-bottom:.75rem; }
+    .quiz-q-text { font-size:1rem; font-weight:600; color:var(--text); line-height:1.55; margin-bottom:1.25rem; }
+    .quiz-multi-hint { font-size:.78rem; color:var(--accent); font-weight:600; margin-bottom:.9rem; }
+    .quiz-options { display:flex; flex-direction:column; gap:.6rem; }
+    .quiz-option { display:flex; align-items:flex-start; gap:.75rem; background:var(--bg); border:1px solid var(--border); border-radius:9px; padding:.75rem 1rem; cursor:pointer; transition:border-color .12s,background .12s; user-select:none; font-size:.9rem; color:var(--text); line-height:1.45; }
+    .quiz-option:hover:not(.disabled) { border-color:#aaa; background:#f0ece0; }
+    .quiz-option.selected { border-color:#4a6fa5; background:#eef2ff; }
+    .quiz-option.correct { border-color:#3a8a50; background:#eafaf0; }
+    .quiz-option.incorrect { border-color:#c0392b; background:#fdf0ef; }
+    .quiz-option.missed { border-color:#3a8a50; background:#eafaf0; opacity:.75; }
+    .quiz-option.disabled { cursor:default; }
+    .quiz-option-marker { width:1.2rem; height:1.2rem; border-radius:50%; border:2px solid var(--border); flex-shrink:0; margin-top:.1rem; display:flex; align-items:center; justify-content:center; font-size:.7rem; font-weight:700; }
+    .quiz-option.selected .quiz-option-marker { border-color:#4a6fa5; background:#4a6fa5; color:white; }
+    .quiz-option.correct .quiz-option-marker { border-color:#3a8a50; background:#3a8a50; color:white; }
+    .quiz-option.incorrect .quiz-option-marker { border-color:#c0392b; background:#c0392b; color:white; }
+    .quiz-option.missed .quiz-option-marker { border-color:#3a8a50; background:#3a8a50; color:white; }
+    .quiz-submit-row { margin-top:1.25rem; display:flex; align-items:center; gap:1rem; }
+    .quiz-explanation { margin-top:1.25rem; background:#f7f3e8; border-left:4px solid var(--accent-brand); border-radius:0 8px 8px 0; padding:1rem 1.25rem; font-size:.875rem; color:#3a3020; line-height:1.65; display:none; }
+    .quiz-explanation.show { display:block; }
+    .quiz-verdict { font-size:.9rem; font-weight:700; padding:.5rem .9rem; border-radius:7px; }
+    .quiz-verdict.right { background:#eafaf0; color:#2a6a3a; }
+    .quiz-verdict.wrong { background:#fdf0ef; color:#8a2020; }
+    /* Results */
+    .quiz-results-hero { background:linear-gradient(135deg,#1a1a2e 0%,#16213e 60%,#0f3460 100%); border-radius:14px; padding:2.5rem; color:white; text-align:center; margin-bottom:1.5rem; }
+    .quiz-results-score { font-size:3.5rem; font-weight:800; color:var(--accent-brand); line-height:1; }
+    .quiz-results-label { font-size:1rem; color:rgba(255,255,255,.7); margin:.5rem 0 1rem; }
+    .quiz-results-msg { font-size:.9375rem; color:rgba(255,255,255,.85); line-height:1.6; }
+    .quiz-results-breakdown { display:flex; flex-direction:column; gap:.5rem; }
+    .qrb-item { display:flex; align-items:center; gap:.75rem; font-size:.875rem; padding:.6rem .75rem; border-radius:8px; background:var(--card); border:1px solid var(--border); }
+    .qrb-num { font-size:.75rem; font-weight:700; color:var(--text-muted); min-width:1.5rem; }
+    .qrb-text { flex:1; color:var(--text); line-height:1.4; }
+    .qrb-badge { font-size:.75rem; font-weight:700; padding:2px 8px; border-radius:20px; flex-shrink:0; }
+    .qrb-badge.right { background:#eafaf0; color:#2a6a3a; }
+    .qrb-badge.wrong { background:#fdf0ef; color:#8a2020; }
     /* Legislation table (Lesson 7) */
     .leg-table-wrap { overflow-x:auto; margin:1rem 0 1.75rem; border-radius:10px; border:1px solid var(--border); }
     .leg-table { width:100%; border-collapse:collapse; font-size:.875rem; }
@@ -657,12 +697,31 @@
       </div>
     </div>
 
-    <!-- QUIZ STUB -->
+    <!-- QUIZ -->
     <div class="panel" id="panel-quiz">
       <div class="lesson-label">Final Assessment</div>
       <h2 class="lesson-title">Quiz — 13 Questions</h2>
-      <div class="stub-banner">🚧 Interactive quiz coming soon</div>
-      <div class="lesson-nav-row">
+
+      <!-- Quiz progress -->
+      <div class="quiz-progress-row">
+        <span class="quiz-progress-text" id="quizProgressText">Question 1 of 13</span>
+        <div class="quiz-progress-bar"><div class="quiz-progress-fill" id="quizProgressFill" style="width:0%"></div></div>
+      </div>
+
+      <!-- Question container -->
+      <div id="quizContainer"></div>
+
+      <!-- Results screen (hidden until done) -->
+      <div id="quizResults" style="display:none;">
+        <div class="quiz-results-hero" id="quizResultsHero"></div>
+        <div class="quiz-results-breakdown" id="quizResultsBreakdown"></div>
+        <div class="lesson-nav-row" style="margin-top:2rem;">
+          <button class="btn-secondary" onclick="showPanel('lesson7')">← Back to Lesson 7</button>
+          <button class="btn-primary" onclick="restartQuiz()">Retake Quiz</button>
+        </div>
+      </div>
+
+      <div class="lesson-nav-row" id="quizBackRow">
         <button class="btn-secondary" onclick="showPanel('lesson7')">← Back to Lesson 7</button>
       </div>
     </div>
@@ -711,6 +770,243 @@
   }
   function dismissWarning() { document.getElementById('warningOverlay').classList.add('hidden'); }
   function toggleSign(tile) { tile.classList.toggle('open'); }
+
+  /* ── QUIZ ─────────────────────────────────────────────────── */
+  const QUIZ = [
+    {
+      q: "How many people globally are estimated to be victims of modern slavery?",
+      options: ["20 million people","30 million people","40 million people","50 million people"],
+      correct: [3],
+      multi: false,
+      explanation: "As of 2021, the United Nations and Walk Free Foundation estimated that over 50 million people worldwide are victims of modern slavery."
+    },
+    {
+      q: "Imported illegally via containers, thirty Chinese men were promised good-paying jobs in the UK. Once there, the men were forced to collect cockles at Warton Sands — a dangerous and challenging task. The men were exhausted, with workdays often extending beyond 14 hours, little food to keep them going, and threats or beatings if they complained. Unfamiliar with the local geography and language, the men felt trapped and isolated. What type of modern slavery is this?",
+      options: ["Human trafficking","Forced labor","Debt bondage","Servitude"],
+      correct: [1],
+      multi: false,
+      explanation: "Forced labor refers to all work or services demanded from any person under the threat of a penalty and for which the person has not voluntarily offered themselves."
+    },
+    {
+      q: "Linda's boss expects her to work long hours at the office. She arrives before everyone else and leaves when everyone has gone home. She knows she should be getting paid overtime, but when she raises this issue, her boss responds with threats of firing her if she doesn't work the hours he tells her to. Is this considered modern slavery?",
+      options: ["Yes","No"],
+      correct: [1],
+      multi: false,
+      explanation: "Modern slavery refers to severe cases of exploitation in which a person's freedom is taken away. Practices such as inadequate working conditions or underpayment of wages, whilst illegal, do not themselves constitute modern slavery — but may push workers into conditions of modern slavery if combined, and should be addressed under the country's fair work and employment laws."
+    },
+    {
+      q: "Two women from Mexico were brought to the U.S. with a promise of jobs as waitresses in a 5-star hotel. However, once they arrived, their travel documents and personal belongings were confiscated, and they were held captive and forced into prostitution. The women were not allowed to leave, and their captors kept the money they earned. What type of modern slavery is this?",
+      options: ["Human trafficking","Child labor","Debt bondage","Servitude"],
+      correct: [0],
+      multi: false,
+      explanation: "Human trafficking refers to the recruitment, harboring, and movement of a person for exploitation through modern slavery, often subjecting victims to violence, threats, or coercion to exploit them for purposes such as forced prostitution, labor, criminality, marriage, or organ removal."
+    },
+    {
+      q: "12-year-old Mariana is born into an impoverished family. Mariana's mother is desperate and has no choice but to sell her daughter into a marriage. Mariana's new and older husband pays a small payment for the marriage to Mariana's mother and takes Mariana to his home to live. What type of modern slavery is this?",
+      options: ["Human trafficking","Forced labor","Forced marriage","Debt bondage"],
+      correct: [2],
+      multi: false,
+      explanation: "Forced marriage occurs where coercion, threats, or deception are used to make a person marry against their will, and they cannot leave, or where the individual does not understand the nature and effect of the marriage ceremony. Most child marriages can be considered slavery."
+    },
+    {
+      q: "What could be considered potential signs of modern slavery? (Choose ALL that apply)",
+      options: [
+        "A person never has identification or money on them",
+        "A person rarely leaves their house, and if they do, are accompanied by another person",
+        "A person wears the same clothes every day and lacks protective equipment to complete their job",
+        "A child who gets dropped off at school in strange cars such as taxis"
+      ],
+      correct: [0,1,2,3],
+      multi: true,
+      explanation: "All of the above are potential signs of modern slavery. Signs can vary. It is important to be vigilant and aware of your surroundings. If something seems suspicious, report it to the local police or relevant non-government organization (NGO)."
+    },
+    {
+      q: "What might be considered a driving force of modern slavery? (Choose ALL that apply)",
+      options: [
+        "Programs to support farmers in high-risk climate regions",
+        "Lack of supply chain transparency",
+        "Armed conflict",
+        "Food insecurity and little access to safe drinking water"
+      ],
+      correct: [1,2,3],
+      multi: true,
+      explanation: "There are multiple driving forces that contribute to modern slavery including migration, conflict, repressive regimes, unethical business practices, environmental destruction, and discrimination."
+    },
+    {
+      q: "Which industries are most at risk of modern slavery? (Choose ALL that apply)",
+      options: ["Electronics","Agriculture","Hospitality","Shipping and transportation"],
+      correct: [0,1,2,3],
+      multi: true,
+      explanation: "While slavery is illegal globally, evidence suggests that it still occurs in almost every country. The risks affect most industries; however, electronics and high-tech, steel and automobiles, agriculture and seafood, mining and minerals, garments and textiles, shipping and transportation, and construction are especially at risk."
+    },
+    {
+      q: "How many children are estimated to be working in scenarios deemed hazardous to their health?",
+      options: ["39 million","49 million","54 million","64 million"],
+      correct: [2],
+      multi: false,
+      explanation: "138 million children worldwide are engaged in child labor. 54 million children are forced to perform hazardous work that directly endangers their health, safety, or moral development. Over 12 million children are living in situations of modern slavery, including forced labor and forced marriage."
+    },
+    {
+      q: "What year was Australia's Modern Slavery Act enacted?",
+      options: ["2015","2016","2017","2018"],
+      correct: [3],
+      multi: false,
+      explanation: "The Modern Slavery Act (2018) was enacted in Australia in 2018 and was modelled after the UK's Modern Slavery Act (2015)."
+    },
+    {
+      q: "Does the Australian Modern Slavery Act require reporting for entities?",
+      options: ["Yes","No"],
+      correct: [0],
+      multi: false,
+      explanation: "The Australian Modern Slavery Act requires mandatory reporting for entities with an annual consolidated revenue of AUD$100 million or more."
+    },
+    {
+      q: "What can entities do to ensure the ethical treatment of workers in their business and supply chain? (Choose ALL that apply)",
+      options: [
+        "Ensure a living wage is paid",
+        "Ensure poor working conditions",
+        "Ensure reasonable production times for products",
+        "Listen to feedback from workers"
+      ],
+      correct: [0,2,3],
+      multi: true,
+      explanation: "Living wages, safe working conditions, setting reasonable production timelines, and listening to workers all assist in ensuring the ethical treatment of workers."
+    },
+    {
+      q: "True or False — A living wage is the minimum income necessary for a worker to meet their basic needs.",
+      options: ["True","False"],
+      correct: [0],
+      multi: false,
+      explanation: "A living wage is the minimum income necessary for a worker to meet their basic needs, such as food, housing, and other essentials. The goal of a living wage is to allow employees to earn enough income for a satisfactory standard of living and prevent them from falling into poverty."
+    }
+  ];
+
+  let quizCurrent = 0;
+  let quizSelected = [];
+  let quizScores = [];
+  let quizAnswered = false;
+
+  function initQuiz() {
+    quizCurrent = 0; quizSelected = []; quizScores = []; quizAnswered = false;
+    document.getElementById('quizContainer').style.display = 'block';
+    document.getElementById('quizResults').style.display = 'none';
+    document.getElementById('quizBackRow').style.display = 'flex';
+    renderQuestion();
+  }
+
+  function renderQuestion() {
+    const q = QUIZ[quizCurrent];
+    quizSelected = []; quizAnswered = false;
+    const pct = Math.round(quizCurrent / QUIZ.length * 100);
+    document.getElementById('quizProgressText').textContent = 'Question ' + (quizCurrent+1) + ' of ' + QUIZ.length;
+    document.getElementById('quizProgressFill').style.width = pct + '%';
+
+    const letters = ['A','B','C','D','E'];
+    let opts = q.options.map((o,i) => `
+      <div class="quiz-option" id="qopt-${i}" onclick="selectOption(${i})">
+        <div class="quiz-option-marker" id="qmark-${i}">${letters[i]}</div>
+        <span>${o}</span>
+      </div>`).join('');
+
+    document.getElementById('quizContainer').innerHTML = `
+      <div class="quiz-q">
+        <div class="quiz-q-meta">Question ${quizCurrent+1} of ${QUIZ.length}</div>
+        ${q.multi ? '<div class="quiz-multi-hint">Select all that apply</div>' : ''}
+        <div class="quiz-q-text">${q.q}</div>
+        <div class="quiz-options">${opts}</div>
+        <div class="quiz-explanation" id="quizExplanation">${q.explanation}</div>
+        <div class="quiz-submit-row" id="quizSubmitRow">
+          <button class="btn-primary" onclick="submitAnswer()">Submit Answer</button>
+        </div>
+      </div>`;
+  }
+
+  function selectOption(i) {
+    if (quizAnswered) return;
+    const q = QUIZ[quizCurrent];
+    if (q.multi) {
+      const idx = quizSelected.indexOf(i);
+      if (idx === -1) quizSelected.push(i);
+      else quizSelected.splice(idx, 1);
+      q.options.forEach((_,j) => {
+        document.getElementById('qopt-'+j).classList.toggle('selected', quizSelected.includes(j));
+        document.getElementById('qmark-'+j).textContent = quizSelected.includes(j) ? '✓' : ['A','B','C','D','E'][j];
+      });
+    } else {
+      quizSelected = [i];
+      q.options.forEach((_,j) => {
+        document.getElementById('qopt-'+j).classList.toggle('selected', j===i);
+        document.getElementById('qmark-'+j).textContent = j===i ? '✓' : ['A','B','C','D','E'][j];
+      });
+    }
+  }
+
+  function submitAnswer() {
+    if (quizAnswered || quizSelected.length === 0) return;
+    quizAnswered = true;
+    const q = QUIZ[quizCurrent];
+    const correct = q.correct;
+    const isRight = correct.length === quizSelected.length && correct.every(c => quizSelected.includes(c));
+    quizScores.push(isRight);
+
+    q.options.forEach((_,j) => {
+      const el = document.getElementById('qopt-'+j);
+      const mk = document.getElementById('qmark-'+j);
+      el.classList.add('disabled');
+      if (correct.includes(j) && quizSelected.includes(j)) { el.classList.remove('selected'); el.classList.add('correct'); mk.textContent='✓'; }
+      else if (!correct.includes(j) && quizSelected.includes(j)) { el.classList.remove('selected'); el.classList.add('incorrect'); mk.textContent='✗'; }
+      else if (correct.includes(j) && !quizSelected.includes(j)) { el.classList.add('missed'); mk.textContent='✓'; }
+    });
+
+    document.getElementById('quizExplanation').classList.add('show');
+    const verdict = isRight
+      ? '<span class="quiz-verdict right">✓ Correct!</span>'
+      : '<span class="quiz-verdict wrong">✗ Incorrect</span>';
+    const nextLabel = quizCurrent < QUIZ.length - 1 ? 'Next Question →' : 'See Results →';
+    document.getElementById('quizSubmitRow').innerHTML = verdict +
+      `<button class="btn-primary" onclick="nextQuestion()">${nextLabel}</button>`;
+  }
+
+  function nextQuestion() {
+    quizCurrent++;
+    if (quizCurrent >= QUIZ.length) { showResults(); return; }
+    renderQuestion();
+  }
+
+  function showResults() {
+    document.getElementById('quizContainer').style.display = 'none';
+    document.getElementById('quizBackRow').style.display = 'none';
+    document.getElementById('quizProgressText').textContent = 'Complete';
+    document.getElementById('quizProgressFill').style.width = '100%';
+    const score = quizScores.filter(Boolean).length;
+    const pct = Math.round(score / QUIZ.length * 100);
+    let msg = pct >= 80
+      ? "Excellent work! You have a strong understanding of modern slavery and how to combat it."
+      : pct >= 60
+        ? "Good effort. Review the lessons on any questions you missed to strengthen your knowledge."
+        : "Keep learning — revisit the course lessons and try again to build your understanding.";
+    document.getElementById('quizResultsHero').innerHTML = `
+      <div class="quiz-results-score">${score}/${QUIZ.length}</div>
+      <div class="quiz-results-label">${pct}% correct</div>
+      <div class="quiz-results-msg">${msg}</div>`;
+    const breakdown = QUIZ.map((q,i) => `
+      <div class="qrb-item">
+        <span class="qrb-num">Q${i+1}</span>
+        <span class="qrb-text">${q.q.length > 80 ? q.q.slice(0,80)+'…' : q.q}</span>
+        <span class="qrb-badge ${quizScores[i] ? 'right' : 'wrong'}">${quizScores[i] ? '✓ Correct' : '✗ Incorrect'}</span>
+      </div>`).join('');
+    document.getElementById('quizResultsBreakdown').innerHTML = breakdown;
+    document.getElementById('quizResults').style.display = 'block';
+  }
+
+  function restartQuiz() { initQuiz(); }
+
+  // Hook into showPanel to init quiz when navigated to
+  const _origShowPanel = showPanel;
+  showPanel = function(id) {
+    _origShowPanel(id);
+    if (id === 'quiz') initQuiz();
+  };
   updateProgress();
   const hash = window.location.hash.replace('#','');
   if (hash && document.getElementById('panel-' + hash)) showPanel(hash);
