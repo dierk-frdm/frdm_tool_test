@@ -88,6 +88,12 @@
     .btn-primary { display:inline-flex; align-items:center; gap:.4rem; padding:.65rem 1.5rem; background:var(--accent-brand); border:1px solid #c4cc3a; border-radius:8px; font-size:.875rem; font-weight:700; color:#3a4500; cursor:pointer; }
     .btn-primary:hover { background:#cdd63d; }
     .stub-banner { background:#fff8e1; border:1px dashed #f0b429; border-radius:8px; padding:1rem 1.25rem; font-size:.85rem; color:#7a5c00; margin-bottom:1.5rem; }
+    /* Type cards (Lesson 4) */
+    .type-grid { display:flex; flex-direction:column; gap:1rem; margin:1.5rem 0; }
+    .type-card { display:flex; align-items:flex-start; gap:1rem; background:var(--card); border:1px solid var(--border); border-radius:12px; padding:1.25rem; }
+    .type-num { font-size:1.25rem; font-weight:800; color:var(--accent-brand); background:#1a1a2e; border-radius:8px; min-width:2.25rem; height:2.25rem; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .type-title { font-size:.9375rem; font-weight:700; color:var(--text); margin-bottom:.4rem; }
+    .type-content p { margin-bottom:0; font-size:.875rem; color:#3a3020; line-height:1.65; }
     footer { border-top:1px solid var(--border); padding:1rem 2.5rem; display:flex; align-items:center; gap:.75rem; color:var(--text-muted); font-size:.8rem; background:var(--surface); flex-shrink:0; }
     footer img { height:14px; opacity:.6; }
   </style>
@@ -273,11 +279,88 @@
       </div>
     </div>
 
-    <!-- LESSON 4 STUB -->
+    <!-- LESSON 4 -->
     <div class="panel" id="panel-lesson4">
+      <img class="lesson-hero-img" src="Rebuild%20Training/image-05-supply-chain-globe.png" alt="Supply Chain Globe" />
       <div class="lesson-label">Lesson 4</div>
       <h2 class="lesson-title">Types of Modern Slavery</h2>
-      <div class="stub-banner">🚧 Content coming soon</div>
+      <div class="lesson-body">
+        <h3>Legal Definitions</h3>
+        <p>Taken from the 1956 UN Supplementary Convention on the Abolition of Slavery, definitions of modern-day slavery commonly include: <em>"debt bondage, serfdom, forced marriage and the delivery of a child for the exploitation of that child are all slavery-like practices and require criminalization and abolishment."</em></p>
+        <p>The 1930 Forced Labour Convention defines forced labor as: <em>"all work or service which is exacted from any person under the menace of any penalty and for which the said person has not offered himself voluntarily."</em></p>
+
+        <h3>The 8 Types of Modern Slavery</h3>
+
+        <div class="type-grid">
+
+          <div class="type-card">
+            <div class="type-num">1</div>
+            <div class="type-content">
+              <div class="type-title">Servitude</div>
+              <p>A condition where a person is forced to work against their will under threats, coercion, or deception, with restrictions on their freedom of movement. This can include domestic servitude, forced labor in agriculture or mining, and bonded labor where people are forced to work to pay off debts.</p>
+            </div>
+          </div>
+
+          <div class="type-card">
+            <div class="type-num">2</div>
+            <div class="type-content">
+              <div class="type-title">Forced Marriage</div>
+              <p>A marriage where one or both parties are forced to marry through coercion, threats, or deception. This can be used as a form of control, exploitation, or to gain access to resources or political power.</p>
+            </div>
+          </div>
+
+          <div class="type-card">
+            <div class="type-num">3</div>
+            <div class="type-content">
+              <div class="type-title">Human Trafficking</div>
+              <p>The movement of people through force, fraud, or coercion for exploitation, including forced labor, sexual exploitation, organ removal, or domestic servitude. It can occur within or across borders and involves deception, threats, or abuse of power.</p>
+            </div>
+          </div>
+
+          <div class="type-card">
+            <div class="type-num">4</div>
+            <div class="type-content">
+              <div class="type-title">Forced Labor</div>
+              <p>Work or service extracted from a person through threats, violence, intimidation, or coercion, or by abuse of vulnerability. This can include physical or psychological force, debt bondage, or threats of deportation.</p>
+            </div>
+          </div>
+
+          <div class="type-card">
+            <div class="type-num">5</div>
+            <div class="type-content">
+              <div class="type-title">Slavery and Slave-like Practices</div>
+              <p>The state of ownership of another human being, treating them as property, and exploiting their labor or services without their consent or compensation. This includes traditional forms of chattel slavery, modern slavery practices, and practices similar to slavery, such as debt bondage, serfdom, and forced marriage.</p>
+            </div>
+          </div>
+
+          <div class="type-card">
+            <div class="type-num">6</div>
+            <div class="type-content">
+              <div class="type-title">Child Labor</div>
+              <p>Any work or service that is harmful to children's physical, mental, social, or moral development, exploitative, or interferes with their schooling. This includes hazardous work, forced labor, trafficking, sexual exploitation, and armed conflict.</p>
+            </div>
+          </div>
+
+          <div class="type-card">
+            <div class="type-num">7</div>
+            <div class="type-content">
+              <div class="type-title">Deceptive Recruitment</div>
+              <p>False or misleading information or promises used to lure people into situations of forced labor or trafficking. This can involve promises of high wages, better working conditions, or educational opportunities, leading them into exploitation.</p>
+            </div>
+          </div>
+
+          <div class="type-card">
+            <div class="type-num">8</div>
+            <div class="type-content">
+              <div class="type-title">Debt Bondage</div>
+              <p>A system where a person is forced to work to pay off a debt, often inherited or incurred under false pretenses, with no control over the repayment terms or conditions. This can trap people in cycles of exploitation and prevent them from leaving their situation.</p>
+            </div>
+          </div>
+
+        </div>
+
+        <p style="font-size:.85rem;color:var(--text-muted);margin-top:1.5rem;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:.875rem 1rem;line-height:1.6;"><strong>Note:</strong> These are definitions, and the realities of modern slavery can be complex and multifaceted. It's important to understand the nuances and different forms these practices can take to effectively identify and combat them.</p>
+      </div>
       <div class="lesson-nav-row">
         <button class="btn-secondary" onclick="showPanel('lesson3')">← Back</button>
         <button class="btn-primary" onclick="completeLesson('lesson4','lesson5')">Mark Complete &amp; Continue →</button>
