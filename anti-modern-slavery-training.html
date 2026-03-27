@@ -735,85 +735,9 @@
         </div>
 
         <div class="leg-map-wrap">
-          <svg viewBox="0 0 900 400" class="leg-map-svg" xmlns="http://www.w3.org/2000/svg">
-            <rect width="900" height="400" fill="#1a3357"/>
-            <g stroke="#ffffff" stroke-width="0.4" opacity="0.15">
-              <line x1="0" y1="100" x2="900" y2="100"/><line x1="0" y1="200" x2="900" y2="200"/>
-              <line x1="0" y1="300" x2="900" y2="300"/><line x1="225" y1="0" x2="225" y2="400"/>
-              <line x1="450" y1="0" x2="450" y2="400"/><line x1="675" y1="0" x2="675" y2="400"/>
-            </g>
-            <g fill="#2d5a3d" stroke="#3d7a55" stroke-width="0.8">
-              <path d="M185,18 L228,10 L248,28 L238,52 L210,58 L188,46 Z"/>
-              <path d="M88,65 L192,48 L218,68 L238,100 L248,158 L228,188 L195,202 L165,212 L138,205 L112,185 L88,148 L82,105 Z"/>
-              <path d="M195,202 L218,195 L228,218 L215,232 L198,228 Z"/>
-              <path d="M162,238 L215,225 L238,248 L242,292 L228,348 L202,368 L172,362 L152,338 L148,295 L152,258 Z"/>
-              <path d="M415,68 L482,58 L502,75 L498,95 L480,115 L448,125 L418,115 L408,95 Z"/>
-              <path d="M445,38 L478,32 L488,52 L470,65 L448,68 Z"/>
-              <path d="M358,38 L382,32 L390,45 L375,52 L360,48 Z"/>
-              <path d="M418,132 L492,120 L518,142 L520,198 L508,262 L482,312 L448,318 L418,298 L402,252 L405,188 L410,158 Z"/>
-              <path d="M495,128 L538,122 L548,148 L535,178 L508,185 L492,168 Z"/>
-              <path d="M500,62 L738,50 L785,78 L778,128 L752,168 L712,188 L618,198 L528,192 L500,162 L495,108 Z"/>
-              <path d="M565,188 L608,182 L622,218 L612,258 L588,268 L565,248 L558,215 Z"/>
-              <path d="M660,188 L712,178 L728,202 L718,228 L692,238 L665,222 Z"/>
-              <path d="M752,98 L768,90 L775,108 L762,122 L750,115 Z"/>
-              <path d="M672,252 L770,242 L795,265 L792,318 L762,342 L712,345 L675,322 L662,292 Z"/>
-              <path d="M808,305 L820,295 L828,315 L815,328 Z"/>
-            </g>
-            <!-- Canada (2) -->
-            <g class="leg-pin" data-key="ca" data-cats="forced-labor" onclick="showLegDetail('ca')" style="cursor:pointer">
-              <circle cx="142" cy="104" r="10" fill="#8b1a2b" stroke="#fff" stroke-width="2" class="leg-pin-circle"/>
-              <text x="142" y="108" text-anchor="middle" font-size="7.5" font-weight="bold" fill="#fff" font-family="sans-serif">CA</text>
-              <circle cx="150" cy="96" r="6" fill="#fff"/><text x="150" y="100" text-anchor="middle" font-size="6.5" font-weight="bold" fill="#8b1a2b" font-family="sans-serif">2</text>
-            </g>
-            <!-- US (6) -->
-            <g class="leg-pin" data-key="us" data-cats="forced-labor modern-slavery security" onclick="showLegDetail('us')" style="cursor:pointer">
-              <circle cx="155" cy="158" r="13" fill="#8b1a2b" stroke="#fff" stroke-width="2" class="leg-pin-circle"/>
-              <text x="155" y="162" text-anchor="middle" font-size="8" font-weight="bold" fill="#fff" font-family="sans-serif">US</text>
-              <circle cx="165" cy="148" r="7" fill="#fff"/><text x="165" y="152" text-anchor="middle" font-size="7" font-weight="bold" fill="#8b1a2b" font-family="sans-serif">4</text>
-            </g>
-            <!-- UK (1) -->
-            <g class="leg-pin" data-key="uk" data-cats="modern-slavery" onclick="showLegDetail('uk')" style="cursor:pointer">
-              <circle cx="428" cy="82" r="9" fill="#c0392b" stroke="#fff" stroke-width="2" class="leg-pin-circle"/>
-              <text x="428" y="86" text-anchor="middle" font-size="7" font-weight="bold" fill="#fff" font-family="sans-serif">GB</text>
-            </g>
-            <!-- Norway (1) -->
-            <g class="leg-pin" data-key="no" data-cats="hrdd" onclick="showLegDetail('no')" style="cursor:pointer">
-              <circle cx="460" cy="55" r="8" fill="#e07820" stroke="#fff" stroke-width="2" class="leg-pin-circle"/>
-              <text x="460" y="59" text-anchor="middle" font-size="7" font-weight="bold" fill="#fff" font-family="sans-serif">NO</text>
-            </g>
-            <!-- EU (3) -->
-            <g class="leg-pin" data-key="eu" data-cats="hrdd reporting reform" onclick="showLegDetail('eu')" style="cursor:pointer">
-              <circle cx="497" cy="78" r="10" fill="#e07820" stroke="#fff" stroke-width="2" class="leg-pin-circle"/>
-              <text x="497" y="82" text-anchor="middle" font-size="7.5" font-weight="bold" fill="#fff" font-family="sans-serif">EU</text>
-              <circle cx="505" cy="70" r="6" fill="#fff"/><text x="505" y="74" text-anchor="middle" font-size="6.5" font-weight="bold" fill="#e07820" font-family="sans-serif">3</text>
-            </g>
-            <!-- Germany (1) -->
-            <g class="leg-pin" data-key="de" data-cats="hrdd" onclick="showLegDetail('de')" style="cursor:pointer">
-              <circle cx="474" cy="96" r="8" fill="#e07820" stroke="#fff" stroke-width="2" class="leg-pin-circle"/>
-              <text x="474" y="100" text-anchor="middle" font-size="7" font-weight="bold" fill="#fff" font-family="sans-serif">DE</text>
-            </g>
-            <!-- France (1) -->
-            <g class="leg-pin" data-key="fr" data-cats="hrdd" onclick="showLegDetail('fr')" style="cursor:pointer">
-              <circle cx="452" cy="108" r="8" fill="#e07820" stroke="#fff" stroke-width="2" class="leg-pin-circle"/>
-              <text x="452" y="112" text-anchor="middle" font-size="7" font-weight="bold" fill="#fff" font-family="sans-serif">FR</text>
-            </g>
-            <!-- Switzerland (1) -->
-            <g class="leg-pin" data-key="ch" data-cats="hrdd" onclick="showLegDetail('ch')" style="cursor:pointer">
-              <circle cx="464" cy="118" r="8" fill="#e07820" stroke="#fff" stroke-width="2" class="leg-pin-circle"/>
-              <text x="464" y="122" text-anchor="middle" font-size="7" font-weight="bold" fill="#fff" font-family="sans-serif">CH</text>
-            </g>
-            <!-- Japan (1) -->
-            <g class="leg-pin" data-key="jp" data-cats="hrdd" onclick="showLegDetail('jp')" style="cursor:pointer">
-              <circle cx="738" cy="108" r="9" fill="#e07820" stroke="#fff" stroke-width="2" class="leg-pin-circle"/>
-              <text x="738" y="112" text-anchor="middle" font-size="7" font-weight="bold" fill="#fff" font-family="sans-serif">JP</text>
-            </g>
-            <!-- Australia (2) -->
-            <g class="leg-pin" data-key="au" data-cats="modern-slavery" onclick="showLegDetail('au')" style="cursor:pointer">
-              <circle cx="724" cy="292" r="10" fill="#c0392b" stroke="#fff" stroke-width="2" class="leg-pin-circle"/>
-              <text x="724" y="296" text-anchor="middle" font-size="7.5" font-weight="bold" fill="#fff" font-family="sans-serif">AU</text>
-              <circle cx="732" cy="284" r="6" fill="#fff"/><text x="732" y="288" text-anchor="middle" font-size="6.5" font-weight="bold" fill="#c0392b" font-family="sans-serif">2</text>
-            </g>
-            <text x="12" y="394" font-size="9" fill="rgba(255,255,255,0.3)" font-family="sans-serif">Click a marker to explore legislation</text>
+          <svg id="legMapSvg" class="leg-map-svg" viewBox="0 0 960 500" xmlns="http://www.w3.org/2000/svg">
+            <rect width="960" height="500" fill="#1a3357"/>
+            <text id="legMapLoading" x="480" y="255" text-anchor="middle" fill="rgba(255,255,255,0.35)" font-size="14" font-family="sans-serif">Loading map…</text>
           </svg>
           <div class="leg-detail-panel" id="legDetailCard" style="display:none"></div>
         </div>
@@ -975,6 +899,8 @@
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
 <script>
   const LESSONS = ['lesson3','lesson4','lesson5','lesson6','lesson7'];
   const STORAGE_KEY = 'frdm_training_progress';
@@ -1013,16 +939,11 @@
 
   /* ── LEGISLATION MAP ───────────────────────────────────────── */
   const LEG_PINS = {
-    us: { name:'United States', regs:['ctsca','uflpa','ctpat','usmca'] },
-    ca: { name:'Canada', regs:['bills211','usmca'] },
-    uk: { name:'United Kingdom', regs:['uk-msa'] },
-    no: { name:'Norway', regs:['norway'] },
-    eu: { name:'European Union', regs:['csddd','csrd','omnibus'] },
-    de: { name:'Germany', regs:['lksg'] },
-    fr: { name:'France', regs:['vigilance'] },
-    ch: { name:'Switzerland', regs:['vsotr'] },
-    jp: { name:'Japan', regs:['japan'] },
-    au: { name:'Australia', regs:['au-msa','nsw-msa'] }
+    us:     { name:'United States',  regs:['ctsca','uflpa','ctpat','usmca'],                              cats:'forced-labor modern-slavery security', lat:38,  lon:-98,  color:'#8b1a2b' },
+    ca:     { name:'Canada',         regs:['bills211','usmca'],                                            cats:'forced-labor',                         lat:60,  lon:-96,  color:'#8b1a2b' },
+    europe: { name:'Europe',         regs:['uk-msa','norway','csddd','csrd','omnibus','lksg','vigilance','vsotr'], cats:'modern-slavery hrdd reporting reform', lat:52, lon:12, color:'#e07820' },
+    jp:     { name:'Japan',          regs:['japan'],                                                       cats:'hrdd',                                 lat:36,  lon:138,  color:'#e07820' },
+    au:     { name:'Australia',      regs:['au-msa','nsw-msa'],                                            cats:'modern-slavery',                       lat:-25, lon:134,  color:'#c0392b' }
   };
   const LEG_REGS = {
     'csddd':    { flag:'🇪🇺', name:'Corporate Sustainability Due Diligence Directive (CSDDD)', year:'2024', status:'Active', catKey:'hrdd', catLabel:'Human Rights DD', desc:'Mandates EU companies to identify and mitigate adverse human rights and environmental impacts across supply chains. Larger companies must comply by 2027; others by 2028.' },
@@ -1331,11 +1252,136 @@
     });
   }
 
-  // Hook into showPanel to init quiz when navigated to
+  /* ── WORLD MAP ──────────────────────────────────────────────── */
+  let legMapInited = false;
+  function initLegMap() {
+    if (legMapInited) return;
+    legMapInited = true;
+
+    const svgEl = document.getElementById('legMapSvg');
+    if (!svgEl || typeof d3 === 'undefined' || typeof topojson === 'undefined') {
+      const el = document.getElementById('legMapLoading');
+      if (el) el.textContent = 'Map unavailable — see table below';
+      return;
+    }
+
+    const W = 960, H = 500;
+    const svg = d3.select(svgEl);
+    const projection = d3.geoNaturalEarth1().scale(153).translate([W / 2, H / 2]);
+    const path = d3.geoPath().projection(projection);
+
+    // Graticule grid
+    const graticule = d3.geoGraticule();
+    svg.append('path')
+      .datum(graticule())
+      .attr('d', path)
+      .attr('fill', 'none')
+      .attr('stroke', 'rgba(255,255,255,0.07)')
+      .attr('stroke-width', 0.5);
+
+    fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
+      .then(function(r) { return r.json(); })
+      .then(function(world) {
+        const loadEl = document.getElementById('legMapLoading');
+        if (loadEl) loadEl.style.display = 'none';
+
+        // Country fills
+        svg.append('g')
+          .selectAll('path')
+          .data(topojson.feature(world, world.objects.countries).features)
+          .join('path')
+          .attr('d', path)
+          .attr('fill', '#2d5a3d')
+          .attr('stroke', '#3d7a55')
+          .attr('stroke-width', 0.4);
+
+        // Country borders
+        svg.append('path')
+          .datum(topojson.mesh(world, world.objects.countries, function(a, b) { return a !== b; }))
+          .attr('d', path)
+          .attr('fill', 'none')
+          .attr('stroke', '#4a8a60')
+          .attr('stroke-width', 0.3);
+
+        // Pins
+        Object.entries(LEG_PINS).forEach(function([key, pin]) {
+          const coords = projection([pin.lon, pin.lat]);
+          if (!coords) return;
+          const px = coords[0], py = coords[1];
+          const count = pin.regs.length;
+          const color = pin.color;
+          const r = count >= 8 ? 16 : count >= 4 ? 14 : count >= 2 ? 12 : 10;
+
+          const g = svg.append('g')
+            .attr('class', 'leg-pin')
+            .attr('data-key', key)
+            .attr('data-cats', pin.cats)
+            .style('cursor', 'pointer')
+            .on('click', function() { showLegDetail(key); });
+
+          // Shadow / halo
+          g.append('circle')
+            .attr('cx', px).attr('cy', py).attr('r', r + 3)
+            .attr('fill', 'rgba(0,0,0,0.25)');
+
+          // Main circle
+          g.append('circle')
+            .attr('cx', px).attr('cy', py).attr('r', r)
+            .attr('fill', color)
+            .attr('stroke', '#fff')
+            .attr('stroke-width', 2)
+            .attr('class', 'leg-pin-circle');
+
+          // Label
+          const label = key === 'europe' ? 'EU+' : key.toUpperCase();
+          g.append('text')
+            .attr('x', px).attr('y', py + 4)
+            .attr('text-anchor', 'middle')
+            .attr('font-size', r >= 14 ? 8.5 : 7)
+            .attr('font-weight', 'bold')
+            .attr('fill', '#fff')
+            .attr('font-family', 'sans-serif')
+            .attr('pointer-events', 'none')
+            .text(label);
+
+          // Count badge
+          if (count > 1) {
+            const bx = px + r, by = py - r;
+            g.append('circle')
+              .attr('cx', bx).attr('cy', by).attr('r', 7)
+              .attr('fill', '#fff');
+            g.append('text')
+              .attr('x', bx).attr('y', by + 4)
+              .attr('text-anchor', 'middle')
+              .attr('font-size', 6.5)
+              .attr('font-weight', 'bold')
+              .attr('fill', color)
+              .attr('font-family', 'sans-serif')
+              .attr('pointer-events', 'none')
+              .text(count);
+          }
+        });
+
+        // Map hint
+        svg.append('text')
+          .attr('x', 12).attr('y', 493)
+          .attr('font-size', 9)
+          .attr('fill', 'rgba(255,255,255,0.3)')
+          .attr('font-family', 'sans-serif')
+          .text('Click a marker to explore legislation');
+      })
+      .catch(function() {
+        const el = document.getElementById('legMapLoading');
+        if (el) el.textContent = 'Map unavailable — see table below';
+      });
+  }
+
+  // Hook into showPanel to init quiz and map when navigated to
   const _origShowPanel = showPanel;
   showPanel = function(id) {
     _origShowPanel(id);
     if (id === 'quiz') initQuiz();
+    if (id === 'lesson7') initLegMap();
   };
   updateProgress();
   const hash = window.location.hash.replace('#','');
