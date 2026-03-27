@@ -88,6 +88,18 @@
     .btn-primary { display:inline-flex; align-items:center; gap:.4rem; padding:.65rem 1.5rem; background:var(--accent-brand); border:1px solid #c4cc3a; border-radius:8px; font-size:.875rem; font-weight:700; color:#3a4500; cursor:pointer; }
     .btn-primary:hover { background:#cdd63d; }
     .stub-banner { background:#fff8e1; border:1px dashed #f0b429; border-radius:8px; padding:1rem 1.25rem; font-size:.85rem; color:#7a5c00; margin-bottom:1.5rem; }
+    /* Sign tiles (Lesson 5) */
+    .sign-grid { display:flex; flex-direction:column; gap:.6rem; margin:1rem 0 2rem; }
+    .sign-tile { background:var(--card); border:1px solid var(--border); border-radius:10px; overflow:hidden; cursor:pointer; transition:border-color .15s; }
+    .sign-tile:hover { border-color:#bbb; }
+    .sign-tile.open { border-color:var(--accent-brand); }
+    .sign-tile-header { display:flex; align-items:center; gap:.75rem; padding:.9rem 1.1rem; user-select:none; }
+    .sign-tile-icon { font-size:1.1rem; flex-shrink:0; }
+    .sign-tile-title { font-size:.9rem; font-weight:600; color:var(--text); flex:1; line-height:1.35; }
+    .sign-tile-arrow { font-size:1.1rem; font-weight:700; color:var(--accent); flex-shrink:0; transition:transform .2s; }
+    .sign-tile.open .sign-tile-arrow { transform:rotate(45deg); }
+    .sign-tile-body { display:none; padding:0 1.1rem 1rem 3.1rem; font-size:.875rem; color:#3a3020; line-height:1.7; }
+    .sign-tile.open .sign-tile-body { display:block; }
     /* Type cards (Lesson 4) */
     .type-grid { display:flex; flex-direction:column; gap:1rem; margin:1.5rem 0; }
     .type-card { display:flex; align-items:flex-start; gap:1rem; background:var(--card); border:1px solid var(--border); border-radius:12px; padding:1.25rem; }
@@ -367,11 +379,130 @@
       </div>
     </div>
 
-    <!-- LESSON 5 STUB -->
+    <!-- LESSON 5 -->
     <div class="panel" id="panel-lesson5">
+      <img class="lesson-hero-img" src="Rebuild%20Training/image-04-can-you-help.png" alt="Can You Help?" />
       <div class="lesson-label">Lesson 5</div>
       <h2 class="lesson-title">Spot the Signs</h2>
-      <div class="stub-banner">🚧 Content coming soon — interactive tiles planned</div>
+      <div class="lesson-body">
+        <p>The indicators below are the most common potential signs of modern slavery. While the presence of one or more of these markers may not necessarily mean that the person is being exploited, it could suggest that they are a potential victim. Consider each situation individually.</p>
+        <p>If in doubt, always say something to the appropriate reporting bodies and approach these conversations with discretion and sensitivity.</p>
+        <p>Victims of modern slavery may be hesitant or afraid to tell their story through fear of reprisal or not being believed. They might also feel a sense of shame or be unaware of their rights and the treatment they are entitled to receive.</p>
+
+        <h3>Signs of Modern Slavery</h3>
+        <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:1rem;">Click each tile to learn more.</p>
+
+        <div class="sign-grid">
+
+          <div class="sign-tile" onclick="toggleSign(this)">
+            <div class="sign-tile-header">
+              <span class="sign-tile-icon">👁</span>
+              <span class="sign-tile-title">Controlled by Another Person</span>
+              <span class="sign-tile-arrow">+</span>
+            </div>
+            <div class="sign-tile-body">They are accompanied by a controlling person and do not speak on their own behalf, instead deferring to another person. They cannot move freely and have a lack of discretion or choice over personal life decisions. They may be unable to terminate employment freely or leave their situation at any time. They may not know their work or home address. They are forced to stay in accommodation provided by their employer, which may be overcrowded.</div>
+          </div>
+
+          <div class="sign-tile" onclick="toggleSign(this)">
+            <div class="sign-tile-header">
+              <span class="sign-tile-icon">💸</span>
+              <span class="sign-tile-title">Lack of Earnings</span>
+              <span class="sign-tile-arrow">+</span>
+            </div>
+            <div class="sign-tile-body">They cannot keep their earnings, or another person tells them it is held for "safekeeping." As a result, they never have any money on them. They may be afraid to accept money or payment for something. An exploiter may take their legitimate wages. In many cases, they owe a debt they are working to pay off.</div>
+          </div>
+
+          <div class="sign-tile" onclick="toggleSign(this)">
+            <div class="sign-tile-header">
+              <span class="sign-tile-icon">😔</span>
+              <span class="sign-tile-title">Overly Fearful, Depressed, or Submissive Behavior</span>
+              <span class="sign-tile-arrow">+</span>
+            </div>
+            <div class="sign-tile-body">They are frightened to talk to outsiders and authorities since their trafficker(s) or exploiters closely monitor and control them. They appear withdrawn and neglected.</div>
+          </div>
+
+          <div class="sign-tile" onclick="toggleSign(this)">
+            <div class="sign-tile-header">
+              <span class="sign-tile-icon">🪪</span>
+              <span class="sign-tile-title">Lack of Official Identification</span>
+              <span class="sign-tile-arrow">+</span>
+            </div>
+            <div class="sign-tile-body">They do not have their passports or other legal documents to allow them to travel. They do not have any legal identification such as a license, birth certificate, or Proof of Age card. An employer may have confiscated such documents.</div>
+          </div>
+
+          <div class="sign-tile" onclick="toggleSign(this)">
+            <div class="sign-tile-header">
+              <span class="sign-tile-icon">💊</span>
+              <span class="sign-tile-title">Substance Abuse</span>
+              <span class="sign-tile-arrow">+</span>
+            </div>
+            <div class="sign-tile-body">They may show signs of drug use or addiction. They can be forced or coerced into drug use by their traffickers, or turn to substance abuse to help cope with their enslavement. Traffickers use drugs and alcohol to make victims vulnerable and tie them into slavery — this is particularly common in human trafficking and sexual exploitation.</div>
+          </div>
+
+          <div class="sign-tile" onclick="toggleSign(this)">
+            <div class="sign-tile-header">
+              <span class="sign-tile-icon">🎒</span>
+              <span class="sign-tile-title">Lack of Personal Belongings</span>
+              <span class="sign-tile-arrow">+</span>
+            </div>
+            <div class="sign-tile-body">They may have few or no personal possessions. They seem to wear the same clothes every day or wear unsuitable clothing for their work. They do not have access to their belongings, such as their mobile phone.</div>
+          </div>
+
+          <div class="sign-tile" onclick="toggleSign(this)">
+            <div class="sign-tile-header">
+              <span class="sign-tile-icon">🩹</span>
+              <span class="sign-tile-title">Signs of Physical Abuse</span>
+              <span class="sign-tile-arrow">+</span>
+            </div>
+            <div class="sign-tile-body">They may have bruises, scars, and other signs of physical or psychological abuse and torture. They may be "branded" with a tattoo indicating ownership. They may appear scared, intimidated, or frightened. They may demonstrate inappropriate affection, attachment, or dependence toward their abuser. Relationships may not seem right — for example, a young teenager appearing to be the boyfriend/girlfriend of a much older adult.</div>
+          </div>
+
+          <div class="sign-tile" onclick="toggleSign(this)">
+            <div class="sign-tile-header">
+              <span class="sign-tile-icon">📋</span>
+              <span class="sign-tile-title">Deceived by a False Job Offer</span>
+              <span class="sign-tile-arrow">+</span>
+            </div>
+            <div class="sign-tile-body">Their actual job is different from the advertised job they accepted. They are deceived about working conditions and do not know the exact location of their employment. They do not have a contract, are paid less than the National Minimum Wage, or are not paid at all. They lack protective equipment, suitable clothing, or training to do their job safely.</div>
+          </div>
+
+          <div class="sign-tile" onclick="toggleSign(this)">
+            <div class="sign-tile-header">
+              <span class="sign-tile-icon">🚗</span>
+              <span class="sign-tile-title">Controlled Movement</span>
+              <span class="sign-tile-arrow">+</span>
+            </div>
+            <div class="sign-tile-body">They are always dropped off at or collected from work very early in the morning or late at night. They seem unfamiliar with their neighborhood or workplace. There are controlled activities around the person's health and medical treatment. They are not free to meet up with others. Children are dropped off or picked up in private cars or taxis at unusual times and places.</div>
+          </div>
+
+          <div class="sign-tile" onclick="toggleSign(this)">
+            <div class="sign-tile-header">
+              <span class="sign-tile-icon">🌐</span>
+              <span class="sign-tile-title">Foreign, Unfamiliar with the Language</span>
+              <span class="sign-tile-arrow">+</span>
+            </div>
+            <div class="sign-tile-body">They have recently arrived in the country and do not speak the local language — or they only know sex-related or labor-related words. Several female foreign nationals living at the same address could indicate sexual exploitation.</div>
+          </div>
+
+          <div class="sign-tile" onclick="toggleSign(this)">
+            <div class="sign-tile-header">
+              <span class="sign-tile-icon">🔒</span>
+              <span class="sign-tile-title">Isolation</span>
+              <span class="sign-tile-arrow">+</span>
+            </div>
+            <div class="sign-tile-body">They are rarely allowed to travel on their own or interact with others. They don't have access to their belongings and are kept from their mobile phone. They are always accompanied or monitored. They don't know what is in their neighborhood. They could be linguistically isolated and unable to learn the local language. They live and work at the same residence and cannot leave on their own.</div>
+          </div>
+
+        </div>
+
+        <h3>If You See It, Report It</h3>
+        <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:10px;padding:1.25rem 1.5rem;margin-bottom:1rem;">
+          <p style="margin-bottom:.5rem;"><strong>Do not confront the individuals or cause a scene</strong> — this may lead to increased harm for the victims.</p>
+          <p style="margin-bottom:0;">Instead, call the relevant reporting hotline or the police. If potential modern slavery is identified within a business context, refer to your internal policies and procedures for reporting. In an emergency, always call the police.</p>
+        </div>
+        <p>For more information, visit <a href="http://itsapenalty.org" target="_blank" rel="noopener" style="color:var(--accent);font-weight:600;">It's a Penalty</a>.</p>
+        <p style="font-size:.875rem;color:var(--text-muted);margin-top:.75rem;"><strong>Mandatory Reporting for Offenses Against Children:</strong> Some countries and states have strict reporting requirements for offenses against children. Please refer to your region's mandatory reporting obligations.</p>
+      </div>
       <div class="lesson-nav-row">
         <button class="btn-secondary" onclick="showPanel('lesson4')">← Back</button>
         <button class="btn-primary" onclick="completeLesson('lesson5','lesson6')">Mark Complete &amp; Continue →</button>
@@ -453,6 +584,7 @@
     }
   }
   function dismissWarning() { document.getElementById('warningOverlay').classList.add('hidden'); }
+  function toggleSign(tile) { tile.classList.toggle('open'); }
   updateProgress();
   const hash = window.location.hash.replace('#','');
   if (hash && document.getElementById('panel-' + hash)) showPanel(hash);
