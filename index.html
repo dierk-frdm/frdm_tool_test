@@ -224,6 +224,7 @@
     .cat-supplier .category-icon { background: rgba(220,227,81,0.3); }
     .cat-comply   .category-icon { background: rgba(220,227,81,0.25); }
     .cat-report   .category-icon { background: rgba(220,227,81,0.3); }
+    .cat-training .category-icon { background: rgba(80,120,220,0.1); }
 
     .category-title {
       font-size: 0.9375rem;
@@ -288,6 +289,11 @@
       background: var(--accent-brand);
       color: #3a4500;
       border: 1px solid #c4cc3a;
+    }
+    .tool-status.status-training {
+      background: #e8eeff;
+      color: #2a3a8a;
+      border-color: #b0bdf0;
     }
 
     .tool-name {
@@ -395,6 +401,11 @@
     <a class="sidebar-item" href="email-data/email-merge-tool.html">
       <span class="sidebar-icon">✉️</span> Email Merge
     </a>
+
+    <div class="sidebar-section" style="margin-top:0.5rem;">Training</div>
+    <a class="sidebar-item" href="anti-modern-slavery-training.html">
+      <span class="sidebar-icon">🎓</span> Anti-Modern Slavery
+    </a>
   </nav>
 
   <!-- Main content -->
@@ -409,11 +420,11 @@
       </div>
       <div class="hero-stats">
         <div class="stat">
-          <div class="stat-num">9</div>
+          <div class="stat-num">10</div>
           <div class="stat-label">Tools</div>
         </div>
         <div class="stat">
-          <div class="stat-num">3</div>
+          <div class="stat-num">4</div>
           <div class="stat-label">Categories</div>
         </div>
         <div class="stat">
@@ -547,6 +558,29 @@
           <div class="tool-name">Email Merge Tool</div>
           <div class="tool-desc">Merge a recipient CSV with the FRDM monthly risk digest template. Add a custom news blurb, preview each personalized email, and export a JSON payload.</div>
           <div class="tool-cta">Open tool <span class="tool-cta-arrow">→</span></div>
+        </a>
+
+      </div>
+    </section>
+
+    <!-- Training -->
+    <section class="category cat-training">
+      <div class="category-header">
+        <div class="category-icon">🎓</div>
+        <span class="category-title">Training</span>
+        <span class="category-desc">Compliance education and certification for the FRDM team</span>
+      </div>
+      <div class="category-divider"></div>
+      <div class="tool-grid">
+
+        <a class="tool-card" href="anti-modern-slavery-training.html">
+          <div class="tool-card-top">
+            <span class="tool-icon">⛓️</span>
+            <span class="tool-status status-training">Course</span>
+          </div>
+          <div class="tool-name">Anti-Modern Slavery Training</div>
+          <div class="tool-desc">7-lesson interactive course covering modern slavery definitions, warning signs, driving forces, global legislation, and supply chain risk. Includes a 13-question assessment. ~20 mins.</div>
+          <div class="tool-cta">Start course <span class="tool-cta-arrow">→</span></div>
         </a>
 
       </div>
