@@ -483,7 +483,7 @@ async function handleAnalyzeDoc(request, env) {
   try { body = await request.json(); }
   catch { return new Response(JSON.stringify({ error: "Invalid JSON" }), { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }); }
 
-  const { filename = "document", content_type, data } = body;
+  const { filename = "document", content_type, data, mode } = body;
   if (!content_type || !data) {
     return new Response(JSON.stringify({ error: "content_type and data are required" }), { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } });
   }
@@ -491,9 +491,21 @@ async function handleAnalyzeDoc(request, env) {
   const apiKey = env.FRDM_ANTHROPIC_API_KEY;
   if (!apiKey) return new Response(JSON.stringify({ error: "API key not configured" }), { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } });
 
-  const RISK_TAXONOMY = "human_rights, environmental, health, planet, water, cyber, geopolitical, tariff, governance, operations, people, cbp, trade";
+  let instruction;
+  if (mode === "warning") {
+    instruction = `Analyze this document and extract a warning list for a supply chain risk platform.
 
-  const instruction = `Analyze this regulation/standards document and extract key information for categorization in a supply chain risk platform.
+Return ONLY valid JSON with no markdown wrapper:
+{
+  "warning_name": "Short descriptive name for this warning list (e.g. 'Forced Labor Countries', 'High-Risk HS Codes')",
+  "warning_type": "country | hs_code | company_name — pick the best match based on the values in the document",
+  "values": ["array of extracted values: ISO3 country codes, HS codes, or company names exactly as they should appear in the CSV"],
+  "description": "1-2 sentences describing what this warning list covers and why it matters for supply chain risk",
+  "reasoning": "1-2 sentences explaining how you identified the values and warning type"
+}`;
+  } else {
+    const RISK_TAXONOMY = "human_rights, environmental, health, planet, water, cyber, geopolitical, tariff, governance, operations, people, cbp, trade";
+    instruction = `Analyze this regulation/standards document and extract key information for categorization in a supply chain risk platform.
 
 Return ONLY valid JSON with no markdown wrapper:
 {
@@ -505,6 +517,7 @@ Return ONLY valid JSON with no markdown wrapper:
   "risk_suggestions": ["one or more from: ${RISK_TAXONOMY}"],
   "reasoning": "2-3 sentences explaining your NAICS code selections and risk type choices"
 }`;
+  }
 
   let messageContent;
   if (content_type === "application/pdf") {
@@ -776,6 +789,12 @@ async function handleConfigWrite(request, env) {
   const token = body.token || env.GITHUB_API_KEY;
   if (!token) return new Response(JSON.stringify({ error: "No GitHub token provided and GITHUB_API_KEY secret not configured" }), { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } });
 
+  // Optional write password protection
+  const writePassword = env.WRITE_PASSWORD;
+  if (writePassword && body.password !== writePassword) {
+    return new Response(JSON.stringify({ error: "Unauthorized: invalid write password" }), { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } });
+  }
+
   const { owner, repo, path, branch = "main", content, message, merge_mode } = body;
   if (!owner || !repo || !path || content === undefined) {
     return new Response(JSON.stringify({ error: "owner, repo, path, and content are required" }), { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } });
@@ -801,6 +820,14 @@ async function handleConfigWrite(request, env) {
         merged[key] = { ...val, date_added: todayStr, last_updated: todayStr };
       }
     }
+  } else if (merge_mode === "warning_log") {
+    for (const [key, val] of Object.entries(content)) {
+      if (merged[key] && typeof merged[key] === "object") {
+        merged[key] = { ...merged[key], ...val, date_added: merged[key].date_added || todayStr, last_updated: todayStr };
+      } else {
+        merged[key] = { ...val, date_added: todayStr, last_updated: todayStr };
+      }
+    }
   } else if (merge_mode === "doc_log") {
     for (const [key, val] of Object.entries(content)) {
       if (merged[key] && typeof merged[key] === "object") {
@@ -812,15 +839,19 @@ async function handleConfigWrite(request, env) {
         merged[key] = { ...val, last_searched: todayStr };
       }
     }
+  } else if (merge_mode === "replace") {
+    merged = content;
   } else {
     merged = { ...merged, ...content };
   }
 
   const commitMessage = message || (merge_mode === "regulation"
     ? "Update regulation_configurations.json"
-    : merge_mode === "doc_log"
-      ? "Update document_url_log.json"
-      : "Update config file");
+    : merge_mode === "warning_log"
+      ? "Update warning_configurations.json"
+      : merge_mode === "doc_log"
+        ? "Update document_url_log.json"
+        : "Update config file");
 
   const jsonStr = JSON.stringify(merged, null, 2);
   const encoder = new TextEncoder();

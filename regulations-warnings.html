@@ -180,6 +180,30 @@ footer{text-align:center;color:#aaa;font-size:.8rem;padding:2.5rem 1rem;border-t
   <!-- ═══════════════════════════════════════ -->
   <div id="tab-warnings" class="tab-panel active">
 
+    <!-- AI Document Analysis for Warnings -->
+    <div class="card">
+      <div class="card-title">AI Document Analysis</div>
+      <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;line-height:1.5;">Upload a document (list, report, etc.) and let AI extract warning values automatically. Supported formats: <strong>PDF, TXT, DOCX, XLSX, CSV</strong>.</p>
+
+      <div id="warn-doc-upload-zone" class="upload-zone" onclick="document.getElementById('warn-doc-file-input').click()">
+        <input type="file" id="warn-doc-file-input" accept=".pdf,.txt,.docx,.xlsx,.csv" style="display:none" onchange="handleWarnDocFile(this.files[0])"/>
+        <div class="upload-icon">📄</div>
+        <div class="upload-title">Drop document here or click to browse</div>
+        <div class="upload-sub">PDF · TXT · DOCX · XLSX · CSV</div>
+      </div>
+
+      <div id="warn-doc-status" style="font-size:.83rem;color:var(--muted);margin-top:.65rem;min-height:1.2rem;"></div>
+
+      <div id="warn-doc-result-panel" class="ai-result-panel" style="display:none">
+        <div class="result-row"><span class="result-label">Warning Name</span><span class="result-value" id="warn-res-name"></span></div>
+        <div class="result-row"><span class="result-label">Type</span><span class="result-value" id="warn-res-type"></span></div>
+        <div class="result-row"><span class="result-label">Values</span><span class="result-value" id="warn-res-values" style="font-family:monospace;font-size:.8rem;word-break:break-all;"></span></div>
+        <div class="result-row"><span class="result-label">Description</span><span class="result-value" id="warn-res-desc"></span></div>
+        <div class="result-row"><span class="result-label">Reasoning</span><span class="result-value" id="warn-res-reason" style="font-style:italic;color:var(--muted);"></span></div>
+        <button class="btn btn-primary btn-sm" style="margin-top:.5rem" onclick="applyWarnDocResults()">Apply to Form Below ↓</button>
+      </div>
+    </div>
+
     <div class="card">
       <div class="card-title">Create a Warning File</div>
 
@@ -342,13 +366,19 @@ footer{text-align:center;color:#aaa;font-size:.8rem;padding:2.5rem 1rem;border-t
             <input id="reg-gh-path" class="form-input" type="text" placeholder="data/regulation_configurations.json"/>
           </div>
           <div class="form-group" style="margin-bottom:0">
-            <label class="form-label" for="reg-gh-log-path">Log File Path</label>
-            <input id="reg-gh-log-path" class="form-input" type="text" placeholder="data/regulation_warn_log.json"/>
+            <label class="form-label" for="reg-gh-warn-path">Warnings File Path</label>
+            <input id="reg-gh-warn-path" class="form-input" type="text" placeholder="data/warning_configurations.json"/>
           </div>
         </div>
-        <div class="form-group" style="margin-top:.75rem;">
-          <label class="form-label" for="reg-gh-branch">Branch</label>
-          <input id="reg-gh-branch" class="form-input" type="text" placeholder="main"/>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-top:.75rem;">
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label" for="reg-gh-branch">Branch</label>
+            <input id="reg-gh-branch" class="form-input" type="text" placeholder="main"/>
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label" for="reg-gh-write-pw">Write Password <span>(optional — protects log writes)</span></label>
+            <input id="reg-gh-write-pw" class="form-input" type="password" placeholder="Leave blank if not set"/>
+          </div>
         </div>
         <button class="btn btn-secondary btn-sm" onclick="saveRegGhConfig()">Save Settings</button>
         <div id="reg-gh-status" style="margin-top:.5rem;font-size:.8rem;color:var(--muted);"></div>
@@ -375,12 +405,12 @@ footer{text-align:center;color:#aaa;font-size:.8rem;padding:2.5rem 1rem;border-t
 
     <div class="card">
       <div class="card-title">Creation History</div>
+      <div id="log-gh-status" style="margin-bottom:.75rem;font-size:.83rem;color:var(--muted);min-height:1.2rem;"></div>
       <div id="log-container"></div>
       <div class="action-row" style="margin-top:1rem;">
         <button class="btn btn-secondary btn-sm" onclick="downloadLog()">Download Log CSV</button>
         <button class="btn btn-secondary btn-sm" onclick="loadLogFromGithub()">↺ Reload from GitHub</button>
       </div>
-      <div id="log-gh-status" style="margin-top:.5rem;font-size:.8rem;color:var(--muted);"></div>
     </div>
 
   </div><!-- /tab-log -->
@@ -393,7 +423,6 @@ footer{text-align:center;color:#aaa;font-size:.8rem;padding:2.5rem 1rem;border-t
 // ─────────────────────────────────────────────────
 // GLOBALS
 // ─────────────────────────────────────────────────
-const LOG_KEY    = 'frdm_reg_warn_log';
 const REG_GH_KEY = 'frdm_reg_gh_config';
 let naicsData   = null;  // Array of {code, standard_name}
 let naicsLoaded = false;
@@ -409,7 +438,7 @@ function switchTab(name, btn) {
   btn.classList.add('active');
 
   if (name === 'regulations' && !naicsLoaded) loadNaics();
-  if (name === 'log') renderLog();
+  if (name === 'log') loadLogFromGithub();
 }
 
 // ─────────────────────────────────────────────────
@@ -448,11 +477,12 @@ function clearRisks() {
 // ─────────────────────────────────────────────────
 function saveRegGhConfig() {
   const cfg = {
-    owner:    document.getElementById('reg-gh-owner').value.trim(),
-    repo:     document.getElementById('reg-gh-repo').value.trim(),
-    path:     document.getElementById('reg-gh-path').value.trim(),
-    log_path: document.getElementById('reg-gh-log-path').value.trim(),
-    branch:   document.getElementById('reg-gh-branch').value.trim() || 'main',
+    owner:     document.getElementById('reg-gh-owner').value.trim(),
+    repo:      document.getElementById('reg-gh-repo').value.trim(),
+    path:      document.getElementById('reg-gh-path').value.trim(),
+    warn_path: document.getElementById('reg-gh-warn-path').value.trim(),
+    branch:    document.getElementById('reg-gh-branch').value.trim() || 'main',
+    password:  document.getElementById('reg-gh-write-pw').value,
   };
   localStorage.setItem(REG_GH_KEY, JSON.stringify(cfg));
   document.getElementById('reg-gh-status').textContent = '✓ Settings saved.';
@@ -461,21 +491,17 @@ function saveRegGhConfig() {
 function loadRegGhConfig() {
   try {
     const cfg = JSON.parse(localStorage.getItem(REG_GH_KEY)) || {};
-    if (cfg.owner)    document.getElementById('reg-gh-owner').value    = cfg.owner;
-    if (cfg.repo)     document.getElementById('reg-gh-repo').value     = cfg.repo;
-    if (cfg.path)     document.getElementById('reg-gh-path').value     = cfg.path;
-    if (cfg.log_path) document.getElementById('reg-gh-log-path').value = cfg.log_path;
-    if (cfg.branch)   document.getElementById('reg-gh-branch').value   = cfg.branch;
+    if (cfg.owner)     document.getElementById('reg-gh-owner').value      = cfg.owner;
+    if (cfg.repo)      document.getElementById('reg-gh-repo').value       = cfg.repo;
+    if (cfg.path)      document.getElementById('reg-gh-path').value       = cfg.path;
+    if (cfg.warn_path) document.getElementById('reg-gh-warn-path').value  = cfg.warn_path;
+    if (cfg.branch)    document.getElementById('reg-gh-branch').value     = cfg.branch;
+    if (cfg.password)  document.getElementById('reg-gh-write-pw').value   = cfg.password;
   } catch {}
 }
 
 function getRegGhConfig() {
   try { return JSON.parse(localStorage.getItem(REG_GH_KEY)) || {}; } catch { return {}; }
-}
-
-function getLogGhConfig() {
-  const cfg = getRegGhConfig();
-  return (cfg.owner && cfg.repo && cfg.log_path) ? cfg : {};
 }
 
 // ─────────────────────────────────────────────────
@@ -626,6 +652,116 @@ function applyDocResults() {
 }
 
 // ─────────────────────────────────────────────────
+// WARNINGS AI ANALYSIS
+// ─────────────────────────────────────────────────
+let lastWarnDocResult = null;
+
+function initWarnDocUpload() {
+  const zone = document.getElementById('warn-doc-upload-zone');
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if (file) handleWarnDocFile(file);
+  });
+}
+
+async function handleWarnDocFile(file) {
+  if (!file) return;
+  const statusEl = document.getElementById('warn-doc-status');
+  const resultEl = document.getElementById('warn-doc-result-panel');
+  resultEl.style.display = 'none';
+  lastWarnDocResult = null;
+
+  const ext = file.name.split('.').pop().toLowerCase();
+  const allowed = ['pdf', 'txt', 'docx', 'xlsx', 'csv'];
+  if (!allowed.includes(ext)) {
+    statusEl.innerHTML = `<span style="color:var(--critical)">✗ Unsupported file type ".${escHtml(ext)}". Please upload PDF, TXT, DOCX, XLSX, or CSV.</span>`;
+    return;
+  }
+
+  statusEl.innerHTML = `<span class="spinner"></span> Reading <strong>${escHtml(file.name)}</strong>…`;
+
+  try {
+    let contentType, data;
+
+    if (ext === 'pdf') {
+      const buf = await readAsArrayBuffer(file);
+      const bytes = new Uint8Array(buf);
+      let binary = '';
+      for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+      data = btoa(binary);
+      contentType = 'application/pdf';
+    } else if (ext === 'docx') {
+      if (typeof mammoth === 'undefined') throw new Error('mammoth.js not loaded — cannot parse DOCX');
+      const buf = await readAsArrayBuffer(file);
+      const result = await mammoth.extractRawText({ arrayBuffer: buf });
+      data = result.value;
+      contentType = 'text/plain';
+    } else if (ext === 'xlsx') {
+      const buf = await readAsArrayBuffer(file);
+      const wb = XLSX.read(buf, { type: 'array' });
+      const parts = wb.SheetNames.map(name => {
+        const csv = XLSX.utils.sheet_to_csv(wb.Sheets[name]);
+        return `=== Sheet: ${name} ===\n${csv}`;
+      });
+      data = parts.join('\n\n');
+      contentType = 'text/plain';
+    } else {
+      data = await readAsText(file);
+      contentType = 'text/plain';
+    }
+
+    statusEl.innerHTML = `<span class="spinner"></span> Analyzing with AI…`;
+
+    let resp;
+    try {
+      resp = await fetch('/api/analyze-regulation-doc', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filename: file.name, content_type: contentType, data, mode: 'warning' })
+      });
+    } catch (err) {
+      throw new Error('Network error reaching API: ' + err.message);
+    }
+
+    const json = await resp.json();
+    if (!resp.ok || json.error) throw new Error(json.error || ('API error ' + resp.status));
+
+    lastWarnDocResult = json;
+    statusEl.innerHTML = `✓ Analysis complete for <strong>${escHtml(file.name)}</strong>`;
+
+    document.getElementById('warn-res-name').textContent = json.warning_name || '—';
+    document.getElementById('warn-res-type').textContent = json.warning_type || '—';
+    const vals = json.values || [];
+    document.getElementById('warn-res-values').textContent = vals.length ? vals.join(', ') + ` (${vals.length})` : '—';
+    document.getElementById('warn-res-desc').textContent = json.description || '—';
+    document.getElementById('warn-res-reason').textContent = json.reasoning || '';
+    resultEl.style.display = 'block';
+
+  } catch (err) {
+    statusEl.innerHTML = `<span style="color:var(--critical)">✗ ${escHtml(err.message)}</span>`;
+  }
+}
+
+function applyWarnDocResults() {
+  if (!lastWarnDocResult) return;
+  if (lastWarnDocResult.warning_name) document.getElementById('warn-name').value = lastWarnDocResult.warning_name;
+  if (lastWarnDocResult.warning_type) {
+    const radio = document.querySelector(`input[name="warn-type"][value="${lastWarnDocResult.warning_type}"]`);
+    if (radio) { radio.checked = true; updateRadioStyles(); }
+  }
+  if (lastWarnDocResult.values && lastWarnDocResult.values.length) {
+    document.getElementById('warn-values').value = lastWarnDocResult.values.join('\n');
+  }
+  if (lastWarnDocResult.description) document.getElementById('warn-notes').value = lastWarnDocResult.description;
+  document.getElementById('warn-name').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  document.getElementById('warn-name').focus();
+}
+
+// ─────────────────────────────────────────────────
 // NAICS LOADER
 // ─────────────────────────────────────────────────
 async function loadNaics() {
@@ -687,7 +823,7 @@ function updatePreview() {
 // ─────────────────────────────────────────────────
 // WARNINGS GENERATOR
 // ─────────────────────────────────────────────────
-function generateWarning() {
+async function generateWarning() {
   const alertEl = document.getElementById('warn-alert');
   alertEl.className = 'alert';
 
@@ -710,15 +846,31 @@ function generateWarning() {
   const filename = `${slug}_warning_${dateFmt}.csv`;
   downloadBlob(csv, filename, 'text/csv');
 
-  // Log
-  appendLog({
-    type:    'warning',
-    name:    name,
-    details: `${type} · ${values.length} value${values.length !== 1 ? 's' : ''}`,
-    notes:   notes
-  });
-
   showAlert(alertEl, 'success', `✓ Downloaded <strong>${filename}</strong> — ${values.length} value${values.length !== 1 ? 's' : ''}.`);
+
+  // Write to warning_configurations.json
+  const ghCfg = getRegGhConfig();
+  if (ghCfg.owner && ghCfg.repo && ghCfg.warn_path) {
+    try {
+      const ghResp = await fetch('/api/config-write', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          owner:      ghCfg.owner,
+          repo:       ghCfg.repo,
+          path:       ghCfg.warn_path,
+          branch:     ghCfg.branch || 'main',
+          content:    { [name]: { type, values, notes: notes || null } },
+          merge_mode: 'warning_log',
+          password:   ghCfg.password || undefined,
+        }),
+      });
+      const ghData = await ghResp.json();
+      if (!ghResp.ok || ghData.error) throw new Error((ghData.error || 'API error ' + ghResp.status) + (ghData.detail ? ' — ' + ghData.detail : ''));
+    } catch (err) {
+      showAlert(alertEl, 'error', `✓ Downloaded but GitHub write failed: ${escHtml(err.message)}`);
+    }
+  }
 }
 
 // ─────────────────────────────────────────────────
@@ -850,14 +1002,6 @@ async function exportBatch() {
     }
     downloadBlob(Papa.unparse(slugRows), `regulation_slugs_${dateFmt}.csv`, 'text/csv');
 
-    // ── Log ──
-    appendLog({
-      type:    'regulations',
-      name:    regNames.join(', '),
-      details: `${regNames.length} regulation${regNames.length !== 1 ? 's' : ''} · ${matchingRows.length.toLocaleString()} matching NAICS rows`,
-      notes:   batch.map(b => b.notes).filter(Boolean).join('; ')
-    });
-
     showAlert(alertEl, 'success',
       `✓ Downloaded <strong>industry_regulations_${dateFmt}.csv</strong> (${matchingRows.length.toLocaleString()} rows) and <strong>regulation_slugs_${dateFmt}.csv</strong> (${slugRows.length} slugs).`);
 
@@ -882,12 +1026,13 @@ async function exportBatch() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            owner:       ghCfg.owner,
-            repo:        ghCfg.repo,
-            path:        ghCfg.path,
-            branch:      ghCfg.branch || 'main',
-            content:     configEntries,
-            merge_mode:  'regulation',
+            owner:      ghCfg.owner,
+            repo:       ghCfg.repo,
+            path:       ghCfg.path,
+            branch:     ghCfg.branch || 'main',
+            content:    configEntries,
+            merge_mode: 'regulation',
+            password:   ghCfg.password || undefined,
           }),
         });
         const ghData = await ghResp.json();
@@ -908,121 +1053,136 @@ async function exportBatch() {
 }
 
 // ─────────────────────────────────────────────────
-// LOG — LOCAL
+// LOG — GITHUB-SOURCED (regulation_configurations.json + warning_configurations.json)
 // ─────────────────────────────────────────────────
-function getLog() {
-  try { return JSON.parse(localStorage.getItem(LOG_KEY)) || []; } catch { return []; }
-}
+let logCache = []; // [{ type, name, date, details, notes, source_file }]
 
-function appendLog(entry) {
-  const log = getLog();
-  log.unshift({
-    id:      Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
-    date:    new Date().toISOString(),
-    type:    entry.type,
-    name:    entry.name,
-    details: entry.details,
-    notes:   entry.notes || ''
-  });
-  localStorage.setItem(LOG_KEY, JSON.stringify(log));
-  pushLogToGithub(log);
-}
-
-let _pushTimer = null;
-function saveLog(log) {
-  localStorage.setItem(LOG_KEY, JSON.stringify(log));
-  clearTimeout(_pushTimer);
-  _pushTimer = setTimeout(() => pushLogToGithub(log), 1500);
-}
-
-// ─────────────────────────────────────────────────
-// LOG — GITHUB SYNC
-// ─────────────────────────────────────────────────
 async function loadLogFromGithub() {
-  const cfg = getLogGhConfig();
-  if (!cfg.owner) return;
+  const cfg = getRegGhConfig();
   const statusEl = document.getElementById('log-gh-status');
-  statusEl.innerHTML = '<span class="spinner"></span> Loading log from GitHub…';
-  try {
-    const resp = await fetch('/api/config-read', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ owner: cfg.owner, repo: cfg.repo, path: cfg.log_path, ref: cfg.branch || 'main' }),
-    });
-    const data = await resp.json();
-    if (!resp.ok || data.error) throw new Error(data.error || 'API error ' + resp.status);
-    const ghEntries = (data.content && Array.isArray(data.content.entries)) ? data.content.entries : [];
-    const localEntries = getLog();
-    const byId = {};
-    for (const e of [...ghEntries, ...localEntries]) byId[e.id] = e;
-    const merged = Object.values(byId).sort((a, b) => new Date(b.date) - new Date(a.date));
-    localStorage.setItem(LOG_KEY, JSON.stringify(merged));
+  if (!cfg.owner || !cfg.repo) {
+    statusEl.textContent = 'Configure GitHub settings in the ☁️ section on the Regulations tab to enable log sync.';
     renderLog();
-    const n = merged.length;
-    statusEl.textContent = `✓ Loaded ${n} entr${n !== 1 ? 'ies' : 'y'} from GitHub.`;
+    return;
+  }
+  statusEl.innerHTML = '<span class="spinner"></span> Loading from GitHub…';
+  try {
+    const branch = cfg.branch || 'main';
+    const [regResp, warnResp] = await Promise.all([
+      cfg.path ? fetch('/api/config-read', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ owner: cfg.owner, repo: cfg.repo, path: cfg.path, ref: branch }) }) : Promise.resolve(null),
+      cfg.warn_path ? fetch('/api/config-read', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ owner: cfg.owner, repo: cfg.repo, path: cfg.warn_path, ref: branch }) }) : Promise.resolve(null),
+    ]);
+
+    const entries = [];
+
+    if (regResp) {
+      const regData = await regResp.json();
+      if (regData.content && typeof regData.content === 'object') {
+        for (const [name, val] of Object.entries(regData.content)) {
+          entries.push({
+            type: 'regulations',
+            name,
+            date: val.last_updated || val.date_added || '',
+            details: (val.risks || []).join(', ') || (val.description ? val.description.slice(0, 60) + '…' : '—'),
+            notes: val.notes || '',
+            source_file: cfg.path,
+          });
+        }
+      }
+    }
+
+    if (warnResp) {
+      const warnData = await warnResp.json();
+      if (warnData.content && typeof warnData.content === 'object') {
+        for (const [name, val] of Object.entries(warnData.content)) {
+          const count = Array.isArray(val.values) ? val.values.length : '?';
+          entries.push({
+            type: 'warning',
+            name,
+            date: val.last_updated || val.date_added || '',
+            details: `${val.type || '?'} · ${count} value${count !== 1 ? 's' : ''}`,
+            notes: val.notes || '',
+            source_file: cfg.warn_path,
+            raw_values: val.values || [],
+            warn_type: val.type,
+          });
+        }
+      }
+    }
+
+    entries.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+    logCache = entries;
+    renderLog();
+    statusEl.textContent = `✓ Loaded ${entries.length} entr${entries.length !== 1 ? 'ies' : 'y'} from GitHub.`;
   } catch (err) {
     statusEl.innerHTML = `<span style="color:var(--critical)">✗ Failed to load log: ${escHtml(err.message)}</span>`;
+    renderLog();
   }
 }
 
-async function pushLogToGithub(log) {
-  const cfg = getLogGhConfig();
-  if (!cfg.owner) return;
+async function deleteLogEntry(type, name) {
+  if (!confirm(`Delete "${name}" from GitHub? This cannot be undone.`)) return;
+  const cfg = getRegGhConfig();
+  if (!cfg.owner || !cfg.repo) return;
   const statusEl = document.getElementById('log-gh-status');
-  statusEl.innerHTML = '<span class="spinner"></span> Saving log to GitHub…';
+  statusEl.innerHTML = '<span class="spinner"></span> Deleting from GitHub…';
   try {
-    const resp = await fetch('/api/config-write', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ owner: cfg.owner, repo: cfg.repo, path: cfg.log_path, branch: cfg.branch || 'main', content: { entries: log } }),
+    const isWarn = type === 'warning';
+    const filePath = isWarn ? cfg.warn_path : cfg.path;
+    if (!filePath) throw new Error('File path not configured for this entry type');
+    const branch = cfg.branch || 'main';
+
+    // Read current file
+    const readResp = await fetch('/api/config-read', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ owner: cfg.owner, repo: cfg.repo, path: filePath, ref: branch }),
     });
-    const data = await resp.json();
-    if (!resp.ok || data.error) throw new Error((data.error || 'API error ' + resp.status) + (data.detail ? ' — ' + data.detail : ''));
-    statusEl.textContent = '✓ Log saved to GitHub.';
+    const readData = await readResp.json();
+    if (!readResp.ok || readData.error) throw new Error(readData.error || 'read failed');
+    const updated = { ...(readData.content || {}) };
+    delete updated[name];
+
+    const writeResp = await fetch('/api/config-write', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        owner: cfg.owner, repo: cfg.repo, path: filePath, branch,
+        content: updated, merge_mode: 'replace',
+        password: cfg.password || undefined,
+      }),
+    });
+    const writeData = await writeResp.json();
+    if (!writeResp.ok || writeData.error) throw new Error((writeData.error || 'write failed') + (writeData.detail ? ' — ' + writeData.detail : ''));
+
+    statusEl.textContent = `✓ Deleted "${name}" from GitHub.`;
+    await loadLogFromGithub();
   } catch (err) {
-    statusEl.innerHTML = `<span style="color:var(--critical)">✗ Failed to save log: ${escHtml(err.message)}</span>`;
+    statusEl.innerHTML = `<span style="color:var(--critical)">✗ Delete failed: ${escHtml(err.message)}</span>`;
   }
-}
-
-function updateLogEntry(id, field, value) {
-  const log = getLog();
-  const entry = log.find(e => e.id === id);
-  if (entry) { entry[field] = value; saveLog(log); }
-}
-
-function deleteLogEntry(id) {
-  if (!confirm('Delete this log entry? This cannot be undone.')) return;
-  const log = getLog().filter(e => e.id !== id);
-  localStorage.setItem(LOG_KEY, JSON.stringify(log));
-  clearTimeout(_pushTimer);
-  pushLogToGithub(log);
-  renderLog();
 }
 
 function renderLog() {
   const container = document.getElementById('log-container');
-  const log = getLog();
-
-  if (log.length === 0) {
-    container.innerHTML = '<div class="batch-empty">No entries yet. Generate a warning or regulation file to start logging.</div>';
+  if (logCache.length === 0) {
+    container.innerHTML = '<div class="batch-empty">No entries yet. Click "↺ Reload from GitHub" or generate a warning/regulation file.</div>';
     return;
   }
 
-  let html = '<div class="table-wrap"><table><thead><tr><th>Date / Time</th><th>Type</th><th>Name</th><th>Details</th><th>Notes</th><th></th></tr></thead><tbody>';
-  log.forEach(entry => {
+  let html = '<div class="table-wrap"><table><thead><tr><th>Date</th><th>Type</th><th>Name</th><th>Details</th><th>Notes</th><th></th></tr></thead><tbody>';
+  logCache.forEach(entry => {
     const d = new Date(entry.date);
-    const dateStr = isNaN(d) ? (entry.date || '') : d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const eid = escHtml(entry.id);
+    const dateStr = entry.date ? (isNaN(d) ? entry.date : d.toLocaleDateString()) : '—';
+    const typeBadge = entry.type === 'warning'
+      ? '<span class="type-badge type-warning">Warning</span>'
+      : '<span class="type-badge type-regulations">Regulation</span>';
     html += `<tr>
-      <td style="white-space:nowrap"><input class="log-input" value="${escHtml(dateStr)}" style="min-width:130px" oninput="updateLogEntry('${eid}','date',this.value)"/></td>
-      <td><select class="log-select" onchange="updateLogEntry('${eid}','type',this.value)">
-        <option value="warning"${entry.type==='warning'?' selected':''}>Warning</option>
-        <option value="regulations"${entry.type==='regulations'?' selected':''}>Regulations</option>
-      </select></td>
-      <td><input class="log-input" value="${escHtml(entry.name)}" oninput="updateLogEntry('${eid}','name',this.value)"/></td>
-      <td><input class="log-input" value="${escHtml(entry.details)}" oninput="updateLogEntry('${eid}','details',this.value)"/></td>
-      <td><input class="log-input" value="${escHtml(entry.notes||'')}" placeholder="—" oninput="updateLogEntry('${eid}','notes',this.value)"/></td>
-      <td style="white-space:nowrap"><button class="btn btn-danger btn-sm" onclick="deleteLogEntry('${eid}')">Delete</button></td>
+      <td style="white-space:nowrap;color:var(--muted);font-size:.8rem">${escHtml(dateStr)}</td>
+      <td>${typeBadge}</td>
+      <td><strong>${escHtml(entry.name)}</strong></td>
+      <td style="color:var(--muted);font-size:.82rem">${escHtml(entry.details)}</td>
+      <td style="color:var(--muted);font-size:.82rem">${escHtml(entry.notes || '—')}</td>
+      <td style="white-space:nowrap"><button class="btn btn-danger btn-sm" onclick="deleteLogEntry('${escHtml(entry.type)}','${escHtml(entry.name)}')">Delete</button></td>
     </tr>`;
   });
   html += '</tbody></table></div>';
@@ -1030,9 +1190,8 @@ function renderLog() {
 }
 
 function downloadLog() {
-  const log = getLog();
-  if (log.length === 0) return alert('No log entries to download.');
-  const rows = log.map(e => ({
+  if (logCache.length === 0) return alert('No log entries to download. Click "↺ Reload from GitHub" first.');
+  const rows = logCache.map(e => ({
     Date:    e.date,
     Type:    e.type,
     Name:    e.name,
@@ -1087,9 +1246,8 @@ function escHtml(str) {
 (function init() {
   renderBatch();
   initDocUpload();
+  initWarnDocUpload();
   loadRegGhConfig();
-  loadLogFromGithub();
-
 })();
 </script>
 </body>
